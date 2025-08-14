@@ -1,0 +1,66 @@
+# Ikhtibar Educational Exam Management System - Architecture Rules
+
+## Project Overview
+You are working on the **Ikhtibar** educational exam management system - a production-ready full-stack web application with ASP.NET Core 8.0 Web API backend and React.js 18 frontend with TypeScript.
+
+## Core Architecture Principles
+
+### Backend (.NET Core)
+- Use Clean Architecture with folder-per-feature structure
+- Follow BaseRepository<T> pattern for all repositories
+- Use Dapper ORM with parameterized queries
+- Implement JWT authentication with refresh tokens
+- Use structured logging with scopes
+- Always use async methods for I/O operations
+- Follow single responsibility principle strictly
+
+### Frontend (React + TypeScript)
+- Use folder-per-feature module structure
+- Implement components with React.memo for performance
+- Use Zustand for state management
+- Use React Query for server state
+- Support both RTL (Arabic) and LTR (English) layouts
+- Use Tailwind CSS with consistent class patterns
+- Include loading and error states in all components
+
+## Key Patterns to Follow
+
+### Backend Repository Pattern
+```csharp
+public class ExamRepository : BaseRepository<ExamEntity>, IExamRepository
+{
+    public ExamRepository(IDbConnectionFactory connectionFactory, ILogger<ExamRepository> logger)
+        : base(connectionFactory, logger) { }
+    
+    public async Task<ExamEntity> CreateAsync(ExamEntity entity)
+    {
+        using var scope = _logger.BeginScope("Creating exam for user {UserId}", entity.CreatedByUserId);
+        // Implementation follows existing patterns
+    }
+}
+```
+
+### Frontend Component Pattern
+```typescript
+const ExamComponent: React.FC<ExamProps> = memo(({ exam, onEdit }) => {
+  const { t } = useTranslation('exam-management');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Follow established patterns with loading states
+  // Support RTL/LTR layouts
+  // Include proper error handling
+});
+```
+
+## Success Criteria
+- Code follows established patterns from existing codebase
+- Includes comprehensive validation commands
+- Passes all syntax and style checks
+- Integrates seamlessly with existing architecture
+- Includes proper error handling and logging
+- Supports internationalization requirements
+- Maintains single responsibility principle
+description: Ikhtibar project architecture and core patterns
+globs: ["**/*.cs", "**/*.ts", "**/*.tsx"]
+alwaysApply: true
+---

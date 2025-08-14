@@ -245,7 +245,7 @@ describe('RoleService', () => {
 
     // Assert
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/user-roles/assign'),
+      expect.stringContaining('/api/user-roles'),
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({

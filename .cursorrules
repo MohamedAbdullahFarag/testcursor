@@ -1,0 +1,114 @@
+# Cursor Rules for Ikhtibar Project - Enhanced Integration
+
+## Project Context
+You are working on the **Ikhtibar** educational exam management system - a full-stack web application with ASP.NET Core 8.0 backend and React.js 18 frontend with TypeScript.
+
+## Enhanced Rule System
+This project now uses a modern `.cursor/rules/` structure with specialized, scoped rules that automatically apply based on context, plus custom modes for specialized workflows:
+
+### Core Rules (Always Active)
+- **`@.cursor/rules/architecture.mdc`** - Project architecture and core patterns
+- **`@.cursor/rules/development-workflow.mdc`** - Build, test, and run commands
+
+### Context-Aware Rules (Auto-Attached)
+- **`@.cursor/rules/backend-guidelines.mdc`** - Automatically applies when working with `.cs` files
+- **`@.cursor/rules/frontend-guidelines.mdc`** - Automatically applies when working with `.ts`/`.tsx` files
+- **`@.cursor/rules/authentication-security.mdc`** - Applies to auth-related files
+- **`@.cursor/rules/i18n-accessibility.mdc`** - Applies to internationalization and accessibility files
+- **`@.cursor/rules/testing-qa.mdc`** - Applies to test files
+
+## Quick Reference Commands
+
+### Development
+```bash
+# Start all services
+pnpm run dev
+
+# Build everything
+pnpm build
+
+# Run tests
+pnpm test
+```
+
+### Database
+```bash
+# Initialize database
+sqlcmd -S "(localdb)\mssqllocaldb" -i "backend\Ikhtibar.Infrastructure\Data\InitializeDatabase.sql"
+
+# Seed with test data
+sqlcmd -S "(localdb)\mssqllocaldb" -i "backend\seed-app-db.sql"
+```
+
+### Test Credentials
+- **Admin**: admin@ikhtibar.com / password
+- **Teacher**: teacher1@ikhtibar.com / password
+- **Student**: student1@ikhtibar.com / password
+
+## Key Integration Points
+
+### Backend (.NET Core)
+- Use Clean Architecture with folder-per-feature structure
+- Follow BaseRepository<T> pattern for all repositories
+- Use Dapper ORM with parameterized queries
+- Implement JWT authentication with BCrypt password hashing
+- Use structured logging with scopes
+
+### Frontend (React + TypeScript)
+- Use folder-per-feature module structure
+- Implement components with React.memo for performance
+- Use Zustand for state management and React Query for server state
+- Support both RTL (Arabic) and LTR (English) layouts
+- Use Tailwind CSS with consistent class patterns
+
+## Rule Usage Examples
+
+### Automatic Context
+- Working with `.cs` files → Backend rules automatically apply
+- Working with `.tsx` files → Frontend rules automatically apply
+- Working with auth files → Security rules automatically apply
+
+### Manual Rule Invocation
+```
+@development-workflow    # Include development commands
+@testing-qa            # Include testing guidelines
+@authentication-security # Include security patterns
+```
+
+### Custom Modes (Specialized Workflows)
+For specialized development phases, use these custom modes:
+
+- **Feature Architect**: System design and technical planning
+- **Implementation Agent**: Production-ready code implementation  
+- **Test Engineer**: Comprehensive testing strategy
+- **Task Manager**: Task decomposition and project planning
+- **Code Reviewer**: Code quality assessment and security review
+- **Documentation Specialist**: Technical documentation and user guides
+- **DevOps Engineer**: Deployment and infrastructure setup
+- **PRP Specialist**: Project Requirements & Planning (6-phase methodology)
+- **Instruction Specialist**: Specialized instructions and development guidelines
+- **Prompt Specialist**: AI prompt engineering and interaction optimization
+- **PRP Executor**: Automated PRP execution and sequential implementation
+
+**To use custom modes:**
+1. Open Cursor Settings (`Ctrl+,`)
+2. Navigate to `Chat` → `Custom Modes`
+3. Import the desired `.json` file from `.cursor/custom-modes/`
+4. Select the mode from the mode picker dropdown
+
+## Success Criteria
+- Code follows established patterns from existing codebase
+- Includes comprehensive validation commands
+- Passes all syntax and style checks
+- Integrates seamlessly with existing architecture
+- Includes proper error handling and logging
+- Supports internationalization requirements
+- Maintains single responsibility principle
+
+## Migration Notes
+- The old `.cursorrules` format is deprecated
+- New rules in `.cursor/rules/` provide better context and automatic application
+- Rules are now version-controlled and can be shared with the team
+- Each rule has specific scoping and application patterns
+
+For detailed rule documentation, see `.cursor/rules/README.md`

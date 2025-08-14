@@ -1,0 +1,69 @@
+# Development Workflow
+
+## Runtime Validation
+```bash
+pnpm run dev
+# Backend: http://localhost:5000
+# Frontend: https://localhost:5173/
+# Health: http://localhost:5000/api/health/ping
+# Swagger: http://localhost:5000/swagger
+```
+
+## Build Commands
+```bash
+# Build everything
+pnpm build
+
+# Build backend only
+pnpm build:backend
+
+# Build frontend only
+pnpm build:frontend
+```
+
+## Testing Commands
+```bash
+# Run all tests
+pnpm test
+
+# Run backend tests
+cd backend && dotnet test
+
+# Run frontend tests
+cd frontend && pnpm test
+```
+
+## Database Operations
+```bash
+# Initialize database
+sqlcmd -S "(localdb)\mssqllocaldb" -i "backend\Ikhtibar.Infrastructure\Data\InitializeDatabase.sql"
+
+# Seed database
+sqlcmd -S "(localdb)\mssqllocaldb" -i "backend\seed-app-db.sql"
+```
+
+## File Structure Reference
+
+### Backend:
+```
+backend/
+├── Ikhtibar.API/Controllers/     # API endpoints
+├── Ikhtibar.Core/Entities/       # Domain entities
+├── Ikhtibar.Core/Repositories/   # Repository interfaces
+├── Ikhtibar.Core/Services/       # Service interfaces
+└── Ikhtibar.Infrastructure/      # Implementations
+```
+
+### Frontend:
+```
+frontend/src/
+├── modules/[feature]/            # Feature modules
+├── shared/components/            # Reusable components
+├── shared/services/              # API services
+├── shared/store/                 # Global state
+└── shared/types/                 # TypeScript types
+```
+description: Development workflow and validation commands
+globs: ["**/*"]
+alwaysApply: false
+---

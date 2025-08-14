@@ -1,0 +1,44 @@
+# Frontend Development Guidelines
+
+## When creating frontend code:
+1. Reference existing patterns from `frontend/src/modules/`
+2. Use TypeScript interfaces for all props and data
+3. Implement proper loading and error states
+4. Use translation keys (i18n) for all text
+5. Follow established component patterns with memoization
+6. Support accessibility requirements
+
+## Component Structure
+- Use React.memo for performance optimization
+- Include loading and error states
+- Support RTL/LTR layouts
+- Use TypeScript interfaces for all props
+
+## State Management
+- Use Zustand for global state
+- Use React Query for server state
+- Follow established store patterns
+
+## Styling
+- Use Tailwind CSS with consistent patterns
+- Support both Arabic (RTL) and English (LTR) layouts
+- Follow established design system
+
+## Anti-Patterns to Avoid
+- Don't create components without TypeScript typing
+- Don't forget loading and error states
+- Don't hardcode text strings
+- Don't skip established API client patterns
+- Don't ignore accessibility requirements
+
+## Validation Commands
+```bash
+cd frontend
+pnpm run type-check
+pnpm run lint
+pnpm run test
+```
+description: Frontend React/TypeScript development guidelines and patterns
+globs: ["**/*.ts", "**/*.tsx", "frontend/**/*"]
+alwaysApply: false
+---

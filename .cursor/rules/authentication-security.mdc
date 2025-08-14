@@ -1,0 +1,56 @@
+# Authentication & Security Guidelines
+
+## Backend Authentication
+- Use JWT Bearer tokens with refresh token rotation
+- Implement proper password hashing with BCrypt
+- Use structured logging for security events
+- Include audit logging for all authentication attempts
+
+## Password Security
+- Always use BCrypt for password hashing
+- Never store plain text passwords
+- Use `BCrypt.Net.BCrypt.Verify()` for password verification
+- Use `BCrypt.Net.BCrypt.HashPassword()` for password hashing
+
+## JWT Implementation
+- Implement refresh token rotation
+- Use secure token expiration times
+- Include proper claims in JWT payload
+- Implement token revocation
+
+## Security Logging
+- Log all authentication attempts (success/failure)
+- Include IP address and user agent in logs
+- Use structured logging with security scopes
+- Implement audit trail for sensitive operations
+
+## Frontend Security
+- Never store sensitive data in localStorage
+- Use secure HTTP-only cookies for tokens
+- Implement proper token refresh logic
+- Include loading states during authentication
+
+## Example Implementation
+```csharp
+// Password verification
+if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+{
+    _logger.LogWarning("Authentication failed: Invalid password for email: {Email}", email);
+    return null;
+}
+
+// Password hashing
+public async Task<string> HashPasswordAsync(string password)
+{
+    return await Task.FromResult(BCrypt.Net.BCrypt.HashPassword(password));
+}
+```
+
+## Test Credentials
+- **Admin**: admin@ikhtibar.com / password
+- **Teacher**: teacher1@ikhtibar.com / password  
+- **Student**: student1@ikhtibar.com / password
+description: Authentication and security patterns for the Ikhtibar system
+globs: ["**/auth/**/*", "**/AuthController.cs", "**/UserService.cs", "**/Login.tsx"]
+alwaysApply: false
+---

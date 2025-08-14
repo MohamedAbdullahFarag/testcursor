@@ -1,0 +1,40 @@
+# Backend Development Guidelines
+
+## When creating backend code:
+1. Reference existing patterns from `backend/Ikhtibar.Core/` and `backend/Ikhtibar.Infrastructure/`
+2. Use BaseEntity inheritance for all entities
+3. Implement repository interfaces before concrete classes
+4. Include comprehensive error handling and logging
+5. Use DTOs for data transfer between layers
+6. Follow established middleware patterns
+
+## Repository Pattern
+- Always inherit from `BaseRepository<T>`
+- Use Dapper with parameterized queries
+- Include proper logging with scopes
+- Follow async/await patterns
+
+## Service Layer
+- Implement business logic in services, not controllers
+- Use dependency injection for all dependencies
+- Include comprehensive validation
+- Use structured logging with scopes
+
+## Anti-Patterns to Avoid
+- Don't mix business logic in controllers
+- Don't use sync methods for I/O
+- Don't skip input validation
+- Don't ignore BaseRepository pattern
+- Don't create repositories without interfaces
+
+## Validation Commands
+```bash
+cd backend
+dotnet build --configuration Release
+dotnet format --verify-no-changes
+dotnet test
+```
+description: Backend .NET development guidelines and patterns
+globs: ["**/*.cs", "backend/**/*"]
+alwaysApply: false
+---

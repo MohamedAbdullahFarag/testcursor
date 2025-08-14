@@ -1,0 +1,73 @@
+# Testing & Quality Assurance Guidelines
+
+## Testing Strategy
+- Write tests for all business logic
+- Include unit tests for services and utilities
+- Implement integration tests for API endpoints
+- Use component testing for React components
+
+## Backend Testing (.NET)
+- Use xUnit or NUnit for testing framework
+- Mock dependencies using Moq or similar
+- Test repository methods with in-memory database
+- Include authentication and authorization tests
+
+## Frontend Testing (React)
+- Use Vitest for unit testing
+- Use React Testing Library for component testing
+- Mock API calls and external dependencies
+- Test user interactions and accessibility
+
+## Test Coverage Requirements
+- Minimum 80% code coverage for backend services
+- Test all public API endpoints
+- Include error handling scenarios
+- Test edge cases and boundary conditions
+
+## Test Examples
+
+### Backend Service Test
+```csharp
+[Fact]
+public async Task AuthenticateAsync_WithValidCredentials_ReturnsUser()
+{
+    // Arrange
+    var email = "admin@ikhtibar.com";
+    var password = "password";
+    
+    // Act
+    var result = await _userService.AuthenticateAsync(email, password);
+    
+    // Assert
+    Assert.NotNull(result);
+    Assert.Equal(email, result.Email);
+}
+```
+
+### Frontend Component Test
+```typescript
+it('should display loading state while authenticating', async () => {
+  render(<LoginComponent />);
+  
+  const emailInput = screen.getByLabelText(/email/i);
+  const passwordInput = screen.getByLabelText(/password/i);
+  const submitButton = screen.getByRole('button', { name: /login/i });
+  
+  fireEvent.change(emailInput, { target: { value: 'admin@ikhtibar.com' } });
+  fireEvent.change(passwordInput, { target: { value: 'password' } });
+  fireEvent.click(submitButton);
+  
+  expect(screen.getByText(/loading/i)).toBeInTheDocument();
+});
+```
+
+## Quality Gates
+- All tests must pass before merging
+- Code coverage requirements must be met
+- No linting errors or warnings
+- TypeScript compilation must succeed
+- Build must complete without errors
+description: Testing and quality assurance practices for the Ikhtibar system
+globs: ["**/__tests__/**/*", "**/*.test.ts", "**/*.test.tsx", "**/*Tests.cs"]
+alwaysApply: false
+---

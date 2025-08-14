@@ -210,9 +210,8 @@ public class UserService : IUserService
             return null;
         }
 
-        // For now, we'll implement basic password verification
-        // TODO: In a real application, you'd use proper password hashing (BCrypt, Argon2, etc.)
-        if (user.PasswordHash != password) // This should be properly hashed comparison
+        // Verify password using BCrypt
+        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
             _logger.LogWarning("Authentication failed: Invalid password for email: {Email}", email);
             return null;
@@ -240,9 +239,8 @@ public class UserService : IUserService
     {
         _logger.LogDebug("Hashing password");
 
-        // For now, return the password as-is
-        // In a real application, use BCrypt, Argon2, or another secure hashing algorithm
-        return await Task.FromResult(password);
+        // Use BCrypt to hash the password
+        return await Task.FromResult(BCrypt.Net.BCrypt.HashPassword(password));
     }
 
     public async Task<bool> UpdateLastLoginAsync(int userId)

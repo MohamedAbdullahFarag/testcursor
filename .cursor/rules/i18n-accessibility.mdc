@@ -1,0 +1,61 @@
+# Internationalization & Accessibility Guidelines
+
+## Multi-Language Support
+- Support both Arabic (RTL) and English (LTR) layouts
+- Use translation keys for all user-facing text
+- Implement proper RTL/LTR layout switching
+- Support locale-specific formatting (dates, numbers)
+
+## Translation Implementation
+- Use i18next for internationalization
+- Store translations in `locales/` directories
+- Use descriptive translation keys
+- Support pluralization and interpolation
+
+## RTL/LTR Layout Support
+- Use CSS logical properties where possible
+- Implement proper text direction handling
+- Support RTL-specific UI adjustments
+- Test layouts in both directions
+
+## Accessibility Requirements
+- Include proper ARIA labels and roles
+- Support keyboard navigation
+- Implement screen reader compatibility
+- Use semantic HTML elements
+- Include proper focus management
+
+## Component Examples
+```typescript
+// Translation usage
+const { t } = useTranslation('exam-management');
+const [isLoading, setIsLoading] = useState(false);
+
+// RTL support
+<div className={`text-${isRTL ? 'right' : 'left'}`}>
+  {t('exam.title')}
+</div>
+
+// Loading states
+{isLoading ? (
+  <div role="status" aria-live="polite">
+    {t('common.loading')}
+  </div>
+) : (
+  <ExamContent exam={exam} />
+)}
+```
+
+## File Structure
+```
+frontend/src/
+├── shared/locales/
+│   ├── en/          # English translations
+│   └── ar/          # Arabic translations
+├── shared/i18n.ts   # i18n configuration
+└── modules/[feature]/locales/  # Feature-specific translations
+```
+description: Internationalization and accessibility requirements for the Ikhtibar system
+globs: ["**/*.tsx", "**/*.ts", "**/locales/**/*", "**/i18n.ts"]
+alwaysApply: false
+---

@@ -104,7 +104,7 @@ const Login = () => {
                         <FormField
                             control={form.control}
                             name="password"
-                            defaultValue={'admin123'}
+                            defaultValue={'password'}
                             render={({ field }) => (
                                 <FormItem className="w-full">
                                     <FormLabel>Password</FormLabel>
