@@ -1,0 +1,283 @@
+{
+    "Id" : "4q6pntq4hs34js2bz98r6xhnds",
+    "NameAr" : "الأسئلة الشائعة",
+    "NameEn" : "FAQs",
+    "DescriptionAr" : "<p>This section has been prepared to provide comprehensive answers to frequently asked questions you may have regarding our services</p>",
+    "DescriptionEn" : "<p>تم إعداد هذا القسم لتوفير إجابات شافية على الأسئلة الشائعة التي قد تكون لديك بخصوص خدماتنا</p>",
+    "Version" : 1,
+    "SubSectionContents" : [ {
+      "Id" : "4z2y52fxabjcerx4vz4dv17em7",
+      "NameAr" : "الحساب وتسجيل الدخول والخروج",
+      "NameEn" : "Account login and out",
+      "ContentAr" : "",
+      "ContentEn" : "",
+      "IsMobile" : false,
+      "SubSectionContents" : [ {
+        "Id" : "4hchgmn59pa3xw7t6cj415p1nz",
+        "NameAr" : "كيف يمكنني تسجيل الدخول إلى حسابي على اختبار؟",
+        "NameEn" : "How to log in to my account on the portal?",
+        "ContentAr" : "<p>افتح صفحة تسجيل الدخول واكتب بيانات هويتك ثم اضغط على زر تسجيل الدخول، أو يمكنك تسجيل الدخول بسهولة عبر تطبيق نفاذ.</p>",
+        "ContentEn" : "<p>Go to the login page, enter your identification number, and click login. Or log in using Nafath app.<br></p>",
+        "IsMobile" : false
+      }, {
+        "Id" : "4ywxmwna1cqq23zf05deww03m2",
+        "NameAr" : "كيف يمكنني تسجيل الخروج من حسابي على اختبار؟",
+        "NameEn" : "How to log out my account on the portal?",
+        "ContentAr" : "<p>افتح القائمة المنسدلة الموجودة بجانب اسم المستخدم في الجزء العلوي يسار الشاشة وحدد تسجيل الخروج.</p>",
+        "ContentEn" : "<p>Select log out from the dropdown menu next to username in the upper right corner of the screen.<br></p>",
+        "IsMobile" : false
+      }, {
+        "Id" : "4cxj4w4yw6eg4r15cftph4mkns",
+        "NameAr" : "هل يجب تسجيل الدخول لطلب خدمات اختبار؟",
+        "NameEn" : "Do users need to log in the portal to request services?",
+        "ContentAr" : "<p>نعم، ينبغي تسجيل الدخول إلى اختبار لطلب أغلب الخدمات بسبب وجود بيانات حساسة، ولكن تتوفر بعض الخدمات التي يمكن طلبها دون تسجيل الدخول.<br></p>",
+        "ContentEn" : "<p>Yes, users need to log in the portal to request most services due to the sensitive nature of information involved. However, they can request some services without logging in.<br></p>",
+        "IsMobile" : false
+      } ]
+    }, {
+      "Id" : "40w86fj77brs75hxe1qmyb37w3",
+      "NameAr" : "استخدام اختبار",
+      "NameEn" : "Unified portal usage",
+      "ContentAr" : "",
+      "ContentEn" : "",
+      "DisplayOrder" : null,
+      "IsMobile" : false,
+      "SubSectionContents" : [ {
+        "Id" : "48b8fxwfssdaez3kcf5cw8p8w5",
+        "NameAr" : "كيف يمكنني استخدام اختبار؟",
+        "NameEn" : "How to use the unified portal?",
+        "ContentAr" : "<p>استخدم شريط التنقل العلوي أو السفلي للتنقل بين أقسام اختبار وصفحاتها، واستخدم شريط البحث الموجود في الجزء العلوي بالصفحة للبحث عن الخدمات، أو افتح دليل المستخدم للتعرف على أقسام اختبار وطريقة التنقل فيها.<br></p>",
+        "ContentEn" : "<p>Use the top or bottom navigation bar to move between different sections and pages of the portal. You can also use the search bar at the top of the page to find specific services. Or open the User manual to learn more about the different sections of the portal and how to navigate.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      } ]
+    }, {
+      "Id" : "4z58q0gjyj2rx5b3v1rn3yag5q",
+      "NameAr" : "خدمات اختبار",
+      "NameEn" : "Unified portal services",
+      "ContentAr" : "",
+      "ContentEn" : "",
+      "IsMobile" : false,
+      "SubSectionContents" : [ {
+        "Id" : "4bbdj1g4pgj6310nhpjgm429wx",
+        "NameAr" : "ما الخدمات التي توفرها اختبار؟",
+        "NameEn" : "What services does the unified portal provide?",
+        "ContentAr" : "<p>توفر اختبار كل خدمات وزارة التعليم بالمملكة السعودية لكل من ولي الأمر والطالب وموظفي الوزارة، وتنقسم هذه الخدمات إلى خدمات تعليمية وخدمات إدارية.</p>",
+        "ContentEn" : "<p>The unified portal provides all the services of the Ministry of Education in Saudi Arabia for guardians, students, and ministry employees. These services are divided into educational and administrative services.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "4gza6n6mg3swcsj38m4k73npxb",
+        "NameAr" : "كيف يمكنني طلب خدمة على اختبار؟",
+        "NameEn" : "How to request a service on the unified portal?",
+        "ContentAr" : "<p>افتح دليل الخدمات للتعرف على الخدمات المتوفرة على اختبار وكيفية طلب كل خدمة والوقت المقدر للمعالجة.<br></p>",
+        "ContentEn" : "<p>Open the service guide to learn about the services available on the unified portal, how to request each service, and the estimated processing time.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      } ]
+    }, {
+      "Id" : "4wh5r1t28g659yhr3pyt7wks4k",
+      "NameAr" : "الخدمات التعليمية",
+      "NameEn" : "Educational services",
+      "ContentAr" : "",
+      "ContentEn" : "",
+      "DisplayOrder" : null,
+      "IsMobile" : false,
+      "SubSectionContents" : [ {
+        "Id" : "4c043ksg6jbs15jm2npw41t6wz",
+        "NameAr" : "كيف يمكنني الوصول إلى الخدمات التعليمية؟",
+        "NameEn" : "How to access educational services?",
+        "ContentAr" : "<p>سجِّل الدخول وانتقل إلى قسم الخدمات التعليمية الموجود في رأس الصفحة الرئيسية وحدد الخدمة المطلوبة واتبع الخطوات الموضحة لطلب الخدمة.<br></p>",
+        "ContentEn" : "<p>Login to the portal and go to the Educational services tab at the top of the homepage. Select your service and follow the steps provided to request.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "4htmsffbj5mycsmpk40h93tqmv",
+        "NameAr" : "كيف يمكنني تسجيل طفل بمدرسة؟",
+        "NameEn" : "How to enroll a child at a school?",
+        "ContentAr" : "<p>سجِّل الدخول بحساب ولي الأمر وحدد خدمة تسجيل طفل من قسم الخدمات التعليمية بالصفحة الرئيسية، أو حدد بطاقة الطفل في لوحة معلومات ولي الأمر واملأ البيانات المطلوبة للتسجيل.<br></p>",
+        "ContentEn" : "<p>Login to the portal with the parent account and select Child register service from the Educational services tab at the top of the homepage. Or select the child's profile from the parent dashboard and fill in the application.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "4m78169a5w68gz4thhfyf3zk53",
+        "NameAr" : "كيف يمكنني متابعة طلب تسجيل طفلي؟",
+        "NameEn" : "How to follow up my child's registration request?",
+        "ContentAr" : "<p>سجِّل الدخول وانتقل إلى قسم طلباتي في لوحة معلومات ولي الأمر للاطلاع على بطاقة الطفل ومتابعة حالة الطلب.<br></p>",
+        "ContentEn" : "<p>Login and go to the My requests section in the parent's dashboard to view the child's card and follow up status.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "4zjhedjptfayfsqve3rspv3tcd",
+        "NameAr" : "كيف يمكنني ربط طالب بلوحة معلوماتي؟",
+        "NameEn" : "How to link a student to my dashboard?",
+        "ContentAr" : "<p>سجِّل الدخول إلى لوحة معلوماتك وحدد ربط تابع واتبع الخطوات المحددة لربط الطالب.<br></p>",
+        "ContentEn" : "<p>Login to your dashboard and select Link dependant. Follow the specified steps to link the student.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "4v707tpbj97znskvtxx4m11kx4",
+        "NameAr" : "هل يمكنني طلب شهادة دراسية؟",
+        "NameEn" : "How to request a certificate?",
+        "ContentAr" : "<p>نعم، سجِّل الدخول وحدد خدمة الشهادات في قسم الخدمات التعليمية بالصفحة الرئيسية، أو في الشريط الجانبي بلوحة معلومات الطالب لطلب شهادة رقمية أو ورقية، وستصلك على البريد الإلكتروني أو أقرب منطقة تعليمية.<br></p>",
+        "ContentEn" : "<p>Login and select Certificates from the Educational services tab at the top of the homepage, or in the sidebar of the student's dashboard to request a digital or paper certificate. It will be sent to your email or to the nearest educational zone.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "45mf3p0svysvr2yxt5tjw0nbn2",
+        "NameAr" : "هل يمكنني التحقق من بيانات شهادتي الدراسية؟",
+        "NameEn" : "How to verify my certificate?",
+        "ContentAr" : "<p>نعم، حدد خدمة التحقق من شهادة في قسم الخدمات التعليمية بالصفحة الرئيسية واتبع الخطوات الموضحة لطلب الخدمة.<br></p>",
+        "ContentEn" : "<p>Select Certificate verification from the Educational services tab at the top of the homepage and follow the provided steps to request the service.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "4x0x8aj16jzjaw4fbg8kkpnvmw",
+        "NameAr" : "هل يمكنني الاطلاع على الجدول الدراسي للطالب؟",
+        "NameEn" : "How to view a student schedule?",
+        "ContentAr" : "<p>نعم، سجِّل الدخول وحدد الجدول الدراسي في قسم الخدمات التعليمية بالصفحة الرئيسية، أو في لوحة معلومات الطالب، أو من بطاقة الطالب في لوحة معلومات ولي الأمر للاطلاع على تفاصيل اليوم الدراسي.<br></p>",
+        "ContentEn" : "<p>Log in and select the Schedule from the Educational services tab at the top of the homepage, or in the student's dashboard. Or, from the student card in the parent dashboard.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      } ]
+    }, {
+      "Id" : "4ntmrgh97sf28ryjrb6yva2fxk",
+      "NameAr" : "الخدمات الإدارية",
+      "NameEn" : "Administrative Services",
+      "ContentAr" : "",
+      "ContentEn" : "",
+      "DisplayOrder" : null,
+      "IsMobile" : false,
+      "SubSectionContents" : [ {
+        "Id" : "4e043dy809ge76xmx19cj1z9dk",
+        "NameAr" : "كيف يمكنني الوصول إلى الخدمات الإدارية؟",
+        "NameEn" : "How to access administrative services?",
+        "ContentAr" : "<p>سجِّل الدخول وانتقل إلى قسم الخدمات الإدارية الموجود في رأس الصفحة الرئيسية وحدد الخدمة المطلوبة واتبع الخطوات الموضحة لطلب الخدمة.<br></p>",
+        "ContentEn" : "<p>Login and go to the Administrative services tab at the top of the homepage. Choose the service you need and follow the instructions.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "403fcmhh2hdnks5w49qqn8fqme",
+        "NameAr" : "هل يمكنني تقديم طلب إجازة على اختبار؟",
+        "NameEn" : "How to request a leave on the portal?",
+        "ContentAr" : "<p>نعم، سجِّل الدخول بحساب الموظف وحدد خدمة طلب إجازة في قسم الخدمات الإدارية الموجود في رأس الصفحة الرئيسية، أو من لوحة معلومات الموظف.<br></p>",
+        "ContentEn" : "<p>Login with your employee account and select the Leave request from the Administrative services tab at the top of the homepage, or from your employee dashboard.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "4cptghzv7zx9j6gs7f6rdsqqxa",
+        "NameAr" : "هل يمكنني تقديم طلب إلغاء إجازة على اختبار؟",
+        "NameEn" : "How to cancel a leave on the portal?",
+        "ContentAr" : "<p>نعم، سجِّل الدخول بحساب الموظف وحدد خدمة إلغاء إجازة في قسم الخدمات الإدارية الموجود في رأس الصفحة الرئيسية، أو من لوحة معلومات الموظف.<br></p>",
+        "ContentEn" : "<p>Login with your employee account and select the Leave cancelation from the Administrative services tab at the top of the homepage, or from your employee dashboard.&nbsp;<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "47atcy60dca3brzp89xk80ftn4",
+        "NameAr" : "هل يمكنني تقديم طلب قطع إجازة على اختبار؟",
+        "NameEn" : "How to interrupt a leave on the portal? ",
+        "ContentAr" : "<p>نعم، سجِّل الدخول بحساب الموظف وحدد خدمة قطع إجازة في قسم الخدمات الإدارية الموجود في رأس الصفحة الرئيسية، أو من لوحة معلومات الموظف.<br></p>",
+        "ContentEn" : "<p>Login with your employee account and select the Leave interruption from the Administrative services tab at the top of the homepage, or from your employee dashboard.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "4xbfamtk6ggf468zgmtc25tf5r",
+        "NameAr" : "كيف يمكنني متابعة طلب الإجازة؟",
+        "NameEn" : "How to follow up my leave request on the portal?",
+        "ContentAr" : "<p>سجِّل الدخول وانتقل إلى قسم طلباتي في لوحة معلومات الموظف أو في الشريط الجانبي لمتابعة حالة الطلب.<br></p>",
+        "ContentEn" : "<p>Login and go to My requests section in your employee dashboard or sidebar to follow up your request status.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "42vtzx2pp7cnp7e8hbvr14ceds",
+        "NameAr" : "هل يمكنني الاطلاع على إجازاتي السابقة؟",
+        "NameEn" : "How to view my previous leaves?",
+        "ContentAr" : "<p>نعم، سجِّل الدخول وانتقل إلى قسم إجازاتي من الشريط الجانبي في لوحة معلومات الموظف للاطلاع على تفاصيل إجازاتك السابقة.<br></p>",
+        "ContentEn" : "<p>Login and go to My Leaves section in the employee dashboard sidebar to view your previous leaves details.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      } ]
+    }, {
+      "Id" : "457mhnttnydk6yvxy0jdnc15cr",
+      "NameAr" : "إعدادات الحساب",
+      "NameEn" : "Account settings",
+      "ContentAr" : "",
+      "ContentEn" : "",
+      "DisplayOrder" : null,
+      "IsMobile" : false,
+      "SubSectionContents" : [ {
+        "Id" : "4p59m914jab49t2wzt1zca9ewm",
+        "NameAr" : "كيف يمكنني تبديل الدور الافتراضي للحساب؟",
+        "NameEn" : "How to switch account roles?",
+        "ContentAr" : "<p>افتح القائمة المنسدلة الموجودة بجانب اسم المستخدم في الجزء العلوي يسار الشاشة لتحديد الدور المطلوب أو من قائمة الإعدادات في الشريط الجانبي بلوحة المعلومات.<br></p>",
+        "ContentEn" : "<p>Open the dropdown menu next to the username in the top right corner of the screen to select the default role. Or go to the Settings menu in the sidebar of your dashboard.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "48yrxeg77yke3vskp7zk5ghvd6",
+        "NameAr" : "كيف يمكنني تغيير تقويم الحساب؟",
+        "NameEn" : "How to change the account calendar?",
+        "ContentAr" : "<p>افتح قائمة الإعدادات في الشريط الجانبي بلوحة المعلومات لتحديد التقويم الافتراضي للحساب.<br></p>",
+        "ContentEn" : "<p>Open the Settings menu in the sidebar of your dashboard to select the default account calendar.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "481qpdcct47df578xcghc60sc4",
+        "NameAr" : "كيف يمكنني تغيير لغة الحساب؟",
+        "NameEn" : "How to change account language?",
+        "ContentAr" : "<p>افتح قائمة الإعدادات في الشريط الجانبي بلوحة المعلومات لتغيير اللغة الافتراضية.<br></p>",
+        "ContentEn" : "<p>Open the Settings menu in the sidebar of your dashboard to change the default language.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      } ]
+    }, {
+      "Id" : "4mhtss3xdk00618kvtyvxz4kch",
+      "NameAr" : "مركز المساعدة والدعم",
+      "NameEn" : "Support & help center",
+      "ContentAr" : "",
+      "ContentEn" : "",
+      "IsMobile" : false,
+      "SubSectionContents" : [ {
+        "Id" : "4sr51vqbffxvq6rytysrsd4h4x",
+        "NameAr" : "كيف يمكنني تقديم تذكرة؟",
+        "NameEn" : "How to raise a ticket?",
+        "ContentAr" : "<p>حدد قسم الدعم في الجزء العلوي بالصفحة الرئيسية واملأ البيانات المطلوبة في نموذج تذكرة جديدة لتقديمه.</p>",
+        "ContentEn" : "<p>Go to the Support section at the top of the homepage and fill in the form details to create a new ticket.<br></p>",
+        "IsMobile" : false
+      }, {
+        "Id" : "4jq9t51mvc5j45mnjbqd0em5ne",
+        "NameAr" : "كيف يمكنني الاستعلام عن تذكرة؟",
+        "NameEn" : "How to inquire about a ticket?",
+        "ContentAr" : "<p>حدد قسم الدعم في الجزء العلوي بالصفحة الرئيسية واملأ البيانات المطلوبة في نموذج استعلام عن تذكرة للاطلاع على تفاصيل تذكرتك.<br></p>",
+        "ContentEn" : "<p>Go to the Support section at the top of the homepage. Then select Ticket inquiry and fill in the form to access your ticket details.<br></p>",
+        "IsMobile" : false
+      } ]
+    }, {
+      "Id" : "45t1hhft7kpgqwswpkcn0rfcd0",
+      "NameAr" : "تطبيقات الهاتف",
+      "NameEn" : "Mobile apps",
+      "ContentAr" : "",
+      "ContentEn" : "",
+      "DisplayOrder" : null,
+      "IsMobile" : false,
+      "SubSectionContents" : [ {
+        "Id" : "494jb6v4v37qptz6svh5q4sfde",
+        "NameAr" : "هل يمكنني استخدام اختبار عبر الهاتف الجوال؟",
+        "NameEn" : "Is there a mobile app for the unified portal?",
+        "ContentAr" : "<p>نعم، يمكن تحميل تطبيقات اختبار من المتجر الإلكتروني على الهاتف الجوال لنظامي التشغيل IOS وAndroid.<br></p>",
+        "ContentEn" : "<p>Yes. Download the mobile app from the App Store for IOS or from Google Play for Android.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      }, {
+        "Id" : "4yrb46y2g4pk15br83kw1w43n7",
+        "NameAr" : "هل توجد اختلافات في تجربة المستخدم بين الموقع الإلكتروني والهاتف الجوال؟",
+        "NameEn" : "Are there differences in the user experience between the website and the mobile phone?",
+        "ContentAr" : "<p>لا، تجربة المستخدم على الموقع الإلكتروني هي نفسها على الهاتف الجوال.<br></p>",
+        "ContentEn" : "<p>No, the user experience on the website is the same as on the mobile phone.<br></p>",
+        "DisplayOrder" : null,
+        "IsMobile" : false
+      } ]
+    } ],
+    "Alias" : "faqs",
+    "ModifiedUtc" : "2025-03-17T09:39:52.1569703Z"
+  }

@@ -1,0 +1,242 @@
+using AutoMapper;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Models;
+using Microsoft.Extensions.Logging;
+using CoreThumbnailSize = Ikhtibar.Core.Entities.ThumbnailSize;
+
+namespace Ikhtibar.Core.Services;
+
+public interface IMediaThumbnailService
+{
+    Task<IEnumerable<MediaThumbnailDto>> GetThumbnailsByMediaFileIdAsync(Guid mediaFileId);
+    Task<MediaThumbnailDto?> GetThumbnailByIdAsync(Guid id);
+    Task<MediaThumbnailDto> CreateThumbnailAsync(CreateMediaThumbnailDto createDto);
+    Task<MediaThumbnailDto> UpdateThumbnailAsync(Guid id, CreateMediaThumbnailDto updateDto);
+    Task<bool> DeleteThumbnailAsync(Guid id);
+    Task<bool> DeleteThumbnailsByMediaFileIdAsync(Guid mediaFileId);
+    Task<MediaThumbnailDto?> GetThumbnailBySizeAsync(Guid mediaFileId, Ikhtibar.Shared.Enums.ThumbnailSize size);
+}
+
+public class MediaThumbnailService : IMediaThumbnailService
+{
+    private readonly IMediaThumbnailRepository _repository;
+    private readonly IMapper _mapper;
+    private readonly ILogger<MediaThumbnailService> _logger;
+
+    public MediaThumbnailService(
+        IMediaThumbnailRepository repository,
+        IMapper mapper,
+        ILogger<MediaThumbnailService> logger)
+    {
+        _repository = repository;
+        _mapper = mapper;
+        _logger = logger;
+    }
+
+    public async Task<IEnumerable<MediaThumbnailDto>> GetThumbnailsByMediaFileIdAsync(Guid mediaFileId)
+    {
+        using var scope = _logger.BeginScope("Getting thumbnails for media file: {MediaFileId}", mediaFileId);
+        
+        try
+        {
+            var thumbnails = await _repository.GetByMediaFileAsync(mediaFileId);
+            var result = _mapper.Map<IEnumerable<MediaThumbnailDto>>(thumbnails);
+
+            _logger.LogInformation("Found {Count} thumbnails for media file: {MediaFileId}", 
+                result.Count(), mediaFileId);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting thumbnails for media file: {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+
+    public async Task<MediaThumbnailDto?> GetThumbnailByIdAsync(Guid id)
+    {
+        using var scope = _logger.BeginScope("Getting thumbnail by ID: {ThumbnailId}", id);
+        
+        try
+        {
+            var thumbnail = await _repository.GetByIdAsync(id);
+            
+            if (thumbnail == null)
+            {
+                _logger.LogWarning("Thumbnail not found with ID: {ThumbnailId}", id);
+                return null;
+            }
+
+            var result = _mapper.Map<MediaThumbnailDto>(thumbnail);
+            _logger.LogInformation("Successfully retrieved thumbnail: {ThumbnailId}", id);
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting thumbnail by ID: {ThumbnailId}", id);
+            throw;
+        }
+    }
+
+    public async Task<MediaThumbnailDto> CreateThumbnailAsync(CreateMediaThumbnailDto createDto)
+    {
+        using var scope = _logger.BeginScope("Creating thumbnail for media file: {MediaFileId}, size: {Size}", 
+            createDto.MediaFileId, createDto.Size);
+        
+        try
+        {
+            // Check if thumbnail with same size already exists for this media file
+            var existingThumbnail = await GetThumbnailBySizeAsync(createDto.MediaFileId, createDto.Size);
+            if (existingThumbnail != null)
+            {
+                throw new InvalidOperationException($"Thumbnail with size '{createDto.Size}' already exists for media file {createDto.MediaFileId}");
+            }
+
+            var thumbnail = _mapper.Map<Ikhtibar.Core.Entities.MediaThumbnail>(createDto);
+            thumbnail.Id = Guid.NewGuid();
+            thumbnail.CreatedAt = DateTime.UtcNow;
+
+            var createdThumbnail = await _repository.AddAsync(thumbnail);
+            var result = _mapper.Map<MediaThumbnailDto>(createdThumbnail);
+
+            _logger.LogInformation("Successfully created thumbnail: {ThumbnailId} for media file: {MediaFileId}", 
+                createdThumbnail.Id, createDto.MediaFileId);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while creating thumbnail for media file: {MediaFileId}", 
+                createDto.MediaFileId);
+            throw;
+        }
+    }
+
+    public async Task<MediaThumbnailDto> UpdateThumbnailAsync(Guid id, CreateMediaThumbnailDto updateDto)
+    {
+        using var scope = _logger.BeginScope("Updating thumbnail: {ThumbnailId}", id);
+        
+        try
+        {
+            var existingThumbnail = await _repository.GetByIdAsync(id);
+            if (existingThumbnail == null)
+            {
+                throw new InvalidOperationException($"Thumbnail with ID {id} not found");
+            }
+
+            // Update fields
+            existingThumbnail.Size = (CoreThumbnailSize)updateDto.Size;
+            existingThumbnail.Width = updateDto.Width;
+            existingThumbnail.Height = updateDto.Height;
+            existingThumbnail.StoragePath = updateDto.StoragePath;
+            existingThumbnail.FileSizeBytes = updateDto.FileSizeBytes;
+            existingThumbnail.ContentType = updateDto.ContentType;
+            existingThumbnail.ModifiedAt = DateTime.UtcNow;
+
+            var updatedThumbnail = await _repository.UpdateAsync(existingThumbnail);
+            var result = _mapper.Map<MediaThumbnailDto>(updatedThumbnail);
+
+            _logger.LogInformation("Successfully updated thumbnail: {ThumbnailId}", updatedThumbnail.Id);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while updating thumbnail: {ThumbnailId}", id);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteThumbnailAsync(Guid id)
+    {
+        using var scope = _logger.BeginScope("Deleting thumbnail: {ThumbnailId}", id);
+        
+        try
+        {
+            var thumbnail = await _repository.GetByIdAsync(id);
+            if (thumbnail == null)
+            {
+                _logger.LogWarning("Thumbnail not found for deletion: {ThumbnailId}", id);
+                return false;
+            }
+
+            var result = await _repository.DeleteAsync(id);
+            
+            if (result)
+            {
+                _logger.LogInformation("Successfully deleted thumbnail: {ThumbnailId}", id);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to delete thumbnail: {ThumbnailId}", id);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting thumbnail: {ThumbnailId}", id);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteThumbnailsByMediaFileIdAsync(Guid mediaFileId)
+    {
+        using var scope = _logger.BeginScope("Deleting all thumbnails for media file: {MediaFileId}", mediaFileId);
+        
+        try
+        {
+            // Get all thumbnails for the media file
+            var thumbnails = await _repository.GetByMediaFileAsync(mediaFileId);
+            
+            // Delete each thumbnail
+            foreach (var thumbnail in thumbnails)
+            {
+                await _repository.DeleteAsync(thumbnail.Id);
+            }
+            
+            var deletedCount = thumbnails.Count();
+            _logger.LogInformation("Deleted {Count} thumbnails for media file: {MediaFileId}", 
+                deletedCount, mediaFileId);
+
+            return deletedCount > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting thumbnails for media file: {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+
+    public async Task<MediaThumbnailDto?> GetThumbnailBySizeAsync(Guid mediaFileId, Ikhtibar.Shared.Enums.ThumbnailSize size)
+    {
+        using var scope = _logger.BeginScope("Getting thumbnail by size: {Size} for media file: {MediaFileId}", 
+            size, mediaFileId);
+        
+        try
+        {
+            var thumbnail = await _repository.GetByMediaFileAndSizeAsync(mediaFileId, (CoreThumbnailSize)size);
+            
+            if (thumbnail == null)
+            {
+                _logger.LogDebug("No thumbnail found with size: {Size} for media file: {MediaFileId}", size, mediaFileId);
+                return null;
+            }
+
+            var result = _mapper.Map<MediaThumbnailDto>(thumbnail);
+            _logger.LogInformation("Successfully retrieved thumbnail: {Size} for media file: {MediaFileId}", 
+                size, mediaFileId);
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting thumbnail by size: {Size} for media file: {MediaFileId}", 
+                size, mediaFileId);
+            throw;
+        }
+    }
+}

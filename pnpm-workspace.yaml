@@ -1,0 +1,3 @@
+packages:
+  - 'frontend'
+  # Backend is managed by .NET, but we include it in workspace for coordination

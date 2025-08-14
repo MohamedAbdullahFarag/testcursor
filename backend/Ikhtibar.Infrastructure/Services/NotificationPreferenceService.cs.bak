@@ -1,0 +1,474 @@
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Entities;
+using Ikhtibar.Shared.Models;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Core.Services.Interfaces;
+using Microsoft.Extensions.Logging;
+using Ikhtibar.Shared.Enums;
+
+namespace Ikhtibar.Infrastructure.Services;
+
+/// <summary>
+/// Notification preference service implementation for user preference management
+/// Handles user notification delivery preferences and quiet hours
+/// Following SRP: ONLY preference management operations
+/// </summary>
+public class NotificationPreferenceService : INotificationPreferenceService
+{
+    private readonly INotificationPreferenceRepository _preferenceRepository;
+    private readonly ILogger<NotificationPreferenceService> _logger;
+
+    public NotificationPreferenceService(
+        INotificationPreferenceRepository preferenceRepository,
+        ILogger<NotificationPreferenceService> logger)
+    {
+        _preferenceRepository = preferenceRepository;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Gets all preferences for a user
+    /// </summary>
+    public async Task<List<NotificationPreferenceDto>> GetUserPreferencesAsync(int userId)
+    {
+        using var scope = _logger.BeginScope("Getting preferences for user {UserId}", userId);
+        
+        var preferences = await _preferenceRepository.GetUserPreferencesAsync(userId);
+        return preferences.Select(MapToDto).ToList();
+    }
+
+    /// <summary>
+    /// Gets preference for specific user and notification type
+    /// </summary>
+    public async Task<NotificationPreferenceDto?> GetUserPreferenceAsync(int userId, NotificationType notificationType)
+    {
+        var preference = await _preferenceRepository.GetUserPreferenceAsync(userId, notificationType);
+        return preference != null ? MapToDto(preference) : null;
+    }
+
+    /// <summary>
+    /// Updates user preference for a notification type
+    /// </summary>
+    public async Task<NotificationPreferenceDto> UpdateUserPreferenceAsync(int userId, UpdateNotificationPreferenceDto dto)
+    {
+        using var scope = _logger.BeginScope("Updating preference for user {UserId}, notification type {NotificationType}", 
+            userId, dto.NotificationType);
+        
+        var preference = await _preferenceRepository.GetUserPreferenceAsync(userId, dto.NotificationType);
+        if (preference == null)
+        {
+            // Create new preference if it doesn't exist
+            preference = new NotificationPreference
+            {
+                UserId = userId,
+                NotificationType = dto.NotificationType,
+                CreatedAt = DateTime.UtcNow
+            };
+        }
+
+        // Update channel preferences
+        if (dto.EmailEnabled.HasValue)
+        {
+            preference.EmailEnabled = dto.EmailEnabled.Value;
+        }
+        if (dto.SmsEnabled.HasValue)
+        {
+            preference.SmsEnabled = dto.SmsEnabled.Value;
+        }
+        if (dto.PushEnabled.HasValue)
+        {
+            preference.PushEnabled = dto.PushEnabled.Value;
+        }
+        if (dto.InAppEnabled.HasValue)
+        {
+            preference.InAppEnabled = dto.InAppEnabled.Value;
+        }
+
+        preference.ModifiedAt = DateTime.UtcNow;
+
+        if (preference.Id == default)
+        {
+            // New preference
+            var result = await _preferenceRepository.AddAsync(preference);
+            _logger.LogInformation("Created new preference for user {UserId}, notification type {NotificationType}", 
+                userId, dto.NotificationType);
+            return MapToDto(result);
+        }
+        else
+        {
+            // Update existing preference
+            var result = await _preferenceRepository.UpdateAsync(preference);
+            _logger.LogInformation("Updated preference for user {UserId}, notification type {NotificationType}", 
+                userId, dto.NotificationType);
+            return MapToDto(result);
+        }
+    }
+
+    /// <summary>
+    /// Updates multiple preferences for a user
+    /// </summary>
+    public async Task<int> UpdateUserPreferencesAsync(int userId, List<UpdateNotificationPreferenceDto> preferences)
+    {
+        using var scope = _logger.BeginScope("Updating multiple preferences for user {UserId}", userId);
+        
+        int updatedCount = 0;
+        foreach (var dto in preferences)
+        {
+            await UpdateUserPreferenceAsync(userId, dto);
+            updatedCount++;
+        }
+
+        _logger.LogInformation("Updated {Count} preferences for user {UserId}", updatedCount, userId);
+        return updatedCount;
+    }
+
+    /// <summary>
+    /// Creates default preferences for a new user
+    /// </summary>
+    public async Task<List<NotificationPreferenceDto>> CreateDefaultPreferencesAsync(int userId)
+    {
+        using var scope = _logger.BeginScope("Creating default preferences for user {UserId}", userId);
+        
+        var defaultPreferences = GetDefaultPreferences(userId);
+        var createdPreferences = new List<NotificationPreferenceDto>();
+
+        foreach (var preference in defaultPreferences)
+        {
+            var existing = await _preferenceRepository.GetUserPreferenceAsync(userId, preference.NotificationType);
+            if (existing != null)
+            {
+                _logger.LogInformation("Preference already exists for user {UserId}, notification type {NotificationType}", 
+                    userId, preference.NotificationType);
+                createdPreferences.Add(MapToDto(existing));
+                continue;
+            }
+
+            var result = await _preferenceRepository.AddAsync(preference);
+            createdPreferences.Add(MapToDto(result));
+        }
+
+        _logger.LogInformation("Created {Count} default preferences for user {UserId}", createdPreferences.Count, userId);
+        return createdPreferences;
+    }
+
+    /// <summary>
+    /// Resets user preferences to system defaults
+    /// </summary>
+    public async Task<int> ResetToDefaultsAsync(int userId)
+    {
+        using var scope = _logger.BeginScope("Resetting preferences to defaults for user {UserId}", userId);
+        
+        // Delete existing preferences manually (method doesn't exist in repository)
+        var existingPreferences = await _preferenceRepository.GetUserPreferencesAsync(userId);
+        int deletedCount = 0;
+        foreach (var preference in existingPreferences)
+        {
+            await _preferenceRepository.DeleteAsync(preference.Id);
+            deletedCount++;
+        }
+        
+        // Create default preferences
+        var defaultPreferences = GetDefaultPreferences(userId);
+        int count = 0;
+        
+        foreach (var preference in defaultPreferences)
+        {
+            await _preferenceRepository.AddAsync(preference);
+            count++;
+        }
+
+        _logger.LogInformation("Reset {Count} preferences to defaults for user {UserId} (deleted {DeletedCount})", count, userId, deletedCount);
+        return count;
+    }
+
+    /// <summary>
+    /// Updates quiet hours for a user
+    /// </summary>
+    public async Task<int> UpdateQuietHoursAsync(int userId, QuietHoursDto dto)
+    {
+        using var scope = _logger.BeginScope("Updating quiet hours for user {UserId}", userId);
+        
+        // Get all user preferences
+        var preferences = await _preferenceRepository.GetUserPreferencesAsync(userId);
+        int updatedCount = 0;
+        
+        foreach (var preference in preferences)
+        {
+            preference.QuietHoursEnabled = dto.IsEnabled;
+            preference.QuietHoursStart = dto.Start.Hours;
+            preference.QuietHoursEnd = dto.End.Hours;
+            preference.ModifiedAt = DateTime.UtcNow;
+            
+            await _preferenceRepository.UpdateAsync(preference);
+            updatedCount++;
+        }
+
+        _logger.LogInformation("Updated quiet hours for {Count} preferences for user {UserId}", updatedCount, userId);
+        return updatedCount;
+    }
+
+    /// <summary>
+    /// Checks if user should receive notification based on preferences and quiet hours
+    /// </summary>
+    public async Task<bool> ShouldReceiveNotificationAsync(int userId, NotificationType notificationType, 
+        NotificationChannel channel, DateTime? checkTime = null)
+    {
+        var preference = await _preferenceRepository.GetUserPreferenceAsync(userId, notificationType);
+        if (preference == null)
+        {
+            // No preference set, create default and then check
+            var defaultPreferences = GetDefaultPreferences(userId);
+            var defaultPreference = defaultPreferences.FirstOrDefault(p => p.NotificationType == notificationType);
+            
+            if (defaultPreference == null)
+            {
+                // No default defined for this type
+                _logger.LogWarning("No default preference defined for notification type {NotificationType}", notificationType);
+                return false;
+            }
+            
+            // Use default preference
+            return IsChannelEnabled(defaultPreference, channel) && !IsInQuietHours(defaultPreference, checkTime);
+        }
+
+        // Check if the specific channel is enabled and not in quiet hours
+        return IsChannelEnabled(preference, channel) && !IsInQuietHours(preference, checkTime);
+    }
+
+    /// <summary>
+    /// Gets users who have enabled a specific channel for notification type
+    /// </summary>
+    public async Task<List<int>> GetUsersWithChannelEnabledAsync(NotificationType notificationType, NotificationChannel channel)
+    {
+        var users = await _preferenceRepository.GetUsersWithChannelEnabledAsync(notificationType, channel);
+        return users.ToList();
+    }
+
+    /// <summary>
+    /// Gets preference summary for admin dashboard
+    /// </summary>
+    public async Task<PreferenceSummary> GetPreferenceSummaryAsync()
+    {
+        // Get actual stats from repository
+        var stats = await _preferenceRepository.GetPreferenceSummaryAsync();
+        
+        // Convert to the expected PreferenceSummary format
+        // Note: PreferenceSummary is designed for individual users, but interface expects it for admin dashboard
+        // This is a design inconsistency that should be addressed in future refactoring
+        var summary = new PreferenceSummary
+        {
+            UserId = Guid.Empty, // Not applicable for system-wide stats
+            TotalNotificationTypes = stats.PreferencesByType.Count,
+            EnabledNotificationTypes = stats.PreferencesByType.Count, // All types that have preferences
+            DisabledNotificationTypes = 0,
+            PreferredChannels = new List<string> { "Email", "SMS", "Push", "InApp" },
+            HasQuietHours = false // Not applicable for system stats
+        };
+        
+        return summary;
+    }
+
+    /// <summary>
+    /// Bulk updates preferences for multiple users (admin operation)
+    /// </summary>
+    public async Task<int> BulkUpdatePreferencesAsync(List<int> userIds, NotificationType notificationType, 
+        Dictionary<NotificationChannel, bool> channelUpdates)
+    {
+        using var scope = _logger.BeginScope("Bulk updating preferences for {UserCount} users, notification type {NotificationType}", 
+            userIds.Count, notificationType);
+        
+        int updatedCount = 0;
+        
+        foreach (var userId in userIds)
+        {
+            var preference = await _preferenceRepository.GetUserPreferenceAsync(userId, notificationType);
+            bool isNew = false;
+            
+            if (preference == null)
+            {
+                // Create new preference if it doesn't exist
+                preference = new NotificationPreference
+                {
+                    UserId = userId,
+                    NotificationType = notificationType,
+                    CreatedAt = DateTime.UtcNow
+                };
+                isNew = true;
+            }
+            
+            // Update channel settings
+            foreach (var update in channelUpdates)
+            {
+                switch (update.Key)
+                {
+                    case NotificationChannel.Email:
+                        preference.EmailEnabled = update.Value;
+                        break;
+                    case NotificationChannel.Sms:
+                        preference.SmsEnabled = update.Value;
+                        break;
+                    case NotificationChannel.Push:
+                        preference.PushEnabled = update.Value;
+                        break;
+                    case NotificationChannel.InApp:
+                        preference.InAppEnabled = update.Value;
+                        break;
+                }
+            }
+            
+            preference.ModifiedAt = DateTime.UtcNow;
+            
+            if (isNew)
+            {
+                await _preferenceRepository.AddAsync(preference);
+            }
+            else
+            {
+                await _preferenceRepository.UpdateAsync(preference);
+            }
+            
+            updatedCount++;
+        }
+        
+        _logger.LogInformation("Updated preferences for {Count} users", updatedCount);
+        return updatedCount;
+    }
+
+    #region Private Helper Methods
+
+    private NotificationPreferenceDto MapToDto(NotificationPreference entity)
+    {
+        return new NotificationPreferenceDto
+        {
+            Id = entity.Id,
+            UserId = entity.UserId,
+            NotificationType = entity.NotificationType,
+            EmailEnabled = entity.EmailEnabled,
+            SmsEnabled = entity.SmsEnabled,
+            PushEnabled = entity.PushEnabled,
+            InAppEnabled = entity.InAppEnabled,
+            QuietHoursEnabled = entity.QuietHoursEnabled,
+            QuietHoursStart = entity.QuietHoursStart,
+            QuietHoursEnd = entity.QuietHoursEnd,
+            CreatedAt = entity.CreatedAt,
+            ModifiedAt = entity.ModifiedAt
+        };
+    }
+
+    private List<NotificationPreference> GetDefaultPreferences(int userId)
+    {
+        return new List<NotificationPreference>
+        {
+            // Welcome notifications - enabled for all channels
+            new NotificationPreference
+            {
+                UserId = userId,
+                NotificationType = NotificationType.Welcome,
+                EmailEnabled = true,
+                SmsEnabled = true,
+                PushEnabled = true,
+                InAppEnabled = true,
+                QuietHoursEnabled = false,
+                QuietHoursStart = 22, // 10 PM
+                QuietHoursEnd = 7,    // 7 AM
+                CreatedAt = DateTime.UtcNow
+            },
+            
+            // Password reset - enable for secure channels
+            new NotificationPreference
+            {
+                UserId = userId,
+                NotificationType = NotificationType.PasswordReset,
+                EmailEnabled = true,
+                SmsEnabled = true,
+                PushEnabled = false,
+                InAppEnabled = false,
+                QuietHoursEnabled = false, // Security notifications bypass quiet hours
+                QuietHoursStart = 22,
+                QuietHoursEnd = 7,
+                CreatedAt = DateTime.UtcNow
+            },
+            
+            // Exam reminders - enable for all channels
+            new NotificationPreference
+            {
+                UserId = userId,
+                NotificationType = NotificationType.ExamReminder,
+                EmailEnabled = true,
+                SmsEnabled = true,
+                PushEnabled = true,
+                InAppEnabled = true,
+                QuietHoursEnabled = true,
+                QuietHoursStart = 22,
+                QuietHoursEnd = 7,
+                CreatedAt = DateTime.UtcNow
+            },
+            
+            // Exam start - enable for immediate channels
+            new NotificationPreference
+            {
+                UserId = userId,
+                NotificationType = NotificationType.ExamStart,
+                EmailEnabled = true,
+                SmsEnabled = true,
+                PushEnabled = true,
+                InAppEnabled = true,
+                QuietHoursEnabled = false, // Important event notifications bypass quiet hours
+                QuietHoursStart = 22,
+                QuietHoursEnd = 7,
+                CreatedAt = DateTime.UtcNow
+            },
+            
+            // Grading complete - enable for all channels
+            new NotificationPreference
+            {
+                UserId = userId,
+                NotificationType = NotificationType.GradingComplete,
+                EmailEnabled = true,
+                SmsEnabled = false,
+                PushEnabled = true,
+                InAppEnabled = true,
+                QuietHoursEnabled = true,
+                QuietHoursStart = 22,
+                QuietHoursEnd = 7,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+    }
+
+    private bool IsChannelEnabled(NotificationPreference preference, NotificationChannel channel)
+    {
+        return channel switch
+        {
+            NotificationChannel.Email => preference.EmailEnabled,
+            NotificationChannel.Sms => preference.SmsEnabled,
+            NotificationChannel.Push => preference.PushEnabled,
+            NotificationChannel.InApp => preference.InAppEnabled,
+            _ => false
+        };
+    }
+
+    private bool IsInQuietHours(NotificationPreference preference, DateTime? checkTime = null)
+    {
+        if (!preference.QuietHoursEnabled)
+        {
+            return false;
+        }
+        
+        var time = checkTime ?? DateTime.UtcNow;
+        int currentHour = time.Hour;
+        
+        if (preference.QuietHoursStart <= preference.QuietHoursEnd)
+        {
+            // Simple range (e.g., 22:00 to 07:00)
+            return currentHour >= preference.QuietHoursStart && currentHour < preference.QuietHoursEnd;
+        }
+        else
+        {
+            // Overnight range (e.g., 22:00 to 07:00)
+            return currentHour >= preference.QuietHoursStart || currentHour < preference.QuietHoursEnd;
+        }
+    }
+
+    #endregion
+}

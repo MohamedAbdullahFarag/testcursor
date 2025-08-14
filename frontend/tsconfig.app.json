@@ -1,0 +1,20 @@
+{
+    "extends": "./node_modules/mada-design-system/tsconfig",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["./src/*"],
+            "@/hooks/*": ["./src/shared/hooks/*"],
+            "@/models/*": ["./src/shared/models/*"],
+            "@/services/*": ["./src/shared/services/*"],
+            "@/utils/*": ["./src/shared/utils/*"],
+            "@/assets/*": ["./src/assets/*"],
+            "@/pages/*": ["./src/pages/*"],
+            "@/layout/*": ["./src/layout/*"],
+            "@/locales/*": ["./src/shared/locales/*"],
+            "@/constants/*": ["./src/shared/constants/*"],
+            "@/modules/*": ["./src/modules/*"]
+        }
+    },
+    "include": ["src"]
+}

@@ -1,0 +1,224 @@
+using AutoMapper;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Models;
+using Microsoft.Extensions.Logging;
+
+namespace Ikhtibar.Core.Services;
+
+public interface IMediaAccessLogService
+{
+    Task<PagedResult<MediaAccessLogDto>> GetAccessLogsAsync(int page = 1, int pageSize = 20);
+    Task<MediaAccessLogDto?> GetAccessLogByIdAsync(Guid id);
+    Task<MediaAccessLogDto> CreateAccessLogAsync(CreateMediaAccessLogDto createDto);
+    Task<bool> DeleteAccessLogAsync(Guid id);
+    Task<IEnumerable<MediaAccessLogDto>> GetAccessLogsByMediaFileIdAsync(Guid mediaFileId);
+    Task<IEnumerable<MediaAccessLogDto>> GetAccessLogsByUserIdAsync(Guid userId);
+    Task<bool> DeleteAccessLogsByMediaFileIdAsync(Guid mediaFileId);
+}
+
+public class MediaAccessLogService : IMediaAccessLogService
+{
+    private readonly IMediaAccessLogRepository _repository;
+    private readonly IMapper _mapper;
+    private readonly ILogger<MediaAccessLogService> _logger;
+
+    public MediaAccessLogService(
+        IMediaAccessLogRepository repository,
+        IMapper mapper,
+        ILogger<MediaAccessLogService> logger)
+    {
+        _repository = repository;
+        _mapper = mapper;
+        _logger = logger;
+    }
+
+    public async Task<PagedResult<MediaAccessLogDto>> GetAccessLogsAsync(int page = 1, int pageSize = 20)
+    {
+        using var scope = _logger.BeginScope("Getting access logs - Page: {Page}, PageSize: {PageSize}", page, pageSize);
+        
+        try
+        {
+            var offset = (page - 1) * pageSize;
+            var logs = await _repository.GetPagedAsync(offset, pageSize, orderBy: "AccessedAt DESC");
+            var totalCount = await _repository.CountAsync();
+
+            var logDtos = _mapper.Map<IEnumerable<MediaAccessLogDto>>(logs);
+
+            var result = new PagedResult<MediaAccessLogDto>
+            {
+                Items = logDtos,
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            };
+
+            _logger.LogInformation("Found {Count} access logs out of {Total} total", 
+                logDtos.Count(), totalCount);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting access logs");
+            throw;
+        }
+    }
+
+    public async Task<MediaAccessLogDto?> GetAccessLogByIdAsync(Guid id)
+    {
+        using var scope = _logger.BeginScope("Getting access log by ID: {LogId}", id);
+        
+        try
+        {
+            var log = await _repository.GetByIdAsync(id);
+            
+            if (log == null)
+            {
+                _logger.LogWarning("Access log not found with ID: {LogId}", id);
+                return null;
+            }
+
+            var result = _mapper.Map<MediaAccessLogDto>(log);
+            _logger.LogInformation("Successfully retrieved access log: {LogId}", id);
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting access log by ID: {LogId}", id);
+            throw;
+        }
+    }
+
+    public async Task<MediaAccessLogDto> CreateAccessLogAsync(CreateMediaAccessLogDto createDto)
+    {
+        using var scope = _logger.BeginScope("Creating access log for media file: {MediaFileId}, action: {Action}", 
+            createDto.MediaFileId, createDto.Action);
+        
+        try
+        {
+            var log = _mapper.Map<Ikhtibar.Core.Entities.MediaAccessLog>(createDto);
+            log.Id = Guid.NewGuid();
+            log.CreatedAt = DateTime.UtcNow;
+
+            var createdLog = await _repository.AddAsync(log);
+            var result = _mapper.Map<MediaAccessLogDto>(createdLog);
+
+            _logger.LogInformation("Successfully created access log: {LogId} for media file: {MediaFileId}", 
+                createdLog.Id, createDto.MediaFileId);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while creating access log for media file: {MediaFileId}", 
+                createDto.MediaFileId);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteAccessLogAsync(Guid id)
+    {
+        using var scope = _logger.BeginScope("Deleting access log: {LogId}", id);
+        
+        try
+        {
+            var log = await _repository.GetByIdAsync(id);
+            if (log == null)
+            {
+                _logger.LogWarning("Access log not found for deletion: {LogId}", id);
+                return false;
+            }
+
+            var result = await _repository.DeleteAsync(id);
+            
+            if (result)
+            {
+                _logger.LogInformation("Successfully deleted access log: {LogId}", id);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to delete access log: {LogId}", id);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting access log: {LogId}", id);
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<MediaAccessLogDto>> GetAccessLogsByMediaFileIdAsync(Guid mediaFileId)
+    {
+        using var scope = _logger.BeginScope("Getting access logs for media file: {MediaFileId}", mediaFileId);
+        
+        try
+        {
+            var logs = await _repository.GetByMediaFileAsync(mediaFileId);
+            var result = _mapper.Map<IEnumerable<MediaAccessLogDto>>(logs);
+
+            _logger.LogInformation("Found {Count} access logs for media file: {MediaFileId}", 
+                result.Count(), mediaFileId);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting access logs for media file: {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<MediaAccessLogDto>> GetAccessLogsByUserIdAsync(Guid userId)
+    {
+        using var scope = _logger.BeginScope("Getting access logs for user: {UserId}", userId);
+        
+        try
+        {
+            var logs = await _repository.GetByUserAsync(userId);
+            var result = _mapper.Map<IEnumerable<MediaAccessLogDto>>(logs);
+
+            _logger.LogInformation("Found {Count} access logs for user: {UserId}", 
+                result.Count(), userId);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting access logs for user: {UserId}", userId);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteAccessLogsByMediaFileIdAsync(Guid mediaFileId)
+    {
+        using var scope = _logger.BeginScope("Deleting all access logs for media file: {MediaFileId}", mediaFileId);
+        
+        try
+        {
+            // Get all logs for the media file and delete them individually
+            var logs = await _repository.GetByMediaFileAsync(mediaFileId);
+            var deleteCount = 0;
+            
+            foreach (var log in logs)
+            {
+                var deleted = await _repository.DeleteAsync(log.Id);
+                if (deleted) deleteCount++;
+            }
+            
+            var result = deleteCount > 0;
+            _logger.LogInformation("Deleted {Count} access logs for media file: {MediaFileId}, success: {Success}", 
+                deleteCount, mediaFileId, result);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting access logs for media file: {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+}

@@ -1,0 +1,112 @@
+{
+    "id": "4vy4xyq7vhnnq6706tk8d8sw59",
+    "nameAr": "سياسة الخصوصية",
+    "nameEn": "Privacy policy",
+    "DescriptionAr": null,
+    "DescriptionEn": null,
+    "Version": 1,
+    "SubSectionContents": [
+        {
+            "id": "44ky1nmzjrcjm49p6vzzeepfwp",
+            "nameAr": "إشعار الخصوصية",
+            "nameEn": "Privacy Notice",
+            "ContentAr": "<p>تضع وزارة التعليم حماية البيانات الشخصية ضمن أولوياتها الرئيسية، وتلتزم بتطبيق نظام حماية البيانات الشخصية الصادر بالمرسوم الملكي رقم (م/19) بتاريخ 09/02/1443 هـ، والمعدل بالمرسوم الملكي رقم (م/148) بتاريخ 05/09/1444 هـ ولوائحه.</p>\n\n<p><br></p><p>من المهم أن يكون المستفيد على علم بماهية البيانات التي تجمعها وزارة التعليم والغرض من جمعها ومعالجتها وطريقة استخدامها وفقًا لنظام حماية البيانات الشخصية واللوائح المعمول بها في المملكة. وعلى هذا المبدأ تمت صياغة إشعار الخصوصية.  وتحث وزارة التعليم المستفيدين من خدماتها الاطلاع المستمر على إشعار الخصوصية لمعرفة أي تحديثات تتم عليه.</p><p><br></p>\n\n<p>زيارتك لموقع وزارة التعليم واستخدامك للمنصات التابعة له تعني اطلاعك وموافقتك على ما ورد في إشعار الخصوصية الحالي وعلى أي تحديثات تتم عليه، ويستثنى من ذلك معالجة البيانات الشخصية في الحالات التي نص نظام حماية البيانات الشخصية بعدم خضوعها للموافقة.​</p>",
+            "ContentEn": "<p>\n    The Ministry of Education ranks the protection of personal data among its top priorities and is committed to applying the Personal Data Protection Law issued by Royal Decree No. (M/19) dated 09/02/1443 AH, as amended by Royal Decree No. (M/148) dated 05/09/1444 AH, and its Regulations.</p><p><br></p><p>It is important for the beneficiary to be aware of the type of data collected by the Ministry of Education, the purpose of its collection and processing, and how it is used in accordance with the Personal Data Protection Law and the applicable regulations in the Kingdom. Based on this principle, a privacy notice has been issued.</p><p><br></p><p>The Ministry of Education encourages beneficiaries of its services to regularly review the Privacy Notice to stay informed about any updates made thereto.</p><p><br></p><p>Upon visiting the Ministry of Education's website and using its affiliated platforms, you review and accept the current privacy notice, and any updates made thereto, except for the processing of personal data in cases which the Personal Data Protection Law stipulates that they are not covered by the acceptance.</p>",
+            "IsMobile": false
+        },
+        {
+            "id": "4r3wdd5nmkpb3284vqn7af4bxc",
+            "nameAr": "البيانات الشخصية التي يتم جمعها",
+            "nameEn": "Collected Personal Data",
+            "ContentAr": "<div style=\"direction: rtl\">\n    <p>تجمع وزارة التعليم الحد الأدنى من البيانات الشخصية للمستفيدين لأغراض محددة بما يتوافق مع نظام حماية البيانات​ الشخصية ولوائحها في المملكة العربية السعودية، وتشمل البيانات الشخصية الفئات التالية:​<br><br></p>\n    <ul>\n        <li><b>البيانات الشخصية:</b> وتشمل بيانات كالاسم والنوع والحالة الاجتماعية .</li>\n        <li><b>بيانات التواصل:</b> وتشمل بيانات الاتصال كأرقام الهواتف والبريد الإلكتروني والعنوان الوطني.</li>\n        <li><b>بيانات الحساب:</b> تشمل بيانات الدخول للحسابات في المنصات والتطبيقات التابعة لوزارة التعليم كأسماء المستخدمين وكلمات المرور .</li>\n        <li><b>بيانات التعليم والتدريب:</b> تشمل بيانات دورة حياة العملية التعليمية والتدريبية المتعلقة بمختلف المستفيدين كالطالب والمعلم وولي الأمر ومدير المدرسة.</li>\n        <li><b>البيانات المالية:</b> تشمل البيانات التي يتم جمعها لأغراض عمليات الدفع كرقم الحساب المصرفي.</li>\n        <li><b>البيانات الصحية:</b> تشمل كل بيان شخصي يتعلق بحالة الفرد الصحية، سواء الجسدية أو العقلية أو النفسية.</li>\n    </ul>\n</div>",
+            "ContentEn": "<p>The Ministry of Education collects the minimum amount of personal data of beneficiaries for specific purposes in accordance with the Personal Data Protection Law and its Regulations in the Kingdom. The personal data includes the following categories:<br><br></p>\n<ul>\n    <li><b>Basic Personal Data</b>: Includes data such as the name, sex, and marital status.</li>\n    <li><b>Contact Details:</b> Include contact information such as phone numbers, e-mail and national address.</li>\n    <li><b>Account Data:</b> Include login data for accounts on platforms and applications affiliated with the Ministry of Education, such as usernames and passwords.</li>\n    <li><b>Data of Education and Training:</b> Include data related to the educational and training process lifecycle related to various stakeholders, such as students, teachers, parents, and school principals.</li>\n    <li><b>Financial Data:</b> Include data collected for payments such as the bank account number.</li>\n    <li><b>Health Data:</b> Include all personal data related to the physical, mental, or psychological health condition of everyone.</li>\n</ul>",
+            "DisplayOrder": null,
+            "IsMobile": false
+        },
+        {
+            "id": "4skn897frjr6s20drb1fvsmdmt",
+            "nameAr": "لماذا نجمع بياناتك الشخصية وكيف نجمعها؟",
+            "nameEn": "Why and how do we collect your personal data?",
+            "ContentAr": "\n    <p>تلتزم وزارة التعليم بجمع ومعالجة بياناتك الشخصية وفق ما نص عليه نظام حماية البيانات الشخصية ولوائحها، ويعتبر جمع ومعالجة بياناتك الشخصية ضروريًا لتقديم أعلى مستوى من الخدمة، يتم جمع بياناتك الشخصية بشكل مباشر أو غير مباشر حسب الخدمة المقدمة، وتشمل طرق جمع البيانات الشخصية الطرق التالية:​</p>\n    <b>الطرق المباشرة:</b><ul>\n        <li><b>الخدمات:</b> عند التسجيل في القنوات الرسمية لوزارة التعليم، وتشمل المنصات التعليمية وتطبيقات الهاتف الجوال أو المنتجات والخدمات المختلفة.</li>\n        <li><b>التواصل: </b>عند التواصل مع وزارة التعليم عبر قنوات التواصل.</li>\n        <li><b>استطلاعات الرأي.</b></li>\n        <li><b>نماذج التسجيل الورقية والإلكترونية.</b></li>\n    </ul>\n    <b>الطرق غير المباشرة:</b><ul>\n        <li>البيانات التي ​يتم تزويدنا بها عن طريق جهات أخرى كالجهات الحكومية والخاصة التي تدعم أو تقدم خدمات للمستفيدين من خدمات وزارة التعليم.&nbsp;</li>\n        <li>​البيانات التي يتم تسجيلها بمجرد زيارتك لموقع وزارة التعليم الإلكتروني أو المنصات الإلكترونية التابعة للوزارة.<br></li>\n    </ul>\n",
+            "ContentEn": "<p>\n    The Ministry of Education shall collect and process your personal data in accordance with the Personal Data\n    Protection Law and its Regulations. The collection and processing of your personal data are considered necessary to\n    provide the highest level of service. Your personal data shall be collected either directly or indirectly, depending\n    on the service provided. The methods of collecting personal data include the following:\n<br><br></p>\n\n    <b>Direct Methods:</b>\n<ul>\n    <li><b>Services:</b> When registering on the official channels of the Ministry of Education, including educational\n        platforms, mobile applications, or various products and services.</li>\n    <li><b>Communication:</b> Upon communication with the Ministry of Education via the communication channels.</li>\n    <li><b>Polls</b></li>\n    <li><b>Soft and hard registration forms<br><br></b></li>\n</ul>\n\n<b>Indirect Methods:</b>\n<ul>\n    <li>Data provided to us by other entities, such as governmental and private organizations that support or offer\n        services to beneficiaries from the Ministry of Education's services.</li>\n    <li>Data recorded as soon as you access the Ministry of Education's website or its electronic platforms.</li>\n</ul>",
+            "DisplayOrder": null,
+            "IsMobile": false
+        },
+        {
+            "id": "403qac29hqbx0vcdczwg45ejdv",
+            "nameAr": "كيف نستخدم بياناتك الشخصية؟",
+            "nameEn": "How do we use your personal data?",
+            "ContentAr": "<div>\n    <p>\n        تدأب وزارة التعليم على رفع مستوى أداء خدماتها التي تقدمها للمستفيدين من خلال جمع البيانات ومعالجتها ​للأغراض التالية:\n    <br><br></p>\n    <ul>\n        <li>تمكين وتقديم خدمات وزارة التعليم واستيفاء متطلباتها.</li>\n        <li>إعداد الدراسات التي تخدم العملية التعليمية.</li>\n        <li>الاستجابة لاستفسارات المستفيدين من خدمات الوزارة .</li>\n        <li>تطوير وتحسين تجربة المستفيد وضمان استمرارية تقديم الخدمات بالجودة المطلوبة.</li>\n        <li>مصادقة هوية المستخدم عند تسجيل الدخول إلى خدمات الوزارة المختلفة.</li>\n    </ul>\n</div>",
+            "ContentEn": "<p>\n    The Ministry of Education strives to enhance the quality of its services provided to beneficiaries by collecting and processing data for the following purposes:\n<br><br></p>\n\n<ul>\n    <li>Enable and provide the services of the Ministry of Education and fulfill its requirements.</li>\n    <li>Conduct studies that support the educational process.</li>\n    <li>Respond to inquiries of beneficiary from the Ministry services.</li>\n    <li>Develop and improve the beneficiary's experience and ensure the continuity of providing services of the required quality.</li>\n    <li>Verify the user's identity when logging into the Ministry services.</li>\n</ul>",
+            "DisplayOrder": null,
+            "IsMobile": false
+        },
+        {
+            "id": "4ffsx7zxg0cmp494gdct4r1a4k",
+            "nameAr": "مشاركة البيانات الشخصية",
+            "nameEn": "Personal Data Sharing",
+            "ContentAr": "<p>وفقًا لسياسة مشاركة البيانات الصادرة بالقرار الوزاري رقم (4200034434) بتاريخ 05/02/1445 هـ قد نشارك بياناتك الشخصية الضرورية مع جهات حكومية أو جهات غير حكومية مخولة بتقديم خدمات حكومية لأغراض محددة مبنية على أُسس نظامية أو احتياج عملي مبرر يهدف إلى تحقيق مصلحة عامة دون إلحاق أي ضرر بالمصالح الوطنية أو خصوصية الأفراد. عند مشاركة بياناتك الشخصية، نحرص على مشاركتها من خلال بيئة آمنة وموثوقة وفقًا لنظام حماية البيانات الشخصية ولوائحه، وتتخذ وزارة التعليم خطوات إضافية لضمان حماية بياناتك الشخصية من خلال توقيع اتفاقية لمشاركة البيانات بين الوزارة والجهات الأخرى وفقًا لشروط وأحكام محددة متوافقة مع مبادئ مشاركة البيانات وتبادلها.</p>",
+            "ContentEn": "<p><span class=\"NormalTextRun SCXW109651617 BCX0\" style=\"margin: 0; padding: 0; user-select: text; color: rgba(34, 34, 34, 1); font-family: &quot;Times New Roman&quot;, &quot;Times New Roman_EmbeddedFont&quot;, &quot;Times New Roman_MSFontService&quot;, serif; font-variant-ligatures: none\">According to the Data Sharing Policy issued by Ministerial Decision No. (4200034434) dated 05/02/1445 AH, we may share your necessary personal data with governmental or non-governmental agencies authorized to provide government services for specific purposes based on statutory grounds or a justified practical need aimed at achieving a public interest, without harming national interests or individuals' privacy. When sharing your personal data, we ensure it is shared through a secure and reliable environment </span><span class=\"NormalTextRun SCXW109651617 BCX0\" style=\"margin: 0; padding: 0; user-select: text; color: rgba(34, 34, 34, 1); font-family: &quot;Times New Roman&quot;, &quot;Times New Roman_EmbeddedFont&quot;, &quot;Times New Roman_MSFontService&quot;, serif; font-variant-ligatures: none\">in accordance with</span><span class=\"NormalTextRun SCXW109651617 BCX0\" style=\"margin: 0; padding: 0; user-select: text; color: rgba(34, 34, 34, 1); font-family: &quot;Times New Roman&quot;, &quot;Times New Roman_EmbeddedFont&quot;, &quot;Times New Roman_MSFontService&quot;, serif; font-variant-ligatures: none\"> the Personal Data Protection Law and its Regulations. The Ministry of Education takes </span><span class=\"NormalTextRun SCXW109651617 BCX0\" style=\"margin: 0; padding: 0; user-select: text; color: rgba(34, 34, 34, 1); font-family: &quot;Times New Roman&quot;, &quot;Times New Roman_EmbeddedFont&quot;, &quot;Times New Roman_MSFontService&quot;, serif; font-variant-ligatures: none\">additional</span><span class=\"NormalTextRun SCXW109651617 BCX0\" style=\"margin: 0; padding: 0; user-select: text; color: rgba(34, 34, 34, 1); font-family: &quot;Times New Roman&quot;, &quot;Times New Roman_EmbeddedFont&quot;, &quot;Times New Roman_MSFontService&quot;, serif; font-variant-ligatures: none\"> steps to protect your personal data by signing a data-sharing agreement between the Ministry and other entities, based on specific terms and conditions that align with the principles of data sharing and exchange.</span></p>",
+            "DisplayOrder": null,
+            "IsMobile": false
+        },
+        {
+            "id": "4t9rjnmm0gp67wzjf01ka0qhcc",
+            "nameAr": "الأساس النظامي لجمع البيانات الشخصية ومعالجتها",
+            "nameEn": "The Statutory basis for collecting and processing personal data",
+            "ContentAr": "<p>نجمع بياناتك الشخصية ونعالجها ​بناءً على الأسس ​النظامية التالية:</p><p><br></p>",
+            "ContentEn": "<p>We collect and address your personal data based on the following statutory bases:</p><p><br></p>",
+            "DisplayOrder": null,
+            "IsMobile": false,
+            "SubSectionContents": [
+                {
+                    "id": "4w53p3h3jr1raxa9qy8y92jddr",
+                    "nameAr": "1. الالتزام النظامي المتمثل في: ",
+                    "nameEn": "1. Statutory commitment that is:",
+                    "ContentAr": "<ul>\n    <li>التزام الوزارة بأداء مهامها واختصاصاتها حيال توفير الدولة للتعليم العام وإلزامية التعليم الأساسي في المملكة\n        وفقًا لما نصت علية المادة 30 من النظام الأساسي للحكم​ الصادر بالأمر الملكي رقم 90/(أ) بتاريخ 27/08/1421 هـ،\n        ووفقًا لسياسة التعليم في المملكة المعتمدة بقرار مجلس الوزراء رقم 779 بتاريخ 16/09/1389 هـ، وقرار مجلس الوزراء\n        رقم (139) بتاريخ 26/04/1425 هـ.</li>\n    <li>الالتزام بنظام حماية البيانات الشخصية الصادر بالمرسوم الملكي رقم (م/19) بتاريخ 9/02/1443 هـ والمعدل بموجب\n        المرسوم الملكي رقم (م/148) بتاريخ 5/9/ 1444 هـ.</li>\n</ul>",
+                    "ContentEn": "<p></p><ul><li><span style=\"font-size: 12pt; line-height: 107%; font-family: &quot;Times New Roman&quot;, serif; color: rgba(34, 34, 34, 1)\">The Ministry's commitment\nto fulfilling its duties and responsibilities regarding the provision of public\neducation and the mandatory nature of basic education in the Kingdom, in\naccordance with Article 30 of the Basic Law of Governance issued by Royal\nDecree No. 90/A dated 27/08/1421 AH, and in line with the Education Policy in\nthe Kingdom under the Council of Ministers Resolutions No. 779 dated 16/09/1389\nAH, and No. 139 dated 26/04/1425 AH.</span></li><li><span style=\"font-size: 12pt; line-height: 107%; font-family: &quot;Times New Roman&quot;, serif; color: rgba(34, 34, 34, 1)\">Comply with the Personal Data Protection Law issued\nby Royal Decree No. (M/19) dated 09/02/1443 AH, as amended by Royal Decree No.\n(M/148) dated 05/09/1444 AH.</span></li></ul><p></p><p><span style=\"font-size: 12pt; line-height: 107%; font-family: &quot;Times New Roman&quot;, serif; color: rgba(34, 34, 34, 1)\"></span></p>",
+                    "DisplayOrder": null,
+                    "IsMobile": false
+                },
+                {
+                    "id": "4bzeab1h0p3rd6y0b5f4wsy0c9",
+                    "nameAr": "2. المصلحة العامة:",
+                    "nameEn": "2. Public Interest: ",
+                    "ContentAr": "<p> للارتقاء بمستوى العملية التعليمية لتحقيق أعلى درجات الجودة في التعليم وتحسين مخرجاته.</p>",
+                    "ContentEn": "<p>To enhance the level of the educational process to achieve the highest standards of quality in education and improve its outcomes.</p>",
+                    "DisplayOrder": null,
+                    "IsMobile": false
+                }
+            ]
+        },
+        {
+            "id": "4zbmq870n696yz0eygqyrg4kcr",
+            "nameAr": "نقل البيانات الشخصية خارج الحدود الجغرافية للمملكة ",
+            "nameEn": "Transfer of personal data outside the geographical borders of the Kingdom",
+            "ContentAr": "<p>وفقًا للقواعد العامة لنقل البيانات الشخصية خارج الحدود الجغرافية الصادرة من مكتب إدارة البيانات الوطنية، سيتم تخزين بياناتك الشخصية ومعالجتها بطريقة آمنة داخل الحدود الجغرافية للمملكة العربية السعودية، وذلك لضمان المحافظة على السيادة الوطنية الرقمية لهذه البيانات ويستثنى من ذلك الحالات المنصوص عليها في المادة التاسعة والعشرين من نظام حماية البيانات الشخصية ولوائحها عند الحاجة لنقل البيانات أو معالجتها خارج الحدود الجغرافية للمملكة.​ </p>",
+            "ContentEn": "<p>In accordance with the general rules for transferring personal data outside the geographical borders issued by the National Data Management Office, your personal data will be stored and processed securely within the geographical borders of the Kingdom to ensure the preservation of the national, digital sovereignty of this data, except for cases stipulated in Article 29 of the Personal Data Protection Law and its Regulations, as required, to transfer or process the data outside the geographical borders of the Kingdom. </p>",
+            "DisplayOrder": null,
+            "IsMobile": false
+        },
+        {
+            "id": "48y04yszwhv9a14jrrjt2pq65y",
+            "nameAr": "حقوق المستفيد",
+            "nameEn": "Rights of Beneficiary",
+            "ContentAr": "    <ul>\n        <li>الحق في العلم ويشمل ذلك إحاطته علمًا بالمسوغ النظامي لجمع بياناته الشخصية والغرض من جمعها.</li>\n        <li>الحق في طلب الحصول على بياناته الشخصية المتوفرة لدى وزارة التعليم بصيغة مقروءة وواضحة، وفق نظام حماية البيانات الشخصية ولوائحها.</li>\n        <li>الحق في طلب تصحيح بياناته الشخصية المتوفرة لدى وزارة التعليم أو إتمامها أو تحديثها.</li>\n        <li>الحق في الاعتراض والرجوع عن موافقته على معالجة بياناته الشخصية في أي وقت ما لم تكن هناك أغراض مشروعة تتطلب عكس ذلك.</li>\n        <li>الحق في الوصول إلى بياناته الشخصية المتوفرة لدى وزارة التعليم وفق نظام حماية البيانات الشخصية ولوائحها، ودون الإخلال بما ورد في المادة التاسعة من نظام حماية البيانات الشخصية.</li>\n    </ul>",
+            "ContentEn": "<ul>\n    <li>The right to be informed, which includes being made aware of the statutory justification for collecting the personal data thereof and the purpose of its collection.</li>\n    <li>The right to request access to the personal data thereof available with the Ministry of Education in a readable and clear format, in accordance with the Personal Data Protection Law and its Regulations.</li>\n    <li>The right to request the correction, completion, or updating of the personal data thereof available with the Ministry of Education.</li>\n    <li>The right to object and withdraw consent for the processing of the personal data thereof at any time, unless there are legitimate purposes that require otherwise.</li>\n    <li>The right to access the personal data thereof available with the Ministry of Education in accordance with the Personal Data Protection Law and its Regulations, without prejudice to the provisions of Article (9) of the Personal Data Protection Law.</li>\n</ul>",
+            "DisplayOrder": null,
+            "IsMobile": false
+        },
+        {
+            "id": "42w4zhn11khq86p58vq4ttxqcf",
+            "nameAr": "بيانات الاتصال",
+            "nameEn": "Contact details:",
+            "ContentAr": "<p>في حال وجود أي استفسارات أو طلبات تخص حقوقك المتعلقة بمعالجة بياناتك الشخصية أو ما ورد في إشعار الخصوصية بشكل عام،\n    يمكنك الاتصال بمكتب إدارة البيانات في وزارة التعليم عبر البيانات الموضحة تاليًا:</p><p><br></p>\n<ul>\n    <li><b>القسم/الفريق المختص:</b> وزارة التعليم - مكتب إدارة البيانات.</li>\n    <li><b>العنوان:</b> المملكة العربية السعودية ـــــ الرياض، حي صلاح الدين، طريق الملك عبد الله، رقم المبنى (3425)\n        الرمز البريدي (12435) الرقم الإضافي (8234)</li>\n    <li><b>الهاتف:</b> 0114753000</li>\n    <li><b>البريد الالكتروني:</b> dmo@moe.gov.sa</li>\n</ul>",
+            "ContentEn": "<p>\n    If you have any inquiries or requests regarding your rights related to the processing of your personal data or contents of the Privacy Notice, contact the data management office at the Ministry of Education via contact info below:\n</p>\n<ul>\n    <li><b>Competent Department/Team: </b>Ministry of Education - Data Management Office</li>\n    <li><b>Address: </b>Kingdom of Saudi Arabia, Riyadh, Salahudin District, King Abdullah Road, Building No. (3425), Postal Code (12435), Additional Number (8234)</li>\n    <li><b>Tel.</b> 0114753000</li>\n    <li><b>E-mail: </b>dmo@moe.gov.sa</li>\n</ul>",
+            "DisplayOrder": null,
+            "IsMobile": false
+        }
+    ],
+    "Alias": "privacy-policy",
+    "ModifiedUtc": "2025-04-09T05:15:42.3208905Z"
+}

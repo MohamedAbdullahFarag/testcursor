@@ -1,0 +1,167 @@
+{
+  "userManagement": {
+    "view": {
+      "title": "User Management",
+      "description": "Manage users, roles, and permissions",
+      "actions": {
+        "createUser": "Create User"
+      }
+    },
+    "list": {
+      "title": "Users",
+      "headers": {
+        "user": "User",
+        "email": "Email",
+        "roles": "Roles",
+        "status": "Status",
+        "lastLogin": "Last Login",
+        "actions": "Actions"
+      },
+      "filters": {
+        "search": "Search users...",
+        "role": "Filter by role",
+        "status": "Filter by status",
+        "clear": "Clear filters"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "verified": "Verified",
+        "unverified": "Unverified"
+      },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "view": "View Details",
+        "refresh": "Refresh",
+        "export": "Export"
+      },
+      "bulk": {
+        "selectAll": "Select All",
+        "deselectAll": "Deselect All",
+        "delete": "Delete Selected",
+        "export": "Export Selected",
+        "selectedCount": "{{count}} user selected",
+        "selectedCount_plural": "{{count}} users selected"
+      },
+      "pagination": {
+        "showing": "Showing {{from}} to {{to}} of {{total}} users",
+        "previous": "Previous",
+        "next": "Next",
+        "itemsPerPage": "Items per page"
+      },
+      "empty": {
+        "title": "No users found",
+        "description": "No users match your current filters. Try adjusting your search criteria or create a new user.",
+        "action": "Create User"
+      },
+      "loading": "Loading users...",
+      "error": "Failed to load users. Please try again."
+    },
+    "form": {
+      "createTitle": "Create New User",
+      "editTitle": "Edit User",
+      "createDescription": "Add a new user to the system with appropriate roles and permissions.",
+      "editDescription": "Update user information for {{userName}}.",
+      "sections": {
+        "basicInfo": "Basic Information",
+        "roles": "Role Assignment",
+        "status": "Account Status"
+      },
+      "fields": {
+        "username": "Username",
+        "email": "Email Address",
+        "password": "Password",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "phoneNumber": "Phone Number",
+        "preferredLanguage": "Preferred Language",
+        "roles": "Assigned Roles",
+        "isActive": "Account Active"
+      },
+      "placeholders": {
+        "username": "Enter username",
+        "email": "Enter email address",
+        "password": "Enter password (min 8 characters)",
+        "firstName": "Enter first name",
+        "lastName": "Enter last name",
+        "phoneNumber": "Enter phone number"
+      },
+      "descriptions": {
+        "isActive": "Inactive users cannot sign in to the system"
+      },
+      "errors": {
+        "usernameRequired": "Username is required",
+        "usernameTooShort": "Username must be at least 3 characters",
+        "emailRequired": "Email address is required",
+        "emailInvalid": "Please enter a valid email address",
+        "passwordRequired": "Password is required",
+        "passwordTooShort": "Password must be at least 8 characters",
+        "firstNameRequired": "First name is required",
+        "firstNameTooShort": "First name must be at least 2 characters",
+        "lastNameRequired": "Last name is required",
+        "lastNameTooShort": "Last name must be at least 2 characters",
+        "phoneInvalid": "Please enter a valid phone number",
+        "roleRequired": "At least one role must be assigned",
+        "submitFailed": "Failed to save user. Please try again."
+      },
+      "actions": {
+        "create": "Create User",
+        "save": "Save Changes",
+        "cancel": "Cancel"
+      },
+      "noRolesAvailable": "No roles available for assignment"
+    },
+    "deleteModal": {
+      "title": "Delete User",
+      "message": "Are you sure you want to delete {{userName}} ({{email}})? This action cannot be undone.",
+      "warning": "This will permanently remove the user from the system and revoke all their access.",
+      "actions": {
+        "delete": "Delete User",
+        "cancel": "Cancel"
+      }
+    },
+    "notifications": {
+      "userCreated": "User created successfully",
+      "userUpdated": "User updated successfully",
+      "userDeleted": "User deleted successfully",
+      "usersDeleted": "{{count}} user deleted successfully",
+      "usersDeleted_plural": "{{count}} users deleted successfully",
+      "exportStarted": "Export started. You will be notified when it's ready.",
+      "error": "An error occurred. Please try again."
+    }
+  },
+  "users": {
+    "title": "Users",
+    "totalCount": "{{count}} user found",
+    "totalCount_plural": "{{count}} users found",
+    "searchPlaceholder": "Search users...",
+    "selectAll": "Select All",
+    "selectUser": "Select user",
+    "user": "User",
+    "contact": "Contact",
+    "roles": "Roles",
+    "status": "Status",
+    "lastLogin": "Last Login",
+    "active": "Active",
+    "inactive": "Inactive",
+    "noRoles": "No roles assigned",
+    "noUsers": "No users found",
+    "noUsersDescription": "There are no users to display. Try creating a new user or adjusting your search criteria."
+  },
+  "common": {
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "actions": "Actions",
+    "never": "Never",
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "create": "Create",
+    "search": "Search",
+    "clear": "Clear"
+  }
+}

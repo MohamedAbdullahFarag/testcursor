@@ -1,0 +1,28 @@
+export const customerExperienceEn = {
+    customerExperience: {
+        title: 'Rating your experience',
+        veryDifficult: 'Very difficult',
+        veryEasy: 'Very easy',
+        completelyDissatisfied: 'Completely dissatisfied',
+        verySatisfied: 'Very satisfied',
+        otherComments: 'Other comments',
+        sendFeedback: 'Rate',
+        successMessage: 'Thank you for giving us your feedback.',
+        optional: 'optional',
+        wasContentUseful: 'Was the content useful?',
+        helpUsImproveContent: 'Please help us improve the content.',
+        surveyReasonTitle: 'Please share rating reasons.',
+        surveyReason:
+            'We aim to gather ratings for analysis reasons; content improvement and user experience on the portal, ensuring the percentage of satisfaction/dissatisfaction of our users.',
+        surveyThanksMsg: 'Thank you for rating and sharing your experience.',
+        numberOfSurveyMsg: '{0} visitors liked the page content out of {1} visitors',
+        textAreaPlaceholder: 'Enter comments or suggestions',
+        ThanksForRatingShareYourOpinion: 'Thanks for the review, please share your feedback with us.',
+        shareYourOpinion: 'Share your opinion',
+        useful: 'Helpful',
+        notUseful: 'Unhelpful',
+        contentUseful: '{0} visitors found the content helpful.',
+        beTheFirstOneWhoRates: 'Be the first to rate the content',
+        forMoreInfo: 'For more information, read',
+    },
+} as const

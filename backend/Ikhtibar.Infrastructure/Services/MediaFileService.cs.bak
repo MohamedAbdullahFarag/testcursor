@@ -1,0 +1,447 @@
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using Ikhtibar.Core.Entities;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Enums;
+using Ikhtibar.Shared.Models;
+using CoreMediaType = Ikhtibar.Core.Entities.MediaType;
+using CoreMediaStatus = Ikhtibar.Core.Entities.MediaStatus;
+
+namespace Ikhtibar.Infrastructure.Services;
+
+/// <summary>
+/// Media file management service implementing business logic for file operations
+/// Handles CRUD operations, search, metadata management, and file processing
+/// </summary>
+public class MediaFileService : IMediaFileService
+{
+    private readonly IMediaFileRepository _mediaFileRepository;
+    private readonly IMediaCategoryRepository _mediaCategoryRepository;
+    private readonly IMapper _mapper;
+    private readonly ILogger<MediaFileService> _logger;
+
+    public MediaFileService(
+        IMediaFileRepository mediaFileRepository,
+        IMediaCategoryRepository mediaCategoryRepository,
+        IMapper mapper,
+        ILogger<MediaFileService> logger)
+    {
+        _mediaFileRepository = mediaFileRepository;
+        _mediaCategoryRepository = mediaCategoryRepository;
+        _mapper = mapper;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Retrieves a media file by its unique identifier
+    /// </summary>
+    public async Task<MediaFileDto?> GetByIdAsync(Guid id)
+    {
+        using var scope = _logger.BeginScope("Getting media file {MediaFileId}", id);
+        
+        try
+        {
+            _logger.LogInformation("Retrieving media file with ID: {MediaFileId}", id);
+            
+            var mediaFile = await _mediaFileRepository.GetByIdAsync(id);
+            if (mediaFile == null)
+            {
+                _logger.LogWarning("Media file not found with ID: {MediaFileId}", id);
+                return null;
+            }
+
+            var dto = _mapper.Map<MediaFileDto>(mediaFile);
+            _logger.LogInformation("Successfully retrieved media file: {OriginalFileName}", mediaFile.OriginalFileName);
+            
+            return dto;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving media file with ID: {MediaFileId}", id);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Searches media files with filtering and pagination
+    /// </summary>
+    public async Task<PagedResult<MediaFileDto>> SearchAsync(MediaFileSearchDto searchDto)
+    {
+        using var scope = _logger.BeginScope("Searching media files with criteria: {SearchTerm}", searchDto.SearchTerm);
+        
+        try
+        {
+            _logger.LogInformation("Searching media files with filters - Term: {SearchTerm}, Type: {MediaType}, Category: {CategoryId}, Page: {Page}, Size: {PageSize}",
+                searchDto.SearchTerm, searchDto.MediaType, searchDto.CategoryId, searchDto.Page, searchDto.PageSize);
+
+            // Get all media files (basic implementation - can be enhanced with repository search methods)
+            var allMediaFiles = await _mediaFileRepository.GetAllAsync();
+            
+            // Apply filters
+            var filteredFiles = allMediaFiles.AsQueryable();
+            
+            if (!string.IsNullOrWhiteSpace(searchDto.SearchTerm))
+            {
+                filteredFiles = filteredFiles.Where(f => 
+                    f.OriginalFileName.Contains(searchDto.SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    (f.Description != null && f.Description.Contains(searchDto.SearchTerm, StringComparison.OrdinalIgnoreCase)));
+            }
+            
+            if (searchDto.MediaType.HasValue)
+            {
+                filteredFiles = filteredFiles.Where(f => f.MediaType == (CoreMediaType)searchDto.MediaType.Value);
+            }
+            
+            if (searchDto.CategoryId.HasValue)
+            {
+                filteredFiles = filteredFiles.Where(f => f.CategoryId == searchDto.CategoryId.Value);
+            }
+            
+            if (searchDto.Status.HasValue)
+            {
+                filteredFiles = filteredFiles.Where(f => f.Status == (CoreMediaStatus)searchDto.Status.Value);
+            }
+            
+            if (searchDto.UploadedByUserId.HasValue)
+            {
+                filteredFiles = filteredFiles.Where(f => f.UploadedByUserId == searchDto.UploadedByUserId.Value);
+            }
+            
+            if (searchDto.CreatedAfter.HasValue)
+            {
+                filteredFiles = filteredFiles.Where(f => f.CreatedAt >= searchDto.CreatedAfter.Value);
+            }
+            
+            if (searchDto.CreatedBefore.HasValue)
+            {
+                filteredFiles = filteredFiles.Where(f => f.CreatedAt <= searchDto.CreatedBefore.Value);
+            }
+
+            // Apply sorting
+            filteredFiles = searchDto.SortBy?.ToLower() switch
+            {
+                "filename" => searchDto.SortDescending ? 
+                    filteredFiles.OrderByDescending(f => f.OriginalFileName) : 
+                    filteredFiles.OrderBy(f => f.OriginalFileName),
+                "size" => searchDto.SortDescending ? 
+                    filteredFiles.OrderByDescending(f => f.FileSizeBytes) : 
+                    filteredFiles.OrderBy(f => f.FileSizeBytes),
+                "created" => searchDto.SortDescending ? 
+                    filteredFiles.OrderByDescending(f => f.CreatedAt) : 
+                    filteredFiles.OrderBy(f => f.CreatedAt),
+                _ => filteredFiles.OrderByDescending(f => f.CreatedAt)
+            };
+
+            // Apply pagination
+            var totalCount = filteredFiles.Count();
+            var pagedFiles = filteredFiles
+                .Skip((searchDto.Page - 1) * searchDto.PageSize)
+                .Take(searchDto.PageSize)
+                .ToList();
+
+            var dtos = _mapper.Map<List<MediaFileDto>>(pagedFiles);
+            
+            var result = new PagedResult<MediaFileDto>
+            {
+                Items = dtos,
+                TotalCount = totalCount,
+                PageNumber = searchDto.Page,
+                PageSize = searchDto.PageSize
+            };
+
+            _logger.LogInformation("Found {TotalCount} media files matching criteria, returning page {Page} of {TotalPages}",
+                totalCount, searchDto.Page, result.TotalPages);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching media files with criteria: {SearchTerm}", searchDto.SearchTerm);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Creates a new media file record
+    /// </summary>
+    public async Task<MediaFileDto> CreateAsync(CreateMediaFileDto createDto)
+    {
+        using var scope = _logger.BeginScope("Creating media file: {OriginalFileName}", createDto.OriginalFileName);
+        
+        try
+        {
+            _logger.LogInformation("Creating new media file: {OriginalFileName}, Type: {MediaType}",
+                createDto.OriginalFileName, createDto.MediaType);
+
+            // Validate category exists if specified
+            if (createDto.CategoryId.HasValue)
+            {
+                var category = await _mediaCategoryRepository.GetByIdAsync(createDto.CategoryId.Value);
+                if (category == null)
+                {
+                    throw new ArgumentException($"Media category with ID {createDto.CategoryId} not found");
+                }
+            }
+
+            // Create entity from DTO
+            var mediaFile = new MediaFile
+            {
+                Id = Guid.NewGuid(),
+                OriginalFileName = createDto.OriginalFileName,
+                StorageFileName = createDto.StorageFileName,
+                ContentType = createDto.ContentType,
+                FileSizeBytes = createDto.FileSizeBytes,
+                StoragePath = createDto.StoragePath,
+                MediaType = (CoreMediaType)createDto.MediaType,
+                Status = CoreMediaStatus.Available,
+                CategoryId = createDto.CategoryId,
+                Description = createDto.Description ?? string.Empty,
+                AltText = createDto.AltText ?? string.Empty,
+                FileHash = createDto.ChecksumSha256,
+                UploadedByUserId = createDto.UploadedByUserId,
+                CreatedAt = DateTime.UtcNow,
+                ModifiedAt = DateTime.UtcNow
+            };
+
+            // Save to repository
+            var createdMediaFile = await _mediaFileRepository.AddAsync(mediaFile);
+            var resultDto = _mapper.Map<MediaFileDto>(createdMediaFile);
+
+            _logger.LogInformation("Successfully created media file with ID: {MediaFileId}", createdMediaFile.Id);
+            
+            return resultDto;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating media file: {OriginalFileName}", createDto.OriginalFileName);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Updates an existing media file record
+    /// </summary>
+    public async Task<MediaFileDto> UpdateAsync(Guid id, UpdateMediaFileDto updateDto)
+    {
+        using var scope = _logger.BeginScope("Updating media file {MediaFileId}", id);
+        
+        try
+        {
+            _logger.LogInformation("Updating media file: {MediaFileId}", id);
+
+            // Get existing entity
+            var existingMediaFile = await _mediaFileRepository.GetByIdAsync(id);
+            if (existingMediaFile == null)
+            {
+                throw new ArgumentException($"Media file with ID {id} not found");
+            }
+
+            // Validate category if being updated
+            if (updateDto.CategoryId.HasValue)
+            {
+                var category = await _mediaCategoryRepository.GetByIdAsync(updateDto.CategoryId.Value);
+                if (category == null)
+                {
+                    throw new ArgumentException($"Media category with ID {updateDto.CategoryId} not found");
+                }
+            }
+
+            // Update properties
+            existingMediaFile.Description = updateDto.Description ?? existingMediaFile.Description;
+            existingMediaFile.AltText = updateDto.AltText ?? existingMediaFile.AltText;
+            existingMediaFile.CategoryId = updateDto.CategoryId ?? existingMediaFile.CategoryId;
+            existingMediaFile.Status = updateDto.Status.HasValue ? (CoreMediaStatus)updateDto.Status.Value : existingMediaFile.Status;
+            existingMediaFile.ModifiedAt = DateTime.UtcNow;
+
+            // Save changes
+            var updatedMediaFile = await _mediaFileRepository.UpdateAsync(existingMediaFile);
+            var resultDto = _mapper.Map<MediaFileDto>(updatedMediaFile);
+
+            _logger.LogInformation("Successfully updated media file: {MediaFileId}", id);
+            
+            return resultDto;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating media file: {MediaFileId}", id);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Soft deletes a media file record
+    /// </summary>
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        using var scope = _logger.BeginScope("Deleting media file {MediaFileId}", id);
+        
+        try
+        {
+            _logger.LogInformation("Deleting media file: {MediaFileId}", id);
+
+            var result = await _mediaFileRepository.DeleteAsync(id);
+            
+            if (result)
+            {
+                _logger.LogInformation("Successfully deleted media file: {MediaFileId}", id);
+            }
+            else
+            {
+                _logger.LogWarning("Media file not found for deletion: {MediaFileId}", id);
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting media file: {MediaFileId}", id);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets all media files with optional pagination
+    /// </summary>
+    public async Task<List<MediaFileDto>> GetAllAsync()
+    {
+        using var scope = _logger.BeginScope("Getting all media files");
+        
+        try
+        {
+            _logger.LogInformation("Retrieving all media files");
+
+            var mediaFiles = await _mediaFileRepository.GetAllAsync();
+            var dtos = _mapper.Map<List<MediaFileDto>>(mediaFiles);
+
+            _logger.LogInformation("Retrieved {Count} media files", dtos.Count);
+            
+            return dtos;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving all media files");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets media files by category
+    /// </summary>
+    public async Task<List<MediaFileDto>> GetByCategoryAsync(Guid categoryId)
+    {
+        using var scope = _logger.BeginScope("Getting media files by category {CategoryId}", categoryId);
+        
+        try
+        {
+            _logger.LogInformation("Retrieving media files for category: {CategoryId}", categoryId);
+
+            // Validate category exists
+            var category = await _mediaCategoryRepository.GetByIdAsync(categoryId);
+            if (category == null)
+            {
+                throw new ArgumentException($"Media category with ID {categoryId} not found");
+            }
+
+            var allMediaFiles = await _mediaFileRepository.GetAllAsync();
+            var categoryFiles = allMediaFiles.Where(f => f.CategoryId == categoryId).ToList();
+            var dtos = _mapper.Map<List<MediaFileDto>>(categoryFiles);
+
+            _logger.LogInformation("Retrieved {Count} media files for category: {CategoryId}", dtos.Count, categoryId);
+            
+            return dtos;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving media files for category: {CategoryId}", categoryId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets media files by type
+    /// </summary>
+    public async Task<List<MediaFileDto>> GetByTypeAsync(MediaFileType mediaType)
+    {
+        using var scope = _logger.BeginScope("Getting media files by type {MediaType}", mediaType);
+        
+        try
+        {
+            _logger.LogInformation("Retrieving media files of type: {MediaType}", mediaType);
+
+            var allMediaFiles = await _mediaFileRepository.GetAllAsync();
+            var typeFiles = allMediaFiles.Where(f => f.MediaType == (CoreMediaType)mediaType).ToList();
+            var dtos = _mapper.Map<List<MediaFileDto>>(typeFiles);
+
+            _logger.LogInformation("Retrieved {Count} media files of type: {MediaType}", dtos.Count, mediaType);
+            
+            return dtos;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving media files of type: {MediaType}", mediaType);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Updates media file status
+    /// </summary>
+    public async Task<bool> UpdateStatusAsync(Guid id, MediaFileStatus status)
+    {
+        using var scope = _logger.BeginScope("Updating media file status {MediaFileId} to {Status}", id, status);
+        
+        try
+        {
+            _logger.LogInformation("Updating status for media file: {MediaFileId} to {Status}", id, status);
+
+            var mediaFile = await _mediaFileRepository.GetByIdAsync(id);
+            if (mediaFile == null)
+            {
+                _logger.LogWarning("Media file not found for status update: {MediaFileId}", id);
+                return false;
+            }
+
+            mediaFile.Status = (CoreMediaStatus)status;
+            mediaFile.ModifiedAt = DateTime.UtcNow;
+
+            await _mediaFileRepository.UpdateAsync(mediaFile);
+            
+            _logger.LogInformation("Successfully updated status for media file: {MediaFileId}", id);
+            
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating status for media file: {MediaFileId}", id);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets media files by user
+    /// </summary>
+    public async Task<List<MediaFileDto>> GetByUserAsync(Guid userId)
+    {
+        using var scope = _logger.BeginScope("Getting media files by user {UserId}", userId);
+        
+        try
+        {
+            _logger.LogInformation("Retrieving media files for user: {UserId}", userId);
+
+            var allMediaFiles = await _mediaFileRepository.GetAllAsync();
+            var userFiles = allMediaFiles.Where(f => f.UploadedByUserId == userId).ToList();
+            var dtos = _mapper.Map<List<MediaFileDto>>(userFiles);
+
+            _logger.LogInformation("Retrieved {Count} media files for user: {UserId}", dtos.Count, userId);
+            
+            return dtos;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving media files for user: {UserId}", userId);
+            throw;
+        }
+    }
+}

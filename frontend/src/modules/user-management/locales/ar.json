@@ -1,0 +1,167 @@
+{
+  "userManagement": {
+    "view": {
+      "title": "إدارة المستخدمين",
+      "description": "إدارة المستخدمين والأدوار والصلاحيات",
+      "actions": {
+        "createUser": "إنشاء مستخدم"
+      }
+    },
+    "list": {
+      "title": "المستخدمون",
+      "headers": {
+        "user": "المستخدم",
+        "email": "البريد الإلكتروني",
+        "roles": "الأدوار",
+        "status": "الحالة",
+        "lastLogin": "آخر تسجيل دخول",
+        "actions": "الإجراءات"
+      },
+      "filters": {
+        "search": "البحث في المستخدمين...",
+        "role": "تصفية حسب الدور",
+        "status": "تصفية حسب الحالة",
+        "clear": "مسح التصفية"
+      },
+      "status": {
+        "active": "نشط",
+        "inactive": "غير نشط",
+        "verified": "مؤكد",
+        "unverified": "غير مؤكد"
+      },
+      "actions": {
+        "edit": "تحرير",
+        "delete": "حذف",
+        "view": "عرض التفاصيل",
+        "refresh": "تحديث",
+        "export": "تصدير"
+      },
+      "bulk": {
+        "selectAll": "تحديد الكل",
+        "deselectAll": "إلغاء تحديد الكل",
+        "delete": "حذف المحدد",
+        "export": "تصدير المحدد",
+        "selectedCount": "{{count}} مستخدم محدد",
+        "selectedCount_plural": "{{count}} مستخدم محدد"
+      },
+      "pagination": {
+        "showing": "عرض {{from}} إلى {{to}} من {{total}} مستخدم",
+        "previous": "السابق",
+        "next": "التالي",
+        "itemsPerPage": "عدد العناصر في الصفحة"
+      },
+      "empty": {
+        "title": "لم يتم العثور على مستخدمين",
+        "description": "لا يوجد مستخدمون يطابقون معايير البحث الحالية. حاول تعديل معايير البحث أو إنشاء مستخدم جديد.",
+        "action": "إنشاء مستخدم"
+      },
+      "loading": "جاري تحميل المستخدمين...",
+      "error": "فشل في تحميل المستخدمين. يرجى المحاولة مرة أخرى."
+    },
+    "form": {
+      "createTitle": "إنشاء مستخدم جديد",
+      "editTitle": "تحرير المستخدم",
+      "createDescription": "إضافة مستخدم جديد إلى النظام مع الأدوار والصلاحيات المناسبة.",
+      "editDescription": "تحديث معلومات المستخدم {{userName}}.",
+      "sections": {
+        "basicInfo": "المعلومات الأساسية",
+        "roles": "تعيين الأدوار",
+        "status": "حالة الحساب"
+      },
+      "fields": {
+        "username": "اسم المستخدم",
+        "email": "عنوان البريد الإلكتروني",
+        "password": "كلمة المرور",
+        "firstName": "الاسم الأول",
+        "lastName": "اسم العائلة",
+        "phoneNumber": "رقم الهاتف",
+        "preferredLanguage": "اللغة المفضلة",
+        "roles": "الأدوار المعينة",
+        "isActive": "الحساب نشط"
+      },
+      "placeholders": {
+        "username": "أدخل اسم المستخدم",
+        "email": "أدخل عنوان البريد الإلكتروني",
+        "password": "أدخل كلمة المرور (8 أحرف على الأقل)",
+        "firstName": "أدخل الاسم الأول",
+        "lastName": "أدخل اسم العائلة",
+        "phoneNumber": "أدخل رقم الهاتف"
+      },
+      "descriptions": {
+        "isActive": "المستخدمون غير النشطون لا يمكنهم تسجيل الدخول إلى النظام"
+      },
+      "errors": {
+        "usernameRequired": "اسم المستخدم مطلوب",
+        "usernameTooShort": "اسم المستخدم يجب أن يكون 3 أحرف على الأقل",
+        "emailRequired": "عنوان البريد الإلكتروني مطلوب",
+        "emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صحيح",
+        "passwordRequired": "كلمة المرور مطلوبة",
+        "passwordTooShort": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+        "firstNameRequired": "الاسم الأول مطلوب",
+        "firstNameTooShort": "الاسم الأول يجب أن يكون حرفين على الأقل",
+        "lastNameRequired": "اسم العائلة مطلوب",
+        "lastNameTooShort": "اسم العائلة يجب أن يكون حرفين على الأقل",
+        "phoneInvalid": "يرجى إدخال رقم هاتف صحيح",
+        "roleRequired": "يجب تعيين دور واحد على الأقل",
+        "submitFailed": "فشل في حفظ المستخدم. يرجى المحاولة مرة أخرى."
+      },
+      "actions": {
+        "create": "إنشاء مستخدم",
+        "save": "حفظ التغييرات",
+        "cancel": "إلغاء"
+      },
+      "noRolesAvailable": "لا توجد أدوار متاحة للتعيين"
+    },
+    "deleteModal": {
+      "title": "حذف المستخدم",
+      "message": "هل أنت متأكد من أنك تريد حذف {{userName}} ({{email}})؟ لا يمكن التراجع عن هذا الإجراء.",
+      "warning": "سيؤدي هذا إلى إزالة المستخدم نهائياً من النظام وإلغاء جميع صلاحياته.",
+      "actions": {
+        "delete": "حذف المستخدم",
+        "cancel": "إلغاء"
+      }
+    },
+    "notifications": {
+      "userCreated": "تم إنشاء المستخدم بنجاح",
+      "userUpdated": "تم تحديث المستخدم بنجاح",
+      "userDeleted": "تم حذف المستخدم بنجاح",
+      "usersDeleted": "تم حذف {{count}} مستخدم بنجاح",
+      "usersDeleted_plural": "تم حذف {{count}} مستخدم بنجاح",
+      "exportStarted": "بدأ التصدير. سيتم إخطارك عند الانتهاء.",
+      "error": "حدث خطأ. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "users": {
+    "title": "المستخدمون",
+    "totalCount": "تم العثور على {{count}} مستخدم",
+    "totalCount_plural": "تم العثور على {{count}} مستخدم",
+    "searchPlaceholder": "البحث في المستخدمين...",
+    "selectAll": "تحديد الكل",
+    "selectUser": "تحديد المستخدم",
+    "user": "المستخدم",
+    "contact": "الاتصال",
+    "roles": "الأدوار",
+    "status": "الحالة",
+    "lastLogin": "آخر تسجيل دخول",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "noRoles": "لم يتم تعيين أدوار",
+    "noUsers": "لم يتم العثور على مستخدمين",
+    "noUsersDescription": "لا توجد مستخدمين للعرض. جرب إنشاء مستخدم جديد أو تعديل معايير البحث."
+  },
+  "common": {
+    "filter": "تصفية",
+    "refresh": "تحديث",
+    "actions": "الإجراءات",
+    "never": "أبداً",
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "edit": "تحرير",
+    "delete": "حذف",
+    "create": "إنشاء",
+    "search": "بحث",
+    "clear": "مسح"
+  }
+}

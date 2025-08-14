@@ -1,0 +1,261 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Extensions.Logging;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Enums;
+
+namespace Ikhtibar.Infrastructure.Services;
+
+/// <summary>
+/// Background job service for notification scheduling and processing.
+/// Implements scheduling, management, and execution of delayed notifications.
+/// </summary>
+public class NotificationJobService : INotificationJobService
+{
+    private readonly ILogger<NotificationJobService> _logger;
+    private readonly INotificationService _notificationService;
+    private readonly INotificationRepository _notificationRepository;
+    
+    // This is a simple implementation that could be replaced with a real job scheduler like Hangfire or Quartz.NET
+    private static readonly Dictionary<string, Timer> _activeJobs = new();
+
+    public NotificationJobService(
+        ILogger<NotificationJobService> logger,
+        INotificationService notificationService,
+        INotificationRepository notificationRepository)
+    {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _notificationRepository = notificationRepository ?? throw new ArgumentNullException(nameof(notificationRepository));
+    }
+    
+    /// <summary>
+    /// Schedules a notification for future delivery
+    /// </summary>
+    public async Task<string> ScheduleNotificationAsync(Guid notificationId, DateTime scheduleTime, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Scheduling notification {NotificationId} for delivery at {ScheduleTime}", 
+            notificationId, scheduleTime);
+
+        // Validate notification exists
+        var notification = await _notificationRepository.GetByIdAsync(notificationId);
+        if (notification == null)
+        {
+            _logger.LogWarning("Cannot schedule non-existent notification {NotificationId}", notificationId);
+            throw new ArgumentException($"Notification with ID {notificationId} does not exist", nameof(notificationId));
+        }
+        
+        // Generate job ID
+        var jobId = $"notification_{notificationId}_{Guid.NewGuid()}";
+        
+        // Calculate delay time
+        var now = DateTime.UtcNow;
+        var delay = scheduleTime > now ? scheduleTime - now : TimeSpan.Zero;
+
+        // Create timer to execute at scheduled time
+        var timer = new Timer(async state =>
+        {
+            try
+            {
+                _logger.LogInformation("Executing scheduled notification {NotificationId}", notificationId);
+                await _notificationService.SendNotificationAsync(notificationId);
+                
+                // Remove job from active jobs
+                if (_activeJobs.ContainsKey(jobId))
+                {
+                    _activeJobs.Remove(jobId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error executing scheduled notification {NotificationId}", notificationId);
+            }
+        }, null, delay, Timeout.InfiniteTimeSpan);
+
+        // Store timer for future management
+        _activeJobs[jobId] = timer;
+        
+        _logger.LogInformation("Notification {NotificationId} scheduled with job ID {JobId}", notificationId, jobId);
+        
+        return jobId;
+    }
+
+    /// <summary>
+    /// Schedules a recurring notification
+    /// </summary>
+    public async Task<string> ScheduleRecurringNotificationAsync(Guid notificationId, string cronExpression, DateTime? endTime = null, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Scheduling recurring notification {NotificationId} with cron expression {CronExpression}", 
+            notificationId, cronExpression);
+        
+        // Validate notification exists
+        var notification = await _notificationRepository.GetByIdAsync(notificationId);
+        if (notification == null)
+        {
+            _logger.LogWarning("Cannot schedule non-existent notification {NotificationId}", notificationId);
+            throw new ArgumentException($"Notification with ID {notificationId} does not exist", nameof(notificationId));
+        }
+        
+        // Generate job ID
+        var jobId = $"recurring_{notificationId}_{Guid.NewGuid()}";
+        
+        // For a proper implementation, you would use a cron parser to calculate the next execution time
+        // This is a simplified version that schedules the first occurrence only
+        
+        // For demonstration, we'll schedule it for one hour from now
+        var now = DateTime.UtcNow;
+        var delay = TimeSpan.FromHours(1);
+        
+        _logger.LogWarning("Simple implementation - recurring job {JobId} will only execute once", jobId);
+        
+        // Create timer to execute at scheduled time
+        var timer = new Timer(async state =>
+        {
+            try
+            {
+                _logger.LogInformation("Executing recurring notification {NotificationId}", notificationId);
+                await _notificationService.SendNotificationAsync(notificationId);
+                
+                // Remove job from active jobs
+                if (_activeJobs.ContainsKey(jobId))
+                {
+                    _activeJobs.Remove(jobId);
+                }
+                
+                _logger.LogWarning("Recurring job {JobId} completed - no further executions (simple implementation)", jobId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error executing recurring notification {NotificationId}", notificationId);
+            }
+        }, null, delay, Timeout.InfiniteTimeSpan);
+
+        // Store timer for future management
+        _activeJobs[jobId] = timer;
+        
+        _logger.LogInformation("Recurring notification {NotificationId} scheduled with job ID {JobId}", notificationId, jobId);
+        
+        return jobId;
+    }
+
+    /// <summary>
+    /// Cancels a scheduled notification job
+    /// </summary>
+    public Task<bool> CancelScheduledNotificationAsync(string jobId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Attempting to cancel scheduled job {JobId}", jobId);
+        
+        if (_activeJobs.TryGetValue(jobId, out var timer))
+        {
+            timer.Dispose();
+            _activeJobs.Remove(jobId);
+            
+            _logger.LogInformation("Successfully cancelled scheduled job {JobId}", jobId);
+            return Task.FromResult(true);
+        }
+        
+        _logger.LogWarning("Job {JobId} not found for cancellation", jobId);
+        return Task.FromResult(false);
+    }
+    
+    /// <summary>
+    /// Cancels all scheduled notifications for a user
+    /// </summary>
+    public Task<int> CancelAllScheduledNotificationsForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Cancelling all scheduled notifications for user {UserId}", userId);
+        
+        // In a real implementation, you would query a database for jobs associated with the user
+        // For this simple implementation, we'll just return 0
+        
+        _logger.LogWarning("CancelAllScheduledNotificationsForUserAsync not fully implemented");
+        return Task.FromResult(0);
+    }
+    
+    /// <summary>
+    /// Schedules cleanup of old notifications
+    /// </summary>
+    public Task<string> ScheduleCleanupJobAsync(int retentionDays, IEnumerable<NotificationType>? notificationTypes = null, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Scheduling cleanup job for notifications older than {RetentionDays} days", retentionDays);
+        
+        // Generate job ID
+        var jobId = $"cleanup_{Guid.NewGuid()}";
+        
+        // Schedule for midnight tonight
+        var now = DateTime.UtcNow;
+        var midnight = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc).AddDays(1);
+        var delay = midnight - now;
+        
+        // Create timer to execute at scheduled time
+        var timer = new Timer(state =>
+        {
+            try
+            {
+                _logger.LogInformation("Executing cleanup job for notifications older than {RetentionDays} days", retentionDays);
+                
+                // In a real implementation, you would call a repository method to delete old notifications
+                _logger.LogWarning("Cleanup job implementation not complete");
+                
+                // Remove job from active jobs
+                if (_activeJobs.ContainsKey(jobId))
+                {
+                    _activeJobs.Remove(jobId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error executing cleanup job");
+            }
+        }, null, delay, Timeout.InfiniteTimeSpan);
+
+        // Store timer for future management
+        _activeJobs[jobId] = timer;
+        
+        _logger.LogInformation("Cleanup job scheduled with job ID {JobId}", jobId);
+        
+        return Task.FromResult(jobId);
+    }
+    
+    /// <summary>
+    /// Gets all scheduled jobs for a notification
+    /// </summary>
+    public Task<List<ScheduledJobDto>> GetScheduledJobsForNotificationAsync(Guid notificationId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Getting scheduled jobs for notification {NotificationId}", notificationId);
+        
+        // In a real implementation, you would query a database for jobs associated with the notification
+        var jobs = _activeJobs.Keys
+            .Where(k => k.Contains($"notification_{notificationId}"))
+            .Select(k => new ScheduledJobDto
+            {
+                JobId = k,
+                NotificationId = notificationId,
+                ScheduledTime = DateTime.UtcNow.AddHours(1), // Placeholder
+                JobType = "OneTime",
+                Status = "Scheduled"
+            })
+            .ToList();
+            
+        return Task.FromResult(jobs);
+    }
+    
+    /// <summary>
+    /// Gets all scheduled jobs for a user
+    /// </summary>
+    public Task<List<ScheduledJobDto>> GetScheduledJobsForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Getting scheduled jobs for user {UserId}", userId);
+        
+        // In a real implementation, you would query a database for jobs associated with the user
+        // For this simple implementation, we'll just return an empty list
+        
+        _logger.LogWarning("GetScheduledJobsForUserAsync not fully implemented");
+        return Task.FromResult(new List<ScheduledJobDto>());
+    }
+}

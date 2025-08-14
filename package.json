@@ -1,0 +1,70 @@
+{
+  "name": "ikhtibar-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ikhtibar full-stack application workspace",
+  "workspaces": [
+    "frontend"
+  ],
+  "engines": {
+    "node": ">=20.11.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "postinstall": "echo 'Workspace setup complete!'",
+    "run": "concurrently \"pnpm:dev:backend\" \"pnpm:dev:frontend\"",
+    "dev": "concurrently \"pnpm:dev:backend\" \"pnpm:dev:frontend\"",
+    "dev:frontend": "pnpm --filter admin-panel start",
+    "dev:backend": "cd backend && dotnet run --project Ikhtibar.API --launch-profile http",
+    "build": "pnpm build:frontend && pnpm build:backend",
+    "build:frontend": "pnpm --filter admin-panel build",
+    "build:backend": "cd backend && dotnet build Ikhtibar.sln",
+    "build:testing": "pnpm --filter admin-panel build:testing && pnpm build:backend",
+    "build:staging": "pnpm --filter admin-panel build:staging && pnpm build:backend",
+    "build:production": "pnpm --filter admin-panel build:production && pnpm build:backend",
+    "test": "pnpm test:frontend && pnpm test:backend",
+    "test:frontend": "pnpm --filter admin-panel test",
+    "test:backend": "cd backend && dotnet test Ikhtibar.Tests",
+    "test:watch": "concurrently \"pnpm:test:frontend:watch\" \"pnpm:test:backend:watch\"",
+    "test:frontend:watch": "pnpm --filter admin-panel test --watch",
+    "test:backend:watch": "cd backend && dotnet watch test Ikhtibar.Tests",
+    "test:coverage": "pnpm test:frontend:coverage && pnpm test:backend:coverage",
+    "test:frontend:coverage": "pnpm --filter admin-panel test:coverage",
+    "test:backend:coverage": "cd backend && dotnet test Ikhtibar.Tests --collect:\"XPlat Code Coverage\"",
+    "lint": "pnpm lint:frontend",
+    "lint:frontend": "pnpm --filter admin-panel lint",
+    "format": "pnpm format:frontend",
+    "format:frontend": "pnpm --filter admin-panel format",
+    "type-check": "pnpm type-check:frontend",
+    "type-check:frontend": "pnpm --filter admin-panel type-check",
+    "clean": "pnpm clean:frontend && pnpm clean:backend",
+    "clean:frontend": "pnpm --filter admin-panel run clean || rimraf frontend/dist frontend/node_modules/.vite",
+    "clean:backend": "cd backend && dotnet clean Ikhtibar.sln",
+    "restore": "pnpm install && pnpm restore:backend",
+    "restore:backend": "cd backend && dotnet restore Ikhtibar.sln",
+    "publish": "pnpm build:production && pnpm publish:backend",
+    "publish:backend": "cd backend && dotnet publish Ikhtibar.API -c Release -o ./publish",
+    "docker:build": "docker build -t ikhtibar-frontend ./frontend && docker build -t ikhtibar-backend ./backend",
+    "docker:run": "docker-compose up -d",
+    "docker:stop": "docker-compose down",
+    "workspace:info": "pnpm list --depth=0",
+    "workspace:update": "pnpm update --recursive",
+    "start:prod": "concurrently \"pnpm:start:backend:prod\" \"pnpm:start:frontend:prod\"",
+    "start:backend:prod": "cd backend && dotnet run --project Ikhtibar.API --configuration Release",
+    "start:frontend:prod": "pnpm --filter admin-panel preview"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "rimraf": "^6.0.1"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "volta": {
+    "node": "20.11.0",
+    "pnpm": "9.0.0"
+  },
+  "dependencies": {
+    "lucide-react": "^0.525.0"
+  }
+}

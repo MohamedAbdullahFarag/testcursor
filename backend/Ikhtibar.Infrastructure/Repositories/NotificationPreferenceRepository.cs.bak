@@ -1,0 +1,515 @@
+using Dapper;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Entities;
+using Ikhtibar.Shared.Models;
+using Ikhtibar.Shared.Enums;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Infrastructure.Data;
+using System.Data;
+
+namespace Ikhtibar.Infrastructure.Repositories;
+
+/// <summary>
+/// Repository implementation for notification preference entities
+/// Manages user notification delivery preferences with Dapper
+/// </summary>
+public class NotificationPreferenceRepository : BaseRepository<NotificationPreference>, INotificationPreferenceRepository
+{
+    public NotificationPreferenceRepository(IDbConnectionFactory connectionFactory) 
+        : base(connectionFactory)
+    {
+    }
+
+    public async Task<IEnumerable<NotificationPreference>> GetUserPreferencesAsync(int userId)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT * FROM NotificationPreferences 
+                WHERE UserId = @UserId AND IsDeleted = 0
+                ORDER BY NotificationType";
+            
+            var preferences = await connection.QueryAsync<NotificationPreference>(sql, new { UserId = userId });
+            return preferences ?? Enumerable.Empty<NotificationPreference>();
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<NotificationPreference?> GetUserPreferenceAsync(int userId, NotificationType notificationType)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT * FROM NotificationPreferences 
+                WHERE UserId = @UserId AND NotificationType = @NotificationType AND IsDeleted = 0
+                LIMIT 1";
+            
+            var preference = await connection.QuerySingleOrDefaultAsync<NotificationPreference>(sql, 
+                new { UserId = userId, NotificationType = notificationType });
+            return preference;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<NotificationPreference> UpsertPreferenceAsync(
+        int userId, 
+        NotificationType notificationType, 
+        bool emailEnabled, 
+        bool smsEnabled, 
+        bool inAppEnabled, 
+        bool pushEnabled)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            
+            // Check if preference exists
+            const string checkSql = @"
+                SELECT * FROM NotificationPreferences 
+                WHERE UserId = @UserId AND NotificationType = @NotificationType AND IsDeleted = 0";
+            
+            var existing = await connection.QuerySingleOrDefaultAsync<NotificationPreference>(checkSql, 
+                new { UserId = userId, NotificationType = notificationType });
+
+            if (existing != null)
+            {
+                // Update existing
+                existing.EmailEnabled = emailEnabled;
+                existing.SmsEnabled = smsEnabled;
+                existing.InAppEnabled = inAppEnabled;
+                existing.PushEnabled = pushEnabled;
+                existing.ModifiedAt = DateTime.UtcNow;
+                
+                const string updateSql = @"
+                    UPDATE NotificationPreferences 
+                    SET EmailEnabled = @EmailEnabled, SmsEnabled = @SmsEnabled, 
+                        InAppEnabled = @InAppEnabled, PushEnabled = @PushEnabled, ModifiedAt = @ModifiedAt
+                    WHERE Id = @Id";
+                
+                await connection.ExecuteAsync(updateSql, existing);
+                return existing;
+            }
+            else
+            {
+                // Create new
+                var newPreference = new NotificationPreference
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    NotificationType = notificationType,
+                    EmailEnabled = emailEnabled,
+                    SmsEnabled = smsEnabled,
+                    InAppEnabled = inAppEnabled,
+                    PushEnabled = pushEnabled,
+                    FrequencyLimit = 0,
+                    FrequencyWindowMinutes = 60,
+                    CreatedAt = DateTime.UtcNow,
+                    ModifiedAt = DateTime.UtcNow,
+                    IsDeleted = false
+                };
+                
+                const string insertSql = @"
+                    INSERT INTO NotificationPreferences 
+                    (Id, UserId, NotificationType, EmailEnabled, SmsEnabled, InAppEnabled, PushEnabled, 
+                     QuietHoursStart, QuietHoursEnd, TimeZone, FrequencyLimit, FrequencyWindowMinutes, 
+                     CreatedAt, ModifiedAt, IsDeleted)
+                    VALUES 
+                    (@Id, @UserId, @NotificationType, @EmailEnabled, @SmsEnabled, @InAppEnabled, @PushEnabled,
+                     @QuietHoursStart, @QuietHoursEnd, @TimeZone, @FrequencyLimit, @FrequencyWindowMinutes,
+                     @CreatedAt, @ModifiedAt, @IsDeleted)";
+                
+                await connection.ExecuteAsync(insertSql, newPreference);
+                return newPreference;
+            }
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<NotificationPreference> UpsertPreferenceAsync(NotificationPreference preference)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            
+            // Check if preference already exists
+            const string checkSql = @"
+                SELECT COUNT(1) FROM NotificationPreferences 
+                WHERE UserId = @UserId AND NotificationType = @NotificationType AND IsDeleted = 0";
+            
+            var exists = await connection.QuerySingleAsync<int>(checkSql, 
+                new { preference.UserId, preference.NotificationType });
+
+            if (exists > 0)
+            {
+                // Update existing preference
+                preference.ModifiedAt = DateTime.UtcNow;
+                
+                const string updateSql = @"
+                    UPDATE NotificationPreferences 
+                    SET EmailEnabled = @EmailEnabled, SmsEnabled = @SmsEnabled, InAppEnabled = @InAppEnabled, 
+                        PushEnabled = @PushEnabled, QuietHoursStart = @QuietHoursStart, QuietHoursEnd = @QuietHoursEnd, 
+                        TimeZone = @TimeZone, FrequencyLimit = @FrequencyLimit, FrequencyWindowMinutes = @FrequencyWindowMinutes,
+                        ModifiedAt = @ModifiedAt
+                    WHERE UserId = @UserId AND NotificationType = @NotificationType AND IsDeleted = 0";
+                
+                await connection.ExecuteAsync(updateSql, preference);
+            }
+            else
+            {
+                // Insert new preference
+                preference.Id = Guid.NewGuid();
+                preference.CreatedAt = DateTime.UtcNow;
+                preference.ModifiedAt = DateTime.UtcNow;
+                preference.IsDeleted = false;
+                
+                const string insertSql = @"
+                    INSERT INTO NotificationPreferences 
+                    (Id, UserId, NotificationType, EmailEnabled, SmsEnabled, InAppEnabled, PushEnabled, 
+                     QuietHoursStart, QuietHoursEnd, TimeZone, FrequencyLimit, FrequencyWindowMinutes, 
+                     CreatedAt, ModifiedAt, IsDeleted)
+                    VALUES 
+                    (@Id, @UserId, @NotificationType, @EmailEnabled, @SmsEnabled, @InAppEnabled, @PushEnabled,
+                     @QuietHoursStart, @QuietHoursEnd, @TimeZone, @FrequencyLimit, @FrequencyWindowMinutes,
+                     @CreatedAt, @ModifiedAt, @IsDeleted)";
+                
+                await connection.ExecuteAsync(insertSql, preference);
+            }
+
+            return preference;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<NotificationPreference>> CreateDefaultPreferencesAsync(int userId)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            
+            // Create default preferences for all notification types
+            var notificationTypes = Enum.GetValues<NotificationType>();
+            var defaultPreferences = new List<NotificationPreference>();
+            
+            foreach (var notificationType in notificationTypes)
+            {
+                // Check if preference already exists
+                const string checkSql = @"
+                    SELECT COUNT(1) FROM NotificationPreferences 
+                    WHERE UserId = @UserId AND NotificationType = @NotificationType AND IsDeleted = 0";
+                
+                var exists = await connection.QuerySingleAsync<int>(checkSql, 
+                    new { UserId = userId, NotificationType = notificationType });
+                
+                if (exists == 0)
+                {
+                    var (emailEnabled, smsEnabled, inAppEnabled, pushEnabled) = GetDefaultEnabledStates(notificationType);
+                    
+                    var newPreference = new NotificationPreference
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = userId,
+                        NotificationType = notificationType,
+                        EmailEnabled = emailEnabled,
+                        SmsEnabled = smsEnabled,
+                        InAppEnabled = inAppEnabled,
+                        PushEnabled = pushEnabled,
+                        FrequencyLimit = 0,
+                        FrequencyWindowMinutes = 60,
+                        CreatedAt = DateTime.UtcNow,
+                        ModifiedAt = DateTime.UtcNow,
+                        IsDeleted = false
+                    };
+                    
+                    defaultPreferences.Add(newPreference);
+                }
+            }
+
+            if (defaultPreferences.Any())
+            {
+                const string insertSql = @"
+                    INSERT INTO NotificationPreferences 
+                    (Id, UserId, NotificationType, EmailEnabled, SmsEnabled, InAppEnabled, PushEnabled, 
+                     QuietHoursStart, QuietHoursEnd, TimeZone, FrequencyLimit, FrequencyWindowMinutes, 
+                     CreatedAt, ModifiedAt, IsDeleted)
+                    VALUES 
+                    (@Id, @UserId, @NotificationType, @EmailEnabled, @SmsEnabled, @InAppEnabled, @PushEnabled,
+                     @QuietHoursStart, @QuietHoursEnd, @TimeZone, @FrequencyLimit, @FrequencyWindowMinutes,
+                     @CreatedAt, @ModifiedAt, @IsDeleted)";
+                
+                await connection.ExecuteAsync(insertSql, defaultPreferences);
+            }
+            
+            return defaultPreferences;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<int>> GetUsersWithChannelEnabledAsync(NotificationType notificationType, NotificationChannel channel)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            
+            var columnName = channel switch
+            {
+                NotificationChannel.Email => "EmailEnabled",
+                NotificationChannel.Sms => "SmsEnabled",
+                NotificationChannel.InApp => "InAppEnabled",
+                NotificationChannel.Push => "PushEnabled",
+                _ => "InAppEnabled"
+            };
+            
+            var sql = $@"
+                SELECT DISTINCT UserId FROM NotificationPreferences 
+                WHERE NotificationType = @NotificationType AND {columnName} = 1 AND IsDeleted = 0";
+            
+            var userIds = await connection.QueryAsync<int>(sql, 
+                new { NotificationType = notificationType });
+            return userIds ?? Enumerable.Empty<int>();
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<int> UpdateQuietHoursAsync(int userId, string? quietHoursStart, string? quietHoursEnd, string? timezone = null)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                UPDATE NotificationPreferences 
+                SET QuietHoursStart = @QuietHoursStart, QuietHoursEnd = @QuietHoursEnd, TimeZone = @TimeZone, ModifiedAt = @ModifiedAt
+                WHERE UserId = @UserId AND IsDeleted = 0";
+            
+            var rowsAffected = await connection.ExecuteAsync(sql, new 
+            { 
+                UserId = userId,
+                QuietHoursStart = quietHoursStart,
+                QuietHoursEnd = quietHoursEnd,
+                TimeZone = timezone,
+                ModifiedAt = DateTime.UtcNow
+            });
+            
+            return rowsAffected;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<bool> IsWithinQuietHoursAsync(int userId, DateTime? checkTime = null)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT QuietHoursStart, QuietHoursEnd 
+                FROM NotificationPreferences 
+                WHERE UserId = @UserId AND IsDeleted = 0
+                  AND QuietHoursStart IS NOT NULL AND QuietHoursEnd IS NOT NULL
+                LIMIT 1";
+            
+            var quietHours = await connection.QuerySingleOrDefaultAsync<(string? Start, string? End)>(sql, 
+                new { UserId = userId });
+            
+            if (quietHours.Start == null || quietHours.End == null)
+                return false;
+
+            // Use provided time or current time
+            var currentTime = (checkTime ?? DateTime.UtcNow).TimeOfDay;
+            
+            if (TimeSpan.TryParse(quietHours.Start, out var startTime) && 
+                TimeSpan.TryParse(quietHours.End, out var endTime))
+            {
+                if (startTime <= endTime)
+                {
+                    return currentTime >= startTime && currentTime <= endTime;
+                }
+                else
+                {
+                    // Quiet hours span midnight
+                    return currentTime >= startTime || currentTime <= endTime;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<PreferenceStatsDto> GetPreferenceSummaryAsync()
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            
+            const string sql = @"
+                SELECT 
+                    COUNT(DISTINCT UserId) as TotalUsers,
+                    COUNT(DISTINCT NotificationType) as TotalNotificationTypes
+                FROM NotificationPreferences 
+                WHERE IsDeleted = 0";
+            
+            var result = await connection.QuerySingleOrDefaultAsync<dynamic>(sql);
+            
+            var summary = new PreferenceStatsDto
+            {
+                TotalUsers = result?.TotalUsers ?? 0
+            };
+            
+            // Get preferences by type
+            const string typeStatsSql = @"
+                SELECT 
+                    NotificationType,
+                    SUM(CASE WHEN EmailEnabled = 1 THEN 1 ELSE 0 END) as EmailEnabled,
+                    SUM(CASE WHEN SmsEnabled = 1 THEN 1 ELSE 0 END) as SmsEnabled,
+                    SUM(CASE WHEN InAppEnabled = 1 THEN 1 ELSE 0 END) as InAppEnabled,
+                    SUM(CASE WHEN PushEnabled = 1 THEN 1 ELSE 0 END) as PushEnabled,
+                    COUNT(*) as TotalUsers
+                FROM NotificationPreferences 
+                WHERE IsDeleted = 0
+                GROUP BY NotificationType";
+                
+            var typeStats = await connection.QueryAsync<dynamic>(typeStatsSql);
+            
+            foreach (var stat in typeStats)
+            {
+                summary.PreferencesByType[(NotificationType)stat.NotificationType] = new ChannelPreferenceStatsDto
+                {
+                    EmailEnabled = stat.EmailEnabled,
+                    SmsEnabled = stat.SmsEnabled,
+                    InAppEnabled = stat.InAppEnabled,
+                    PushEnabled = stat.PushEnabled,
+                    TotalUsers = stat.TotalUsers
+                };
+            }
+            
+            return summary;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<int> BulkUpdatePreferencesAsync(
+        IEnumerable<int> userIds,
+        NotificationType notificationType,
+        Dictionary<NotificationChannel, bool> channelUpdates)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            using var transaction = connection.BeginTransaction();
+            
+            int updatedCount = 0;
+            
+            try
+            {
+                foreach (var userId in userIds)
+                {
+                    // Get existing preference
+                    const string selectSql = @"
+                        SELECT * FROM NotificationPreferences 
+                        WHERE UserId = @UserId AND NotificationType = @NotificationType AND IsDeleted = 0";
+                    
+                    var preference = await connection.QuerySingleOrDefaultAsync<NotificationPreference>(
+                        selectSql, new { UserId = userId, NotificationType = notificationType }, transaction);
+                    
+                    if (preference != null)
+                    {
+                        // Update channel settings
+                        foreach (var (channel, enabled) in channelUpdates)
+                        {
+                            switch (channel)
+                            {
+                                case NotificationChannel.Email:
+                                    preference.EmailEnabled = enabled;
+                                    break;
+                                case NotificationChannel.Sms:
+                                    preference.SmsEnabled = enabled;
+                                    break;
+                                case NotificationChannel.InApp:
+                                    preference.InAppEnabled = enabled;
+                                    break;
+                                case NotificationChannel.Push:
+                                    preference.PushEnabled = enabled;
+                                    break;
+                            }
+                        }
+                        
+                        preference.ModifiedAt = DateTime.UtcNow;
+                        
+                        const string updateSql = @"
+                            UPDATE NotificationPreferences 
+                            SET EmailEnabled = @EmailEnabled, SmsEnabled = @SmsEnabled, 
+                                InAppEnabled = @InAppEnabled, PushEnabled = @PushEnabled, ModifiedAt = @ModifiedAt
+                            WHERE Id = @Id";
+                        
+                        await connection.ExecuteAsync(updateSql, preference, transaction);
+                        updatedCount++;
+                    }
+                }
+                
+                transaction.Commit();
+                return updatedCount;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets default enabled states for notification type and all channels
+    /// </summary>
+    private static (bool email, bool sms, bool inApp, bool push) GetDefaultEnabledStates(NotificationType notificationType)
+    {
+        return notificationType switch
+        {
+            NotificationType.Welcome => (true, false, true, true),
+            NotificationType.ExamStart => (true, false, true, false),
+            NotificationType.ExamEnd => (true, false, true, false),
+            NotificationType.Announcement => (true, false, true, true),
+            NotificationType.ExamReminder => (true, true, true, true),
+            NotificationType.GradePublished => (true, false, true, true),
+            NotificationType.SecurityAlert => (true, true, true, false),
+            NotificationType.PasswordReset => (true, false, false, false),
+            NotificationType.RoleAssignment => (true, false, true, false),
+            NotificationType.AccountLocked => (true, true, false, false),
+            NotificationType.SystemAnnouncement => (false, false, true, false),
+            NotificationType.AssignmentReminder => (true, false, false, false),
+            NotificationType.SystemMaintenance => (true, false, true, false),
+            _ => (false, false, true, false) // Default to in-app only
+        };
+    }
+}

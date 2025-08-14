@@ -1,0 +1,669 @@
+using System.Data;
+using Dapper;
+using Microsoft.Extensions.Logging;
+using Ikhtibar.Core.Entities;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Infrastructure.Data;
+
+namespace Ikhtibar.Infrastructure.Repositories;
+
+/// <summary>
+/// Repository implementation for MediaCategory entity operations
+/// Provides specialized methods for hierarchical category management using Dapper
+/// </summary>
+public class MediaCategoryRepository : BaseRepository<MediaCategory>, IMediaCategoryRepository
+{
+    private readonly ILogger<MediaCategoryRepository> _logger;
+
+    public MediaCategoryRepository(IDbConnectionFactory connectionFactory, ILogger<MediaCategoryRepository> logger)
+        : base(connectionFactory)
+    {
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Gets all root categories (categories without parent)
+    /// </summary>
+    public async Task<IEnumerable<MediaCategory>> GetRootCategoriesAsync(bool activeOnly = true)
+    {
+        using var scope = _logger.BeginScope("GetRootCategoriesAsync: ActiveOnly={ActiveOnly}", activeOnly);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaCategories 
+                WHERE ParentCategoryId IS NULL 
+                AND IsDeleted = 0";
+            
+            if (activeOnly)
+            {
+                sql += " AND IsActive = 1";
+            }
+            
+            sql += " ORDER BY SortOrder, Name";
+            
+            var categories = await connection.QueryAsync<MediaCategory>(sql);
+            
+            _logger.LogInformation("Retrieved {Count} root categories", categories.Count());
+            return categories;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving root categories");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets child categories of a parent category
+    /// </summary>
+    public async Task<IEnumerable<MediaCategory>> GetChildCategoriesAsync(Guid parentCategoryId, bool activeOnly = true)
+    {
+        using var scope = _logger.BeginScope("GetChildCategoriesAsync: ParentId={ParentId}, ActiveOnly={ActiveOnly}", 
+            parentCategoryId, activeOnly);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaCategories 
+                WHERE ParentCategoryId = @ParentId 
+                AND IsDeleted = 0";
+            
+            if (activeOnly)
+            {
+                sql += " AND IsActive = 1";
+            }
+            
+            sql += " ORDER BY SortOrder, Name";
+            
+            var categories = await connection.QueryAsync<MediaCategory>(sql, new { ParentId = parentCategoryId });
+            
+            _logger.LogInformation("Retrieved {Count} child categories for parent {ParentId}", 
+                categories.Count(), parentCategoryId);
+            return categories;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving child categories for parent {ParentId}", parentCategoryId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets all descendant categories of a parent category (recursive)
+    /// </summary>
+    public async Task<IEnumerable<MediaCategory>> GetDescendantCategoriesAsync(Guid parentCategoryId, bool activeOnly = true)
+    {
+        using var scope = _logger.BeginScope("GetDescendantCategoriesAsync: ParentId={ParentId}, ActiveOnly={ActiveOnly}", 
+            parentCategoryId, activeOnly);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                WITH CategoryHierarchy AS (
+                    -- Base case: direct children
+                    SELECT mc.* FROM MediaCategories mc
+                    WHERE mc.ParentCategoryId = @ParentId
+                    AND mc.IsDeleted = 0
+                    
+                    UNION ALL
+                    
+                    -- Recursive case: children of children
+                    SELECT mc.* FROM MediaCategories mc
+                    INNER JOIN CategoryHierarchy ch ON mc.ParentCategoryId = ch.Id
+                    WHERE mc.IsDeleted = 0
+                )
+                SELECT * FROM CategoryHierarchy";
+            
+            if (activeOnly)
+            {
+                sql += " WHERE IsActive = 1";
+            }
+            
+            sql += " ORDER BY Name";
+            
+            var categories = await connection.QueryAsync<MediaCategory>(sql, new { ParentId = parentCategoryId });
+            
+            _logger.LogInformation("Retrieved {Count} descendant categories for parent {ParentId}", 
+                categories.Count(), parentCategoryId);
+            return categories;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving descendant categories for parent {ParentId}", parentCategoryId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets the full path of a category (all ancestors)
+    /// </summary>
+    public async Task<IEnumerable<MediaCategory>> GetCategoryPathAsync(Guid categoryId)
+    {
+        using var scope = _logger.BeginScope("GetCategoryPathAsync: CategoryId={CategoryId}", categoryId);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                WITH CategoryPath AS (
+                    -- Base case: the target category
+                    SELECT mc.*, 0 as Level FROM MediaCategories mc
+                    WHERE mc.Id = @CategoryId
+                    AND mc.IsDeleted = 0
+                    
+                    UNION ALL
+                    
+                    -- Recursive case: parent categories
+                    SELECT mc.*, cp.Level + 1 FROM MediaCategories mc
+                    INNER JOIN CategoryPath cp ON mc.Id = cp.ParentCategoryId
+                    WHERE mc.IsDeleted = 0
+                )
+                SELECT * FROM CategoryPath
+                ORDER BY Level DESC";
+            
+            var categories = await connection.QueryAsync<MediaCategory>(sql, new { CategoryId = categoryId });
+            
+            _logger.LogInformation("Retrieved category path with {Count} levels for category {CategoryId}", 
+                categories.Count(), categoryId);
+            return categories;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving category path for {CategoryId}", categoryId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets a category by its slug
+    /// </summary>
+    public async Task<MediaCategory?> GetBySlugAsync(string slug, bool activeOnly = true)
+    {
+        using var scope = _logger.BeginScope("GetBySlugAsync: Slug={Slug}, ActiveOnly={ActiveOnly}", slug, activeOnly);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaCategories 
+                WHERE Slug = @Slug 
+                AND IsDeleted = 0";
+            
+            if (activeOnly)
+            {
+                sql += " AND IsActive = 1";
+            }
+            
+            var category = await connection.QueryFirstOrDefaultAsync<MediaCategory>(sql, new { Slug = slug });
+            
+            _logger.LogInformation("Retrieved category by slug {Slug}: {Found}", slug, category != null);
+            return category;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving category by slug {Slug}", slug);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets categories by name (partial match)
+    /// </summary>
+    public async Task<IEnumerable<MediaCategory>> GetByNameAsync(string name, bool activeOnly = true)
+    {
+        using var scope = _logger.BeginScope("GetByNameAsync: Name={Name}, ActiveOnly={ActiveOnly}", name, activeOnly);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaCategories 
+                WHERE Name LIKE @Name 
+                AND IsDeleted = 0";
+            
+            if (activeOnly)
+            {
+                sql += " AND IsActive = 1";
+            }
+            
+            sql += " ORDER BY Name";
+            
+            var categories = await connection.QueryAsync<MediaCategory>(sql, new { Name = $"%{name}%" });
+            
+            _logger.LogInformation("Retrieved {Count} categories by name search '{Name}'", categories.Count(), name);
+            return categories;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving categories by name {Name}", name);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets the hierarchical tree structure of all categories
+    /// </summary>
+    public async Task<IEnumerable<MediaCategory>> GetCategoryTreeAsync(bool activeOnly = true)
+    {
+        using var scope = _logger.BeginScope("GetCategoryTreeAsync: ActiveOnly={ActiveOnly}", activeOnly);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                WITH CategoryTree AS (
+                    -- Root categories
+                    SELECT mc.*, 0 as Level, CAST(mc.SortOrder as varchar(max)) as TreePath
+                    FROM MediaCategories mc
+                    WHERE mc.ParentCategoryId IS NULL
+                    AND mc.IsDeleted = 0
+                    
+                    UNION ALL
+                    
+                    -- Child categories
+                    SELECT mc.*, ct.Level + 1, ct.TreePath + '.' + CAST(mc.SortOrder as varchar(max))
+                    FROM MediaCategories mc
+                    INNER JOIN CategoryTree ct ON mc.ParentCategoryId = ct.Id
+                    WHERE mc.IsDeleted = 0
+                )
+                SELECT * FROM CategoryTree";
+            
+            if (activeOnly)
+            {
+                sql += " WHERE IsActive = 1";
+            }
+            
+            sql += " ORDER BY TreePath";
+            
+            var categories = await connection.QueryAsync<MediaCategory>(sql);
+            
+            _logger.LogInformation("Retrieved {Count} categories in tree structure", categories.Count());
+            return categories;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving category tree");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Checks if a category has any child categories
+    /// </summary>
+    public async Task<bool> HasChildrenAsync(Guid categoryId, bool activeOnly = true)
+    {
+        using var scope = _logger.BeginScope("HasChildrenAsync: CategoryId={CategoryId}, ActiveOnly={ActiveOnly}", 
+            categoryId, activeOnly);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT COUNT(1) FROM MediaCategories 
+                WHERE ParentCategoryId = @CategoryId 
+                AND IsDeleted = 0";
+            
+            if (activeOnly)
+            {
+                sql += " AND IsActive = 1";
+            }
+            
+            var count = await connection.QuerySingleAsync<int>(sql, new { CategoryId = categoryId });
+            var hasChildren = count > 0;
+            
+            _logger.LogInformation("Category {CategoryId} has children: {HasChildren}", categoryId, hasChildren);
+            return hasChildren;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking if category {CategoryId} has children", categoryId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Checks if a category has any media files
+    /// </summary>
+    public async Task<bool> HasMediaFilesAsync(Guid categoryId, bool includeDescendants = false)
+    {
+        using var scope = _logger.BeginScope("HasMediaFilesAsync: CategoryId={CategoryId}, IncludeDescendants={IncludeDescendants}", 
+            categoryId, includeDescendants);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            string sql;
+            
+            if (includeDescendants)
+            {
+                sql = @"
+                    WITH CategoryHierarchy AS (
+                        SELECT Id FROM MediaCategories WHERE Id = @CategoryId
+                        UNION ALL
+                        SELECT mc.Id FROM MediaCategories mc
+                        INNER JOIN CategoryHierarchy ch ON mc.ParentCategoryId = ch.Id
+                        WHERE mc.IsDeleted = 0
+                    )
+                    SELECT COUNT(1) FROM MediaFiles mf
+                    INNER JOIN CategoryHierarchy ch ON mf.CategoryId = ch.Id
+                    WHERE mf.IsDeleted = 0";
+            }
+            else
+            {
+                sql = @"
+                    SELECT COUNT(1) FROM MediaFiles 
+                    WHERE CategoryId = @CategoryId 
+                    AND IsDeleted = 0";
+            }
+            
+            var count = await connection.QuerySingleAsync<int>(sql, new { CategoryId = categoryId });
+            var hasFiles = count > 0;
+            
+            _logger.LogInformation("Category {CategoryId} has media files: {HasFiles} (IncludeDescendants: {IncludeDescendants})", 
+                categoryId, hasFiles, includeDescendants);
+            return hasFiles;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking if category {CategoryId} has media files", categoryId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets the count of media files in a category
+    /// </summary>
+    public async Task<int> GetMediaFileCountAsync(Guid categoryId, bool includeDescendants = false)
+    {
+        using var scope = _logger.BeginScope("GetMediaFileCountAsync: CategoryId={CategoryId}, IncludeDescendants={IncludeDescendants}", 
+            categoryId, includeDescendants);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            string sql;
+            
+            if (includeDescendants)
+            {
+                sql = @"
+                    WITH CategoryHierarchy AS (
+                        SELECT Id FROM MediaCategories WHERE Id = @CategoryId
+                        UNION ALL
+                        SELECT mc.Id FROM MediaCategories mc
+                        INNER JOIN CategoryHierarchy ch ON mc.ParentCategoryId = ch.Id
+                        WHERE mc.IsDeleted = 0
+                    )
+                    SELECT COUNT(*) FROM MediaFiles mf
+                    INNER JOIN CategoryHierarchy ch ON mf.CategoryId = ch.Id
+                    WHERE mf.IsDeleted = 0";
+            }
+            else
+            {
+                sql = @"
+                    SELECT COUNT(*) FROM MediaFiles 
+                    WHERE CategoryId = @CategoryId 
+                    AND IsDeleted = 0";
+            }
+            
+            var count = await connection.QuerySingleAsync<int>(sql, new { CategoryId = categoryId });
+            
+            _logger.LogInformation("Category {CategoryId} has {Count} media files (IncludeDescendants: {IncludeDescendants})", 
+                categoryId, count, includeDescendants);
+            return count;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting media file count for category {CategoryId}", categoryId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Checks if a slug is available for a new category
+    /// </summary>
+    public async Task<bool> IsSlugAvailableAsync(string slug, Guid? excludeId = null)
+    {
+        using var scope = _logger.BeginScope("IsSlugAvailableAsync: Slug={Slug}, ExcludeId={ExcludeId}", slug, excludeId);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT COUNT(1) FROM MediaCategories 
+                WHERE Slug = @Slug 
+                AND IsDeleted = 0";
+            
+            object parameters = new { Slug = slug };
+            
+            if (excludeId.HasValue)
+            {
+                sql += " AND Id != @ExcludeId";
+                parameters = new { Slug = slug, ExcludeId = excludeId.Value };
+            }
+            
+            var count = await connection.QuerySingleAsync<int>(sql, parameters);
+            var isAvailable = count == 0;
+            
+            _logger.LogInformation("Slug '{Slug}' is available: {IsAvailable}", slug, isAvailable);
+            return isAvailable;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking slug availability for '{Slug}'", slug);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Updates the sort order of categories within a parent
+    /// </summary>
+    public async Task<int> UpdateSortOrderAsync(Guid? parentCategoryId, IEnumerable<Guid> categoryIds)
+    {
+        using var scope = _logger.BeginScope("UpdateSortOrderAsync: ParentId={ParentId}, CategoryCount={Count}", 
+            parentCategoryId, categoryIds.Count());
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                UPDATE MediaCategories 
+                SET SortOrder = @SortOrder, ModifiedAt = @ModifiedAt
+                WHERE Id = @CategoryId AND IsDeleted = 0";
+            
+            var updates = categoryIds.Select((categoryId, index) => new
+            {
+                CategoryId = categoryId,
+                SortOrder = index + 1,
+                ModifiedAt = DateTime.UtcNow
+            });
+            
+            var affectedRows = await connection.ExecuteAsync(sql, updates);
+            
+            _logger.LogInformation("Updated sort order for {Count} categories under parent {ParentId}", 
+                affectedRows, parentCategoryId);
+            return affectedRows;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating sort order for categories under parent {ParentId}", parentCategoryId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Moves a category to a new parent
+    /// </summary>
+    public async Task<bool> MoveCategoryAsync(Guid categoryId, Guid? newParentId)
+    {
+        using var scope = _logger.BeginScope("MoveCategoryAsync: CategoryId={CategoryId}, NewParentId={NewParentId}", 
+            categoryId, newParentId);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var transaction = connection.BeginTransaction();
+            
+            try
+            {
+                // First, check if the move would create a circular reference
+                if (newParentId.HasValue)
+                {
+                    var checkSql = @"
+                        WITH CategoryPath AS (
+                            SELECT Id FROM MediaCategories WHERE Id = @NewParentId
+                            UNION ALL
+                            SELECT mc.Id FROM MediaCategories mc
+                            INNER JOIN CategoryPath cp ON mc.ParentCategoryId = cp.Id
+                        )
+                        SELECT COUNT(1) FROM CategoryPath WHERE Id = @CategoryId";
+                    
+                    var wouldCreateCycle = await connection.QuerySingleAsync<int>(checkSql, 
+                        new { CategoryId = categoryId, NewParentId = newParentId }, transaction) > 0;
+                    
+                    if (wouldCreateCycle)
+                    {
+                        _logger.LogWarning("Cannot move category {CategoryId} to parent {NewParentId} - would create circular reference", 
+                            categoryId, newParentId);
+                        return false;
+                    }
+                }
+                
+                // Update the category's parent
+                var updateSql = @"
+                    UPDATE MediaCategories 
+                    SET ParentCategoryId = @NewParentId, ModifiedAt = @ModifiedAt
+                    WHERE Id = @CategoryId AND IsDeleted = 0";
+                
+                var affectedRows = await connection.ExecuteAsync(updateSql, new
+                {
+                    CategoryId = categoryId,
+                    NewParentId = newParentId,
+                    ModifiedAt = DateTime.UtcNow
+                }, transaction);
+                
+                transaction.Commit();
+                
+                var success = affectedRows > 0;
+                _logger.LogInformation("Moved category {CategoryId} to parent {NewParentId}: {Success}", 
+                    categoryId, newParentId, success);
+                return success;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error moving category {CategoryId} to parent {NewParentId}", categoryId, newParentId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets categories with their media file statistics
+    /// </summary>
+    public async Task<IEnumerable<dynamic>> GetCategoriesWithStatsAsync(bool activeOnly = true)
+    {
+        using var scope = _logger.BeginScope("GetCategoriesWithStatsAsync: ActiveOnly={ActiveOnly}", activeOnly);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT 
+                    mc.*,
+                    ISNULL(stats.FileCount, 0) as FileCount,
+                    ISNULL(stats.TotalSize, 0) as TotalSize,
+                    ISNULL(stats.LastUploadDate, mc.CreatedAt) as LastUploadDate
+                FROM MediaCategories mc
+                LEFT JOIN (
+                    SELECT 
+                        CategoryId,
+                        COUNT(*) as FileCount,
+                        SUM(FileSize) as TotalSize,
+                        MAX(CreatedAt) as LastUploadDate
+                    FROM MediaFiles 
+                    WHERE IsDeleted = 0
+                    GROUP BY CategoryId
+                ) stats ON mc.Id = stats.CategoryId
+                WHERE mc.IsDeleted = 0";
+            
+            if (activeOnly)
+            {
+                sql += " AND mc.IsActive = 1";
+            }
+            
+            sql += " ORDER BY mc.Name";
+            
+            var categories = await connection.QueryAsync(sql);
+            
+            _logger.LogInformation("Retrieved {Count} categories with statistics", categories.Count());
+            return categories;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving categories with statistics");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Searches categories by name, description, or metadata
+    /// </summary>
+    public async Task<IEnumerable<MediaCategory>> SearchAsync(string searchTerm, bool activeOnly = true)
+    {
+        using var scope = _logger.BeginScope("SearchAsync: SearchTerm={SearchTerm}, ActiveOnly={ActiveOnly}", 
+            searchTerm, activeOnly);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT DISTINCT mc.* FROM MediaCategories mc
+                WHERE mc.IsDeleted = 0
+                AND (
+                    mc.Name LIKE @SearchTerm 
+                    OR mc.Description LIKE @SearchTerm
+                    OR mc.Slug LIKE @SearchTerm
+                )";
+            
+            if (activeOnly)
+            {
+                sql += " AND mc.IsActive = 1";
+            }
+            
+            sql += " ORDER BY mc.Name";
+            
+            var categories = await connection.QueryAsync<MediaCategory>(sql, new { SearchTerm = $"%{searchTerm}%" });
+            
+            _logger.LogInformation("Found {Count} categories matching search term '{SearchTerm}'", 
+                categories.Count(), searchTerm);
+            return categories;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching categories with term '{SearchTerm}'", searchTerm);
+            throw;
+        }
+    }
+}

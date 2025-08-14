@@ -1,0 +1,656 @@
+
+Contents
+1.	Introduction	4
+2.	User Roles	4
+2.1.	System Administrator:	4
+2.2.	Question Bank Creator:	4
+2.3.	Reviewer:	4
+2.4.	Exam Manager:	4
+2.5.	Supervisor:	4
+2.6.	Student:	5
+2.7.	Grader:	5
+3.	Workflows	5
+3.1.	Question Creation Workflow:	5
+3.2.	Exam Creation Workflow	7
+3.3.	Grading Workflow	14
+4.	Modules Design	17
+4.1.	User Management:	17
+4.2.	Question Bank:	17
+4.3.	Exam Management:	17
+4.4.	Grading:	17
+4.5.	Reporting:	17
+5.	Architecture	19
+5.1.	Core Components	19
+5.2.	Application Services	20
+5.3.	Data Layer	20
+5.4.	Observability & Monitoring	20
+5.5.	Single Sign-On (SSO)	20
+5.6.	Scalability and Fault Tolerance	21
+6.	Technologies	21
+
+?
+1.	Introduction
+Ekhtibar, integrated into the Madrasati platform, is a comprehensive solution designed to 
+streamline the creation, management, and evaluation of educational exams and assessments. 
+It offers an intuitive interface that ensures seamless automated test creation as well as 
+manual grading and detailed performance analytics. The system promotes efficiency and 
+accuracy in managing examinations while maintaining high security and privacy standards.
+2.	User Roles
+In exam system, stakeholders range from administrative users, such as System Administrators 
+and Supervisors, to end users, including Students and Graders. System Administrators 
+manage access control and system configurations, Question Bank Creators focus on building 
+high-quality questions, and Quality Monitors ensure that these questions meet defined 
+standards. Every change in the system should be logged for future auditing. We will explore 
+these roles in detail below.
+2.1.	System Administrator:
+*	Creates and manages user accounts and permissions.
+*	Manages groups, assigns permissions, and review logs.
+*	Manages the main system tree and supports data entry
+*	Manages question banks in hierarchical structure. 
+*	Oversees system performance metrics and resolving issues.
+2.2.	Question Bank Creator:
+*	Develops structured questions.
+*	Tags questions with metadata (difficulty, subject, type) for easy search and retrieval.
+*	Uploads elements to support diverse question types.
+*	Bulk import/export questions and multimedia attachments
+*	Collaborates with reviewers for approval and refinement of questions.
+2.3.	Reviewer:
+*	Reviews newly submitted questions for accuracy, alignment with objectives, and clarity.
+*	Approves or rejects questions based on defined academic and technical standards.
+*	Tracks returned questions and ensures Question Bank Creators make revisions.
+2.4.	Exam Manager:
+*	Configures exam templates with settings such as time limits, scores, and randomization.
+*	Schedules exams and assigns them to groups or individual students.
+*	Manages live exam sessions by tracking progress and resolving real-time technical issues.
+*	Send notifications and reminders to users about upcoming exams.
+*	Terminate the ongoing Exame
+*	Terminate student session 
+2.5.	Supervisor:
+*	Assign tasks to Question Bank Creators, Quality Monitors, and Exam Paper Creators.
+*	Grants appropriate permissions to team members based on their role.
+*	Monitors  task progress to ensure deadlines are met efficiently.
+*	Oversee collaboration between stakeholders to streamline the exam creation process.
+2.6.	Student:
+*	Views assigned exams.
+*	Completes assigned exams within the given timeframe.
+*	Accesses results and feedback from graders.
+*	Provides feedback on the exam experience for system improvement.
+2.7.	Grader:
+*	Grades subjective answers such as essays using grading rubrics.
+*	Reviews flagged responses for anomalies or re-evaluation requests.
+*	Collaborate with Exam Managers to finalize grading criteria.
+3.	Workflows
+Below we discuss the workflows contained in Ikhtibar system
+
+3.1.	Question Creation Workflow:
+
+It s the process that ensures high-quality questions are created, reviewed, and made available 
+for exams. This workflow incorporates multiple stages, roles, and status transitions to 
+maintain the integrity and reliability of the question bank. Below is the detailed lifecycle of 
+the question creation process, including its statuses.
+
+1.	Draft: The Item Creator drafts a new question, adding basic details such as question text, type, 
+options (if applicable), and metadata (e.g., difficulty level, topic).
+2.	Review: Reviewer or Subject Matter Expert (SME). This stage ensures the question is accurate, 
+relevant, and aligned with curriculum standards.
+-	Approved: the question is approved for publishing. Then this question is marked as ready for 
+use in exams and move to the question bank.
+-	Rejected: the question is rejected with feedback 
+-	Revision request: is a request to move to the question from the rejected question bank
+To the draft status and submitted as a new question
+-	Return with comments: the question returned to the question creator with comments for 
+update 
+3.	Archived: Questions that are outdated, irrelevant, or have been replaced are archived. These 
+questions are not accessible for future exams but remain in the database for historical records.
+-	Versioning: track the question update and maintains version history
+-	Restore: return the question to active state and move to the question bank 
+
+3.2.	Exam Paper Workflow
+the step-by-step process for creating, configuring exam paper(s). This workflow includes 
+Creating and configuring exam metadata. Below is a detailed description of the stages and 
+statuses involved in the lifecycle of exam creation.
+
+1.	Paper Initiation: This is the first stage where the foundation of the exam paper is established. Key 
+activities include
+-	Set subject and grade level 
+-	Allocate total marks 
+-	Set duration
+2.	Blueprint Creation: The blueprint serves as the architectural plan for the exam paper. Activities 
+include:
+-	Define section distribution 
+-	Allocate marks per section 
+-	Select questions (manual/auto) 
+-	Map learning outcomes 
+-	Balance difficulty levels 
+-	Ensure topic coverage 
+-	Include answer keys and marking scheme
+-	Develop model answers
+-	Define assessment rubrics
+3.	 Question Selection: Questions can be selected through two methods:
+Manual Selection:
+*	manually choose questions from the question bank
+*	Questions are selected based on blueprint specifications
+*	Each question is reviewed for alignment with objectives
+
+Automated Selection:
+*	System algorithmically selects questions based on blueprint criteria
+*	Questions are automatically balanced for difficulty
+*	Learning outcomes coverage is systematically ensured
+*	Metadata matching with blueprint requirements
+
+4.	Blueprint Completion: At this stage:
+-	All questions are finalized and organized
+-	The marking scheme is completed
+-	Answer keys are verified
+-	Total marks are validated against blueprint
+-	Time allocations are confirmed
+
+
+5.	Quality Review:  A reviewer make a comprehensive review ensures:
+-	Verify all paper components 
+-	Check content alignment 
+-	Validate completeness 
+-	Ensure standards compliance
+-	Preview the paper in student mode allowed
+-	Complete coverage of learning outcomes
+-	Language and formatting consistency
+
+6.	Paper Bank Storage: Once approved, the exam paper is
+-	Stored in the paper bank with proper versioning
+-	Made available for scheduling and deployment
+
+3.3.	Publish Exam Workflow
+the step-by-step process for scheduling exams. This workflow involves multiple stakeholders 
+and ensures that exams are properly assigned and monitored for effective delivery. Below is a 
+detailed description of the stages and statuses involved in the lifecycle of exam publishing 
+process.
+
+1.  Select Exam Paper
+*	Paper Selection 
+o	Browse approved papers from Paper Bank
+o	Verify paper version and status
+o	Check completeness (questions, answer keys, marking scheme)
+o	Confirm alignment with curriculum requirements
+*	Paper Verification 
+o	Validate all media elements
+o	Check marking schemes
+o	Verify total marks calculation
+o	Ensure learning outcomes mapping
+
+
+2.	Configure Exam Settings 
+Timing Configuration / Schedule Exam
+*	Timeline Setup 
+o	Set exam date and time
+o	Set access window duration
+o	Set overall duration
+o	Configure section-wise timing (if needed)
+o	Configure breaks (if needed)
+
+*	Notification Setup 
+o	Configure pre-exam reminders
+o	Set up start notifications
+o	Define completion alerts
+o	Schedule admin notifications
+
+*	Access Settings 
+o	Define attempt limits
+o	Set IP restrictions (if needed)
+o	Set browser security rules
+*	Navigation Rules 
+o	Set question sequence (fixed/random)
+o	Configure section navigation
+o	Set question review options
+o	Define flag/mark for review features
+o	Set calculator/tool availability (if needed)
+o	Configure accessibility features
+
+
+3.	Assign Students
+o	Select eligible students/groups
+o	Verify enrollment status
+o	Check prerequisites
+o	Manage special cases
+
+4.	Review Configuration
+*	Settings Verification 
+o	Check all exam parameters
+o	Verify student assignments
+o	Validate timing configurations
+o	Review security settings
+*	Access Testing 
+o	Test student view
+o	Verify navigation rules
+o	Check tool accessibility
+o	Test notification systems
+*	Final Checks 
+o	Verify scoring setup
+o	Check monitoring tools
+o	Test emergency procedures
+o	Validate backup systems
+
+5.	Deploy Exam
+*	System Initialization 
+o	Activate exam settings
+o	Initialize monitoring systems
+o	Enable security protocols
+o	Start logging systems
+*	Communication 
+o	Send access instructions
+o	Distribute guidelines
+o	Notify support teams
+o	Brief proctors/supervisors
+*	Resource Allocation 
+o	Assign support staff
+o	Enable help channels
+o	Set up monitoring stations
+o	Prepare backup resources
+
+6.	Monitor Exam
+*	Active Monitoring 
+o	Track student access
+o	Monitor system performance
+o	Watch for security alerts
+o	Handle technical issues
+*	Support Management 
+o	Provide technical assistance
+o	Handle emergency cases
+o	Manage time extensions
+o	Document incidents
+*	Progress Tracking 
+o	Monitor completion status
+o	Track submission status
+o	Handle disconnections
+o	Manage time overruns
+
+*	 Termination Triggers: 
+o	Detect cheating/malpractice
+o	System-wide technical failures
+o	Emergency situations
+o	Security breaches
+o	Administrative decisions
+*	Termination Actions: 
+o	Immediate Termination 
+?	Freeze all active sessions
+?	Save current responses
+?	Log termination reason
+?	Notify all stakeholders
+?	Generate incident report
+*	Scheduled Termination 
+?	Send advance warnings
+?	Allow completion of current sections
+?	Graceful session closure
+?	Save all responses
+?	Generate completion report
+*	Post-Termination Procedures: 
+?	Document termination reason
+?	Save partial responses
+?	Generate incident reports
+?	Plan remediation steps
+?	Schedule makeup sessions if needed
+
+7.	Exam Termination Types
+1. Normal Termination
+*	Scheduled end time reached
+*	All students completed
+*	Regular closure procedures
+*	Standard archival process
+2. Emergency Termination
+*	Technical Emergencies 
+o	System-wide failures
+o	Network outages
+o	Platform issues
+*	Security Incidents 
+o	Detected breach
+o	Mass cheating detection
+o	Data compromise
+*	External Emergencies 
+o	Natural disasters
+o	Power failures
+o	Building emergencies
+3. Administrative Termination
+o	Policy violations
+o	Schedule conflicts
+o	Administrative decisions
+o	Technical upgrade
+
+9. Archive Process
+*	Data Collection 
+o	Gather exam statistics
+o	Collect system logs
+o	Save configuration data
+o	Store response data
+*	Documentation 
+o	Generate summary reports
+o	Document incidents
+o	Save support logs
+o	Create audit trails
+*	Final Processing 
+o	Archive exam data
+o	Store analytics
+o	Save performance metrics
+o	Maintain compliance records
+
+3.4.	Grading Workflow
+This is the process for evaluating student responses and assigning scores. This workflow 
+ensures accuracy, consistency, and fairness in the grading process while providing detailed 
+feedback to students. Below is a detailed description of the stages and statuses in the grading 
+lifecycle.
+
+1. Initial Processing
+Exam Submission
+*	Capture all student responses
+*	Verify completion status
+*	Log submission time
+*	Save response data
+Automatic Grading
+*	Grade objective questions
+*	Calculate section scores
+*	Apply marking scheme
+*	Flag any anomalies
+2. Manual Grading Process
+Grader Assignment
+*	Distribute subjective answers
+*	Balance grader workload
+*	Set grading deadlines
+*	Provide rubrics and guidelines
+Manual Grading
+*	Apply standardized rubrics
+*	Add comments/feedback
+*	Flag uncertain cases
+*	Record partial scores
+3. Quality Control
+Second Grader Review
+*	Independent assessment
+*	Compare scores
+*	Review comments
+*	Validate rubric application
+Moderation
+*	Resolve score discrepancies
+*	Standardized grading
+*	Document decisions
+4. Score Finalization
+Final Review
+*	Verify all sections graded
+*	Check calculation accuracy
+*	Validate total scores
+*	Review flagged cases
+Result Publication
+*	Generate score reports
+*	Apply grade boundaries
+*	Prepare feedback
+*	Schedule publication
+
+4.	Results Archival
+Finalization
+*	Lock final scores
+*	Generate statistics
+*	Create audit trail
+*	Archive response data
+Documentation
+*	Store grading records
+*	Save appeal decisions
+*	Archive feedback
+*	Maintain logs
+
+5.	Modules Design
+During design we used domain driven design (DDD) to ensure that the application is 
+structured into clearly defined modules, each focusing on specific business logic, to simplify 
+development, scaling, and maintenance.
+5.1.	User Management:
+This is the component responsible for managing users, their roles, permissions, and 
+authentication.
+Features included:
+*	Authentication: Integrates with SSO for authentication and profile management.
+*	Role Management: Assigns roles to users and defines role-specific permissions.
+*	Audit Logging: Tracks user actions to ensure accountability and compliance.
+5.2.	Question Bank:
+The Question Bank module plays a pivotal role in the exam management system by 
+managing the lifecycle of questions, organizing them into hierarchical structures, and 
+enabling their integration with exam papers. Below is the detailed design for the Question 
+Bank module.
+*	Tree Management: Manage the hierarchical structure of categories and subcategories.
+*	Question Bank Administration: Enable the creation and management of question banks. 
+Configure access permissions and ownership.
+*	Question Management: Create, update, delete, and archive questions. And Attach multimedia 
+content to questions.
+*	Tagging: Allows categorization and filtering of questions.
+*	Media Management: Manages uploads and association of media files with questions.
+5.3.	Exam Management:
+Manages the lifecycle of exams, from creation to publishing and archiving.
+Features included:
+*	Exam Creation: Handles exam creation, configuration, and scheduling.
+*	Exam Assignment: Assigns exams to students or groups.
+5.4.	Grading:
+Automates and manages grading workflows for submitted exams.
+Features included:
+*	Auto-Grading: Automatically grades objective questions (e.g., MCQs).
+*	Manual Grading: Allows graders to review and score subjective answers.
+*	Grade Calculation: Aggregates scores and generates final grades.
+5.5.	Reporting:
+Ensures the integrity of exams through real-time monitoring.
+Features included:
+*	Report Generation: Creates detailed reports based on selected filters.
+*	Visualization: Displays graphs, charts, and trends in the dashboard.
+*	Notification: Handles email, SMS notifications for deadlines, exam events, and grading 
+completion.
+*	Proctoring: Provides tools for live monitoring and post-exam session reviews.
+6.	Data Design
+
+This ERD represents a view of the system s data model, covering user management, exam 
+creation, question banking, grading, and system auditing. The design follows a domain-driven 
+approach, ensuring that each entity corresponds to a key business function. We will examine 
+each entity and its relationships to illustrate how they collectively fulfill the requirements.
+6.1.	User Management and Access Control
+*	User
+The User entity stores information about individuals who interact with the system, including 
+students, exam managers, reviewers, and administrators. Key fields such as UserID, Username, 
+phone and Email capture a user s basic profile and credentials. Users are linked to Role in order to 
+define each user s permissions and responsibilities within the system. They are also connected to 
+Activity Log for auditing user actions, which helps maintain an accurate record of who performed 
+specific operations. Depending on their role, users may also connect to Student Answers or 
+Student Grades when they act as students taking exams.
+*	Role
+The Role entity represents a group of permissions that define the actions a user can perform. It 
+includes fields like Role ID and Role Name to distinguish between various system roles, such as 
+ Admin,   Exam Manager,  or  Student.  Roles map to Permission records, which detail the scope 
+of allowed actions for that role. A single user can be assigned multiple roles, depending on the 
+system s policy, providing a flexible and scalable access control mechanism.
+*	Permission
+The Permission entity lists specific privileges in the system, such as  Create Exam,   Edit Question,  
+or  Review Answers.  It includes fields like Permission ID and Permission Name to identify each 
+distinct permission. Permissions are associated with Role, allowing multiple permissions to be 
+grouped under a single role. This model provides granular control over system features and 
+ensures that only authorized users can perform sensitive actions.
+ 
+6.2.	Question Management
+*	QuestionBank
+The QuestionBank entity organizes collections of questions and may represent a subject area, 
+topic, or other logical grouping. It includes fields such as Question Bank ID and Name to label and 
+identify each bank. A question bank can contain multiple Question records and may also be 
+associated with Tree nodes to manage hierarchical structures, for instance,  Mathematics > 
+Algebra > Linear Equations. 
+*	Question
+The Question entity stores the core content of a test item, including the question text, references, 
+and metadata such as difficulty. Fields like Question ID, Text, and Difficulty capture these details. A 
+question can be linked to Answer entities for multiple-choice or other question types, belongs to a 
+Question Bank for organizational purposes, and is associated with Question Review History to track 
+approvals and revisions. It can also be organized by Tree to facilitate hierarchical categorization, 
+such as by subject or subtopic.
+*	Answer
+The Answer entity represents potential responses to a question, including multiple-choice options, 
+short answers, or other response formats. It contains fields like AnswerID and OptionText. Each 
+Question can have many associated Answer records, allowing for a variety of question types and 
+answer structures.
+*	Tree
+The Tree entity implements a self-referencing hierarchy that allows nested categorization of 
+question banks and questions. It includes fields such as TreeID, Name, and a ParentTreeID for self-
+reference. One Tree node can organize many Question or QuestionBank records, making it a 
+flexible structure for multi-level categorization. This approach supports a variety of use cases, from 
+broad subject classifications down to granular topics.
+*	QuestionReviewHistory
+The QuestionReviewHistory entity logs all review or quality-check actions performed on a question. 
+Fields like ReviewID, Comments, and Timestamp record the details of each review cycle. This 
+history is associated with Question to track who reviewed the content, what changes were 
+suggested, and whether the question was approved or rejected. Often, the reviewing user or role is 
+also noted, providing a complete audit trail.
+ 
+6.3.	Exam Lifecycle
+*	Exam
+The Exam entity represents the main assessment container, such as  Midterm Exam  or  Final 
+Exam.  It includes fields like ExamID, Title, and Status to manage the exam s lifecycle. An exam can 
+comprise multiple ExamPaper records if there are different versions or sections. It also links to 
+ExamEvent, ExamSchedule, and ExamResult to manage scheduling, execution, and outcomes.
+*	ExamPaper
+The ExamPaper entity holds the blueprint of a particular exam paper or version. Its fields 
+include ExamPaperID, Title, and TotalMarks to outline how an exam is structured. Each exam 
+paper references multiple Question entities, defining the content of the assessment, and is 
+associated with ExamPaperRubrics for standardized scoring. It also ties back to Exam to 
+specify which exam the paper belongs to.
+*	ExamEvent
+The ExamEvent entity manages the scheduling context of an exam, such as the specific academic 
+term or date range. It includes fields like ExamEventID, Name, StartDate, and EndDate to define the 
+event window. An event can connect to one or more Exam entries to indicate which assessments 
+are happening during that timeframe, and it also links to ExamSchedule for detailed time slots or 
+sessions.
+*	ExamSchedule
+The ExamSchedule entity specifies the exact date, time, and duration for a scheduled exam session, 
+storing details in fields like ExamScheduleID and ScheduleTime. It links to ExamEvent for a broader 
+context and may also be tied to ExamSession, which captures real-time data about the exam while 
+it is in progress. This setup supports multiple schedules under a single event if different student 
+groups are taking the same exam at different times.
+*	ExamSession
+The ExamSession entity captures a real-time instance of a scheduled exam, from the moment 
+students begin until they submit their work. Fields such as ExamSessionID, SessionStart, and 
+SessionEnd log session details. It is typically associated with ExamSchedule or ExamEvent and is 
+crucial for tracking live information like the number of active participants, IP addresses, or device 
+usage. StudentAnswers are recorded in the context of an exam session.
+*	ExamResult
+The ExamResult entity stores overall performance outcomes, including total score and pass/fail 
+status, in fields such as ExamResultID, Score, and Status. It is linked to Exam to indicate which exam 
+the results pertain to, and it may connect to a user or student record to finalize grading data. This 
+setup ensures that all performance metrics are captured consistently for reporting and analytics.
+*	ExamPaperRubrics
+The ExamPaperRubrics entity defines evaluation criteria and scoring guidelines for an exam paper. 
+Fields like RubricID, Criteria, and MaxScore specify how each paper should be graded. By linking to 
+ExamPaper, these rubrics ensure consistent grading across different exam versions or sections.
+ 
+6.4.	Student Submissions and Grading
+*	StudentAnswers
+The StudentAnswers entity captures each student s response to a specific question during an exam 
+session. Fields like StudentAnswerID and AnswerText store the response details. This entity ties to 
+Question (and possibly Answer for multiple-choice), links to User (the student), and references 
+ExamSession or ExamPaper to provide contextual information about when and where the response 
+was submitted.
+*	StudentGrades
+The StudentGrades entity represents the outcome of grading for individual questions or sections 
+for a specific student. It includes fields such as StudentGradeID and Grade to record the assigned 
+score. By linking to User (student) and referencing ExamPaper or ExamResult, the system can 
+aggregate final marks or produce detailed breakdowns of each student s performance.
+ 
+6.5.	Notifications and Audit
+*	Notification
+The Notification entity manages system messages, alerts, and announcements, which can be 
+triggered by events such as  Exam is starting in 30 minutes.  Fields like NotificationID, Message, 
+and Timestamp store the details of each alert. Notifications are typically associated with User to 
+identify recipients, and they can also be linked to ExamEvent or ExamSchedule to trigger event-
+based alerts that keep users informed of exam-related updates.
+*	ActivityLog
+The ActivityLog entity provides an audit trail of all significant actions, such as user logins, question 
+edits, or exam creation. It includes fields like LogID, Activity, and Timestamp to capture details 
+about each action. Activity logs are linked to User to identify who performed a particular operation, 
+and they can reference other entities (Exam, Question, etc.) for context. This feature helps 
+maintain system transparency and compliance.
+
+
+7.	Architecture
+
+ 
+7.1.	Core Components
+1.	Cloud VNET and Subnets
+The system is hosted on a secured Cloud Virtual Network (VNET) that is segmented into 
+subnets for logical isolation and enhanced security:
+*	External API Gateway Subnet: Acts as the entry point for external applications, ensuring 
+secure and efficient routing of HTTP and GRPC traffic to microservices.
+*	Microservices Subnet: Houses microservices for user management, question banks, grading, 
+exams, and reporting, each leveraging KEDA for autoscaling.
+*	SQL Clusters Subnet: Contains managed SQL databases for different domain contexts, 
+including Users, QBank, Exams, Grading, and Reporting.
+2.	Legacy Application Integration (On-Prem MOE)
+The architecture ensures seamless integration with existing MOE legacy systems (e.g., Noor, 
+Faris, Aamali) via a secure VPN Tunnel. This approach bridges cloud-hosted microservices with 
+on-premises systems, enabling real-time data exchange.
+3.	Perimeter Security
+*	Palo Alto Firewall: Adds an additional security layer by inspecting inbound and outbound 
+traffic for potential threats.
+*	Application Gateway with WAF: Protects web applications from common exploits and 
+vulnerabilities (e.g., SQL Injection, Cross-Site Scripting).
+*	DDoS Protection: Safeguards the system against distributed denial-of-service attacks.
+
+7.2.	Application Services
+1.	Frontend
+*	Microfrontend: Interact with users through responsive interfaces and modular components.
+*	Static Web App: Provides Single Page Applications (SPA) for both administrative and end-
+user interactions.
+2.	Microservices
+Microservices are designed based on Domain-Driven Design (DDD) principles and organized into 
+bounded contexts:
+*	Users: Manages user accounts, roles, and permissions.
+*	QBank: Manages hierarchical question banks and their integration with exam papers.
+*	Exams: Handles the lifecycle of exam events, from creation to scheduling and execution.
+*	Grading: Automates grading processes, supports manual assessments, and calculates results.
+*	Reporting: Generates insights and analytics for users, admins, and stakeholders.
+Each microservice communicates using lightweight HTTP or GRPC protocols, ensuring high 
+performance and fault tolerance.
+3.	Integration Services
+*	Azure Service Bus: Facilitates asynchronous communication between microservices, ensuring 
+reliable message delivery and decoupling services.
+*	Key Vaults: Manages sensitive configuration settings and encryption keys securely.
+*	App Configuration: Centralizes application settings for consistent configuration management 
+across environments.
+7.3.	Data Layer
+SQL Clusters store data for each domain context in separate databases to enforce 
+modularity and optimize performance. Key design considerations include:
+*	Data Isolation: Each microservice interacts with its corresponding database, following the 
+principle of single responsibility.
+*	Scalability: SQL clusters are scalable, allowing growth in storage or compute based on 
+demand.
+*	Security: Databases are accessed through secure service identities, reducing the attack 
+surface.
+
+7.4.	Observability & Monitoring
+*	Application Insights: Monitors the health and performance of microservices, detecting 
+failures and bottlenecks in real time.
+*	Azure Monitoring: Provides centralized visibility into system logs, network traffic, and 
+infrastructure health.
+
+7.5.	Single Sign-On (SSO)
+*	OIDC Protocol: Enables secure authentication and user management across all 
+integrated systems.
+*	Integration with Legacy Systems: Legacy applications authenticate users via the 
+centralized SSO mechanism, ensuring a unified user experience.
+
+7.6.	Scalability and Fault Tolerance
+The architecture is designed to handle high concurrent user loads while ensuring resilience:
+*	KEDA Autoscaling: Dynamically scales microservices based on workload and event-driven 
+triggers.
+*	Resilient Design: Incorporates retry mechanisms, circuit breakers, and fallback strategies to 
+maintain uptime during failures.
+
+8.	Technologies
+The system is built using modern technologies that ensure scalability, reliability, and ease of 
+development.
+Frontend Technologies:
+1.	React.js: Framework for building responsive user interfaces. We will use component-
+based architecture for modularity.
+2.	.NET Core: A high-performance, cross-platform framework for building APIs. 
+3.	Authentication using SSO: We will integrate with SSO provided by MOE. 
+4.	SQL Database: we will use SQL server as a relational database service.
+5.	Redis cache: Used for caching frequently accessed data.
+6.	Azure Blob Storage: Stores multimedia files and large datasets.
+7.	Azure Kubernetes Service (AKS): Hosting services in AKS to manage containerized APIs 
+and to automate scaling and updates.
+8.	Azure Monitor: Tracks the health and performance of the application. And Application 
+Insights for detailed telemetry.
+9.	Azure service bus: to streamline asynchronous messaging between microservices and 
+ensure smooth communication and workflow orchestration.

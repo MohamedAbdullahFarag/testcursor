@@ -1,0 +1,207 @@
+using AutoMapper;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Models;
+using Microsoft.Extensions.Logging;
+
+namespace Ikhtibar.Core.Services;
+
+public interface IMediaMetadataService
+{
+    Task<MediaMetadataDto?> GetMediaMetadataByIdAsync(Guid id);
+    Task<MediaMetadataDto> CreateMediaMetadataAsync(CreateMediaMetadataDto createDto);
+    Task<MediaMetadataDto> UpdateMediaMetadataAsync(Guid id, CreateMediaMetadataDto updateDto);
+    Task<bool> DeleteMediaMetadataAsync(Guid id);
+    Task<MediaMetadataDto?> GetMetadataByMediaFileIdAsync(Guid mediaFileId);
+    Task<bool> DeleteMetadataByMediaFileIdAsync(Guid mediaFileId);
+}
+
+public class MediaMetadataService : IMediaMetadataService
+{
+    private readonly IMediaMetadataRepository _repository;
+    private readonly IMapper _mapper;
+    private readonly ILogger<MediaMetadataService> _logger;
+
+    public MediaMetadataService(
+        IMediaMetadataRepository repository,
+        IMapper mapper,
+        ILogger<MediaMetadataService> logger)
+    {
+        _repository = repository;
+        _mapper = mapper;
+        _logger = logger;
+    }
+
+    public async Task<MediaMetadataDto?> GetMediaMetadataByIdAsync(Guid id)
+    {
+        using var scope = _logger.BeginScope("Getting media metadata by ID: {MetadataId}", id);
+        
+        try
+        {
+            var metadata = await _repository.GetByIdAsync(id);
+            
+            if (metadata == null)
+            {
+                _logger.LogWarning("Media metadata not found with ID: {MetadataId}", id);
+                return null;
+            }
+
+            var result = _mapper.Map<MediaMetadataDto>(metadata);
+            _logger.LogInformation("Successfully retrieved media metadata: {MetadataId}", id);
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting media metadata by ID: {MetadataId}", id);
+            throw;
+        }
+    }
+
+    public async Task<MediaMetadataDto> CreateMediaMetadataAsync(CreateMediaMetadataDto createDto)
+    {
+        using var scope = _logger.BeginScope("Creating new media metadata for file: {MediaFileId}", 
+            createDto.MediaFileId);
+        
+        try
+        {
+            // Check if metadata already exists for this media file
+            var existingMetadata = await GetMetadataByMediaFileIdAsync(createDto.MediaFileId);
+            if (existingMetadata != null)
+            {
+                throw new InvalidOperationException($"Metadata already exists for media file {createDto.MediaFileId}");
+            }
+
+            var metadata = _mapper.Map<Ikhtibar.Core.Entities.MediaMetadata>(createDto);
+            metadata.Id = Guid.NewGuid();
+            metadata.CreatedAt = DateTime.UtcNow;
+
+            var createdMetadata = await _repository.AddAsync(metadata);
+            var result = _mapper.Map<MediaMetadataDto>(createdMetadata);
+
+            _logger.LogInformation("Successfully created media metadata: {MetadataId}", 
+                createdMetadata.Id);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while creating media metadata for file: {MediaFileId}", 
+                createDto.MediaFileId);
+            throw;
+        }
+    }
+
+    public async Task<MediaMetadataDto> UpdateMediaMetadataAsync(Guid id, CreateMediaMetadataDto updateDto)
+    {
+        using var scope = _logger.BeginScope("Updating media metadata: {MetadataId}", id);
+        
+        try
+        {
+            var existingMetadata = await _repository.GetByIdAsync(id);
+            if (existingMetadata == null)
+            {
+                throw new InvalidOperationException($"Media metadata with ID {id} not found");
+            }
+
+            // For key-value structure, we need to update the specific metadata entry
+            // This implementation assumes we're updating based on the DTO structure
+            _mapper.Map(updateDto, existingMetadata);
+            existingMetadata.ModifiedAt = DateTime.UtcNow;
+
+            var updatedMetadata = await _repository.UpdateAsync(existingMetadata);
+            var result = _mapper.Map<MediaMetadataDto>(updatedMetadata);
+
+            _logger.LogInformation("Successfully updated media metadata: {MetadataId}", 
+                updatedMetadata.Id);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while updating media metadata: {MetadataId}", id);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteMediaMetadataAsync(Guid id)
+    {
+        using var scope = _logger.BeginScope("Deleting media metadata: {MetadataId}", id);
+        
+        try
+        {
+            var metadata = await _repository.GetByIdAsync(id);
+            if (metadata == null)
+            {
+                _logger.LogWarning("Media metadata not found for deletion: {MetadataId}", id);
+                return false;
+            }
+
+            var result = await _repository.DeleteAsync(id);
+            
+            if (result)
+            {
+                _logger.LogInformation("Successfully deleted media metadata: {MetadataId}", id);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to delete media metadata: {MetadataId}", id);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting media metadata: {MetadataId}", id);
+            throw;
+        }
+    }
+
+    public async Task<MediaMetadataDto?> GetMetadataByMediaFileIdAsync(Guid mediaFileId)
+    {
+        using var scope = _logger.BeginScope("Getting metadata by media file ID: {MediaFileId}", mediaFileId);
+        
+        try
+        {
+            var metadataList = await _repository.GetByMediaFileAsync(mediaFileId);
+            var firstMetadata = metadataList.FirstOrDefault();
+            
+            if (firstMetadata == null)
+            {
+                _logger.LogDebug("No metadata found for media file: {MediaFileId}", mediaFileId);
+                return null;
+            }
+
+            var result = _mapper.Map<MediaMetadataDto>(firstMetadata);
+            _logger.LogInformation("Successfully retrieved metadata for media file: {MediaFileId}", mediaFileId);
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting metadata by media file ID: {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteMetadataByMediaFileIdAsync(Guid mediaFileId)
+    {
+        using var scope = _logger.BeginScope("Deleting all metadata for media file: {MediaFileId}", mediaFileId);
+        
+        try
+        {
+            var deletedCount = await _repository.DeleteByMediaFileAsync(mediaFileId);
+            var result = deletedCount > 0;
+            
+            _logger.LogInformation("Deleted {Count} metadata entries for media file: {MediaFileId}, success: {Success}", 
+                deletedCount, mediaFileId, result);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting metadata for media file: {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+}

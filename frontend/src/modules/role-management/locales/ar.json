@@ -1,0 +1,88 @@
+{
+  "roleManagement": {
+    "title": "إدارة الأدوار",
+    "subtitle": "إدارة أدوار النظام والصلاحيات",
+    
+    "actions": {
+      "create": "إنشاء دور",
+      "edit": "تعديل دور",
+      "delete": "حذف دور",
+      "managePermissions": "إدارة الصلاحيات"
+    },
+    
+    "role": {
+      "name": "الاسم",
+      "code": "الرمز",
+      "description": "الوصف",
+      "isSystemRole": "دور نظام",
+      "isActive": "نشط",
+      "permissions": "الصلاحيات",
+      "createdAt": "تاريخ الإنشاء",
+      "updatedAt": "تاريخ التعديل"
+    },
+    
+    "filters": {
+      "all": "الكل",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "system": "أدوار النظام",
+      "custom": "أدوار مخصصة"
+    },
+    
+    "userRoleAssignment": {
+      "title": "تعيين الأدوار",
+      "assignRolesToUser": "تعيين الأدوار لـ {{username}}",
+      "currentRoles": "الأدوار الحالية",
+      "availableRoles": "الأدوار المتاحة"
+    },
+    
+    "permissionMatrix": {
+      "title": "مصفوفة الصلاحيات",
+      "category": "الفئة",
+      "permission": "الصلاحية",
+      "description": "الوصف",
+      "selectAll": "تحديد الكل",
+      "deselectAll": "إلغاء تحديد الكل",
+      "systemRoleWarning": "هذا دور نظام. قد يؤثر تعديل صلاحياته على وظائف النظام."
+    },
+    
+    "confirmations": {
+      "deleteRole": "هل أنت متأكد من حذف هذا الدور؟",
+      "deleteSystemRole": "هذا دور نظام ولا يمكن حذفه.",
+      "deleteRoleInUse": "هذا الدور مستخدم حاليا من قبل المستخدمين ولا يمكن حذفه."
+    },
+    
+    "success": {
+      "roleCreated": "تم إنشاء الدور بنجاح",
+      "roleUpdated": "تم تحديث الدور بنجاح",
+      "roleDeleted": "تم حذف الدور بنجاح",
+      "permissionsUpdated": "تم تحديث الصلاحيات بنجاح",
+      "rolesUpdated": "تم تحديث أدوار المستخدم بنجاح"
+    },
+    
+    "error": {
+      "loadRoles": "فشل تحميل الأدوار",
+      "createRole": "فشل إنشاء الدور",
+      "updateRole": "فشل تحديث الدور",
+      "deleteRole": "فشل حذف الدور",
+      "loadUserRoles": "فشل تحميل أدوار المستخدم",
+      "updateRoles": "فشل تحديث أدوار المستخدم",
+      "loadPermissions": "فشل تحميل الصلاحيات",
+      "updatePermissions": "فشل تحديث الصلاحيات"
+    },
+    
+    "validation": {
+      "nameRequired": "الاسم مطلوب",
+      "codeRequired": "الرمز مطلوب",
+      "codePattern": "يجب أن يحتوي الرمز على أحرف وأرقام وشرطات سفلية فقط",
+      "codeDuplicate": "هذا الرمز مستخدم بالفعل"
+    },
+    
+    "empty": "لم يتم العثور على أدوار",
+    "loading": "جاري تحميل الأدوار...",
+    "noRolesFound": "لم يتم العثور على أدوار",
+    "search": "بحث في الأدوار",
+    "yes": "نعم",
+    "no": "لا"
+  }
+}

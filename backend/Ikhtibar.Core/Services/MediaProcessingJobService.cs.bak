@@ -1,0 +1,285 @@
+using AutoMapper;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Models;
+using Microsoft.Extensions.Logging;
+using CoreProcessingJobStatus = Ikhtibar.Core.Entities.ProcessingJobStatus;
+using CoreProcessingJobType = Ikhtibar.Core.Entities.ProcessingJobType;
+
+namespace Ikhtibar.Core.Services;
+
+public interface IMediaProcessingJobService
+{
+    Task<PagedResult<MediaProcessingJobDto>> GetProcessingJobsAsync(int page = 1, int pageSize = 20);
+    Task<MediaProcessingJobDto?> GetProcessingJobByIdAsync(Guid id);
+    Task<MediaProcessingJobDto> CreateProcessingJobAsync(CreateMediaProcessingJobDto createDto);
+    Task<MediaProcessingJobDto> UpdateProcessingJobAsync(Guid id, UpdateMediaProcessingJobDto updateDto);
+    Task<bool> DeleteProcessingJobAsync(Guid id);
+    Task<IEnumerable<MediaProcessingJobDto>> GetJobsByMediaFileIdAsync(Guid mediaFileId);
+    Task<IEnumerable<MediaProcessingJobDto>> GetJobsByStatusAsync(Ikhtibar.Shared.Enums.ProcessingJobStatus status);
+    Task<IEnumerable<MediaProcessingJobDto>> GetPendingJobsAsync();
+    Task<bool> DeleteJobsByMediaFileIdAsync(Guid mediaFileId);
+}
+
+public class MediaProcessingJobService : IMediaProcessingJobService
+{
+    private readonly IMediaProcessingJobRepository _repository;
+    private readonly IMapper _mapper;
+    private readonly ILogger<MediaProcessingJobService> _logger;
+
+    public MediaProcessingJobService(
+        IMediaProcessingJobRepository repository,
+        IMapper mapper,
+        ILogger<MediaProcessingJobService> logger)
+    {
+        _repository = repository;
+        _mapper = mapper;
+        _logger = logger;
+    }
+
+    public async Task<PagedResult<MediaProcessingJobDto>> GetProcessingJobsAsync(int page = 1, int pageSize = 20)
+    {
+        using var scope = _logger.BeginScope("Getting processing jobs - Page: {Page}, PageSize: {PageSize}", page, pageSize);
+        
+        try
+        {
+            var offset = (page - 1) * pageSize;
+            var jobs = await _repository.GetPagedAsync(offset, pageSize, orderBy: "CreatedAt DESC");
+            var totalCount = await _repository.CountAsync();
+
+            var jobDtos = _mapper.Map<IEnumerable<MediaProcessingJobDto>>(jobs);
+
+            var result = new PagedResult<MediaProcessingJobDto>
+            {
+                Items = jobDtos,
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            };
+
+            _logger.LogInformation("Found {Count} processing jobs out of {Total} total", 
+                jobDtos.Count(), totalCount);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting processing jobs");
+            throw;
+        }
+    }
+
+    public async Task<MediaProcessingJobDto?> GetProcessingJobByIdAsync(Guid id)
+    {
+        using var scope = _logger.BeginScope("Getting processing job by ID: {JobId}", id);
+        
+        try
+        {
+            var job = await _repository.GetByIdAsync(id);
+            
+            if (job == null)
+            {
+                _logger.LogWarning("Processing job not found with ID: {JobId}", id);
+                return null;
+            }
+
+            var result = _mapper.Map<MediaProcessingJobDto>(job);
+            _logger.LogInformation("Successfully retrieved processing job: {JobId}", id);
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting processing job by ID: {JobId}", id);
+            throw;
+        }
+    }
+
+    public async Task<MediaProcessingJobDto> CreateProcessingJobAsync(CreateMediaProcessingJobDto createDto)
+    {
+        using var scope = _logger.BeginScope("Creating processing job for media file: {MediaFileId}, type: {JobType}", 
+            createDto.MediaFileId, createDto.JobType);
+        
+        try
+        {
+            var job = _mapper.Map<Ikhtibar.Core.Entities.MediaProcessingJob>(createDto);
+            job.Id = Guid.NewGuid();
+            job.Status = CoreProcessingJobStatus.Queued;
+            job.JobType = (CoreProcessingJobType)createDto.JobType;
+            job.CreatedAt = DateTime.UtcNow;
+
+            var createdJob = await _repository.AddAsync(job);
+            var result = _mapper.Map<MediaProcessingJobDto>(createdJob);
+
+            _logger.LogInformation("Successfully created processing job: {JobId} for media file: {MediaFileId}", 
+                createdJob.Id, createDto.MediaFileId);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while creating processing job for media file: {MediaFileId}", 
+                createDto.MediaFileId);
+            throw;
+        }
+    }
+
+    public async Task<MediaProcessingJobDto> UpdateProcessingJobAsync(Guid id, UpdateMediaProcessingJobDto updateDto)
+    {
+        using var scope = _logger.BeginScope("Updating processing job: {JobId}", id);
+        
+        try
+        {
+            var existingJob = await _repository.GetByIdAsync(id);
+            if (existingJob == null)
+            {
+                throw new InvalidOperationException($"Processing job with ID {id} not found");
+            }
+
+            // Update fields
+            existingJob.Status = (CoreProcessingJobStatus)updateDto.Status;
+            existingJob.JobResults = updateDto.Result;
+            existingJob.ErrorMessage = updateDto.ErrorMessage;
+            existingJob.StartedAt = updateDto.StartedAt;
+            existingJob.CompletedAt = updateDto.CompletedAt;
+            existingJob.ModifiedAt = DateTime.UtcNow;
+
+            var updatedJob = await _repository.UpdateAsync(existingJob);
+            var result = _mapper.Map<MediaProcessingJobDto>(updatedJob);
+
+            _logger.LogInformation("Successfully updated processing job: {JobId} to status: {Status}", 
+                updatedJob.Id, updateDto.Status);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while updating processing job: {JobId}", id);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteProcessingJobAsync(Guid id)
+    {
+        using var scope = _logger.BeginScope("Deleting processing job: {JobId}", id);
+        
+        try
+        {
+            var job = await _repository.GetByIdAsync(id);
+            if (job == null)
+            {
+                _logger.LogWarning("Processing job not found for deletion: {JobId}", id);
+                return false;
+            }
+
+            var result = await _repository.DeleteAsync(id);
+            
+            if (result)
+            {
+                _logger.LogInformation("Successfully deleted processing job: {JobId}", id);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to delete processing job: {JobId}", id);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting processing job: {JobId}", id);
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<MediaProcessingJobDto>> GetJobsByMediaFileIdAsync(Guid mediaFileId)
+    {
+        using var scope = _logger.BeginScope("Getting processing jobs for media file: {MediaFileId}", mediaFileId);
+        
+        try
+        {
+            var jobs = await _repository.GetByMediaFileAsync(mediaFileId);
+            var result = _mapper.Map<IEnumerable<MediaProcessingJobDto>>(jobs);
+
+            _logger.LogInformation("Found {Count} processing jobs for media file: {MediaFileId}", 
+                result.Count(), mediaFileId);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting processing jobs for media file: {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<MediaProcessingJobDto>> GetJobsByStatusAsync(Ikhtibar.Shared.Enums.ProcessingJobStatus status)
+    {
+        using var scope = _logger.BeginScope("Getting processing jobs by status: {Status}", status);
+        
+        try
+        {
+            var coreStatus = (CoreProcessingJobStatus)status;
+            var jobs = await _repository.GetByStatusAsync(coreStatus);
+            var result = _mapper.Map<IEnumerable<MediaProcessingJobDto>>(jobs);
+
+            _logger.LogInformation("Found {Count} processing jobs with status: {Status}", 
+                result.Count(), status);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting processing jobs by status: {Status}", status);
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<MediaProcessingJobDto>> GetPendingJobsAsync()
+    {
+        using var scope = _logger.BeginScope("Getting pending processing jobs");
+        
+        try
+        {
+            var jobs = await _repository.GetByStatusAsync(CoreProcessingJobStatus.Queued);
+            var result = _mapper.Map<IEnumerable<MediaProcessingJobDto>>(jobs);
+
+            _logger.LogInformation("Found {Count} pending processing jobs", result.Count());
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting pending processing jobs");
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteJobsByMediaFileIdAsync(Guid mediaFileId)
+    {
+        using var scope = _logger.BeginScope("Deleting all processing jobs for media file: {MediaFileId}", mediaFileId);
+        
+        try
+        {
+            // Get all jobs for the media file
+            var jobs = await _repository.GetByMediaFileAsync(mediaFileId);
+            
+            // Delete each job
+            foreach (var job in jobs)
+            {
+                await _repository.DeleteAsync(job.Id);
+            }
+            
+            var deletedCount = jobs.Count();
+            _logger.LogInformation("Deleted {Count} processing jobs for media file: {MediaFileId}", 
+                deletedCount, mediaFileId);
+
+            return deletedCount > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting processing jobs for media file: {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+}

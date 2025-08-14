@@ -1,0 +1,308 @@
+using AutoMapper;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Models;
+using Microsoft.Extensions.Logging;
+
+namespace Ikhtibar.Core.Services;
+
+public interface IMediaCollectionService
+{
+    Task<IEnumerable<MediaCollectionDto>> GetAllCollectionsAsync();
+    Task<MediaCollectionDto?> GetCollectionByIdAsync(Guid id);
+    Task<MediaCollectionDto> CreateCollectionAsync(CreateMediaCollectionDto createDto);
+    Task<MediaCollectionDto> UpdateCollectionAsync(Guid id, UpdateMediaCollectionDto updateDto);
+    Task<bool> DeleteCollectionAsync(Guid id);
+    Task<IEnumerable<MediaCollectionDto>> GetCollectionsByUserIdAsync(Guid userId);
+    Task<IEnumerable<MediaCollectionDto>> GetPublicCollectionsAsync();
+    Task<bool> AddMediaFileToCollectionAsync(Guid collectionId, Guid mediaFileId);
+    Task<bool> RemoveMediaFileFromCollectionAsync(Guid collectionId, Guid mediaFileId);
+    Task<bool> ExistsByNameAsync(string name, Guid? excludeId = null);
+}
+
+public class MediaCollectionService : IMediaCollectionService
+{
+    private readonly IMediaCollectionRepository _repository;
+    private readonly IMapper _mapper;
+    private readonly ILogger<MediaCollectionService> _logger;
+
+    public MediaCollectionService(
+        IMediaCollectionRepository repository,
+        IMapper mapper,
+        ILogger<MediaCollectionService> logger)
+    {
+        _repository = repository;
+        _mapper = mapper;
+        _logger = logger;
+    }
+
+    public async Task<IEnumerable<MediaCollectionDto>> GetAllCollectionsAsync()
+    {
+        using var scope = _logger.BeginScope("Getting all media collections");
+        
+        try
+        {
+            var collections = await _repository.GetAllAsync();
+            var collectionDtos = _mapper.Map<IEnumerable<MediaCollectionDto>>(collections);
+
+            _logger.LogInformation("Found {Count} media collections", collectionDtos.Count());
+
+            return collectionDtos;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting all media collections");
+            throw;
+        }
+    }
+
+    public async Task<MediaCollectionDto?> GetCollectionByIdAsync(Guid id)
+    {
+        using var scope = _logger.BeginScope("Getting media collection by ID: {CollectionId}", id);
+        
+        try
+        {
+            var collection = await _repository.GetByIdAsync(id);
+            
+            if (collection == null)
+            {
+                _logger.LogWarning("Media collection not found with ID: {CollectionId}", id);
+                return null;
+            }
+
+            var result = _mapper.Map<MediaCollectionDto>(collection);
+            _logger.LogInformation("Successfully retrieved media collection: {CollectionName}", collection.Name);
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting media collection by ID: {CollectionId}", id);
+            throw;
+        }
+    }
+
+    public async Task<MediaCollectionDto> CreateCollectionAsync(CreateMediaCollectionDto createDto)
+    {
+        using var scope = _logger.BeginScope("Creating new media collection: {CollectionName}", createDto.Name);
+        
+        try
+        {
+            // Check if collection with same name already exists
+            if (await ExistsByNameAsync(createDto.Name))
+            {
+                throw new InvalidOperationException($"Media collection with name '{createDto.Name}' already exists");
+            }
+
+            var collection = _mapper.Map<Ikhtibar.Core.Entities.MediaCollection>(createDto);
+            collection.Id = Guid.NewGuid();
+            collection.CreatedAt = DateTime.UtcNow;
+
+            var createdCollection = await _repository.AddAsync(collection);
+            var result = _mapper.Map<MediaCollectionDto>(createdCollection);
+
+            _logger.LogInformation("Successfully created media collection: {CollectionId} - {CollectionName}", 
+                createdCollection.Id, createdCollection.Name);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while creating media collection: {CollectionName}", createDto.Name);
+            throw;
+        }
+    }
+
+    public async Task<MediaCollectionDto> UpdateCollectionAsync(Guid id, UpdateMediaCollectionDto updateDto)
+    {
+        using var scope = _logger.BeginScope("Updating media collection: {CollectionId}", id);
+        
+        try
+        {
+            var existingCollection = await _repository.GetByIdAsync(id);
+            if (existingCollection == null)
+            {
+                throw new InvalidOperationException($"Media collection with ID {id} not found");
+            }
+
+            // Check if another collection with the same name exists
+            if (await ExistsByNameAsync(updateDto.Name, id))
+            {
+                throw new InvalidOperationException($"Media collection with name '{updateDto.Name}' already exists");
+            }
+
+            // Update fields
+            existingCollection.Name = updateDto.Name;
+            existingCollection.Description = updateDto.Description;
+            existingCollection.IsPublic = updateDto.IsPublic;
+            existingCollection.ModifiedAt = DateTime.UtcNow;
+
+            var updatedCollection = await _repository.UpdateAsync(existingCollection);
+            var result = _mapper.Map<MediaCollectionDto>(updatedCollection);
+
+            _logger.LogInformation("Successfully updated media collection: {CollectionId} - {CollectionName}", 
+                updatedCollection.Id, updatedCollection.Name);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while updating media collection: {CollectionId}", id);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteCollectionAsync(Guid id)
+    {
+        using var scope = _logger.BeginScope("Deleting media collection: {CollectionId}", id);
+        
+        try
+        {
+            var collection = await _repository.GetByIdAsync(id);
+            if (collection == null)
+            {
+                _logger.LogWarning("Media collection not found for deletion: {CollectionId}", id);
+                return false;
+            }
+
+            var result = await _repository.DeleteAsync(id);
+            
+            if (result)
+            {
+                _logger.LogInformation("Successfully deleted media collection: {CollectionId} - {CollectionName}", 
+                    id, collection.Name);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to delete media collection: {CollectionId}", id);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting media collection: {CollectionId}", id);
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<MediaCollectionDto>> GetCollectionsByUserIdAsync(Guid userId)
+    {
+        using var scope = _logger.BeginScope("Getting collections by user ID: {UserId}", userId);
+        
+        try
+        {
+            var collections = await _repository.GetByUserAsync(userId);
+            var result = _mapper.Map<IEnumerable<MediaCollectionDto>>(collections);
+
+            _logger.LogInformation("Found {Count} collections for user: {UserId}", 
+                result.Count(), userId);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting collections by user ID: {UserId}", userId);
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<MediaCollectionDto>> GetPublicCollectionsAsync()
+    {
+        using var scope = _logger.BeginScope("Getting public collections");
+        
+        try
+        {
+            var collections = await _repository.GetPublicAsync();
+            var result = _mapper.Map<IEnumerable<MediaCollectionDto>>(collections);
+
+            _logger.LogInformation("Found {Count} public collections", result.Count());
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while getting public collections");
+            throw;
+        }
+    }
+
+    public async Task<bool> AddMediaFileToCollectionAsync(Guid collectionId, Guid mediaFileId)
+    {
+        using var scope = _logger.BeginScope("Adding media file {MediaFileId} to collection {CollectionId}", 
+            mediaFileId, collectionId);
+        
+        try
+        {
+            var result = await _repository.AddMediaFileAsync(collectionId, mediaFileId);
+            
+            if (result)
+            {
+                _logger.LogInformation("Successfully added media file {MediaFileId} to collection {CollectionId}", 
+                    mediaFileId, collectionId);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to add media file {MediaFileId} to collection {CollectionId}", 
+                    mediaFileId, collectionId);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while adding media file {MediaFileId} to collection {CollectionId}", 
+                mediaFileId, collectionId);
+            throw;
+        }
+    }
+
+    public async Task<bool> RemoveMediaFileFromCollectionAsync(Guid collectionId, Guid mediaFileId)
+    {
+        using var scope = _logger.BeginScope("Removing media file {MediaFileId} from collection {CollectionId}", 
+            mediaFileId, collectionId);
+        
+        try
+        {
+            var result = await _repository.RemoveMediaFileAsync(collectionId, mediaFileId);
+            
+            if (result)
+            {
+                _logger.LogInformation("Successfully removed media file {MediaFileId} from collection {CollectionId}", 
+                    mediaFileId, collectionId);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to remove media file {MediaFileId} from collection {CollectionId}", 
+                    mediaFileId, collectionId);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while removing media file {MediaFileId} from collection {CollectionId}", 
+                mediaFileId, collectionId);
+            throw;
+        }
+    }
+
+    public async Task<bool> ExistsByNameAsync(string name, Guid? excludeId = null)
+    {
+        try
+        {
+            // Get all collections and check for name collision
+            var collections = await _repository.GetAllAsync();
+            var nameExists = collections.Any(c => 
+                string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase) && 
+                (excludeId == null || c.Id != excludeId));
+            
+            return nameExists;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while checking if collection exists by name: {Name}", name);
+            throw;
+        }
+    }
+}

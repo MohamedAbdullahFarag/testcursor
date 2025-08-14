@@ -1,0 +1,707 @@
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Entities;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Core.Services.Interfaces;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using Ikhtibar.Shared.Enums;
+
+namespace Ikhtibar.Infrastructure.Services;
+
+/// <summary>
+/// Notification template service implementation
+/// Handles template management, variable substitution, and multi-language support
+/// Following SRP: ONLY template management operations
+/// </summary>
+public class NotificationTemplateService : INotificationTemplateService
+{
+    private readonly INotificationTemplateRepository _templateRepository;
+    private readonly INotificationHistoryRepository _historyRepository;
+    private readonly ILogger<NotificationTemplateService> _logger;
+    private static readonly Regex _variablePattern = new Regex(@"\{\{([a-zA-Z0-9_\.]+)\}\}", RegexOptions.Compiled);
+
+    public NotificationTemplateService(
+        INotificationTemplateRepository templateRepository,
+        INotificationHistoryRepository historyRepository,
+        ILogger<NotificationTemplateService> logger)
+    {
+        _templateRepository = templateRepository;
+        _historyRepository = historyRepository;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Creates a new notification template
+    /// </summary>
+    public async Task<NotificationTemplateDto> CreateTemplateAsync(CreateNotificationTemplateDto dto)
+    {
+        using var scope = _logger.BeginScope("Creating template for notification type {Type}, language {Language}", 
+            dto.NotificationType, dto.Language);
+
+        // Validate template exists
+        var existingTemplate = await _templateRepository.GetByTypeAndLanguageAsync(dto.NotificationType, dto.Language);
+        if (existingTemplate != null)
+        {
+            _logger.LogWarning("Template already exists for this notification type and language");
+            throw new InvalidOperationException($"Template already exists for notification type {dto.NotificationType} and language {dto.Language}");
+        }
+
+        // Validate template content
+        var validationResult = await ValidateTemplateAsync(dto.Template);
+        if (!validationResult.IsValid)
+        {
+            _logger.LogWarning("Template validation failed: {Errors}", string.Join(", ", validationResult.Errors));
+            throw new ArgumentException($"Template validation failed: {string.Join(", ", validationResult.Errors)}");
+        }
+
+        var template = new NotificationTemplate
+        {
+            Id = Guid.NewGuid(),
+            Type = dto.NotificationType,
+            Language = dto.Language,
+            Name = $"{dto.NotificationType} - {dto.Language}",
+            SubjectTemplate = dto.Subject,
+            MessageTemplate = dto.Template,
+            EmailHtmlTemplate = dto.EmailHtml,
+            SmsTemplate = dto.SmsContent,
+            PushTitleTemplate = dto.PushTitle,
+            PushBodyTemplate = dto.PushBody,
+            IsActive = dto.IsActive,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var result = await _templateRepository.AddAsync(template);
+        _logger.LogInformation("Template created with ID {TemplateId}", result.Id);
+
+        return MapToDto(result);
+    }
+
+    /// <summary>
+    /// Updates an existing template
+    /// </summary>
+    public async Task<NotificationTemplateDto> UpdateTemplateAsync(Guid templateId, UpdateNotificationTemplateDto dto)
+    {
+        using var scope = _logger.BeginScope("Updating template {TemplateId}", templateId);
+
+        var template = await _templateRepository.GetByIdAsync(templateId);
+        if (template == null)
+        {
+            _logger.LogWarning("Template not found");
+            throw new KeyNotFoundException($"Template with ID {templateId} not found");
+        }
+
+        // Validate template content
+        if (!string.IsNullOrEmpty(dto.Template))
+        {
+            var validationResult = await ValidateTemplateAsync(dto.Template);
+            if (!validationResult.IsValid)
+            {
+                _logger.LogWarning("Template validation failed: {Errors}", string.Join(", ", validationResult.Errors));
+                throw new ArgumentException($"Template validation failed: {string.Join(", ", validationResult.Errors)}");
+            }
+        }
+
+        // Update template properties
+        template.SubjectTemplate = dto.Subject ?? template.SubjectTemplate;
+        template.MessageTemplate = dto.Template ?? template.MessageTemplate;
+        template.EmailHtmlTemplate = dto.EmailHtml ?? template.EmailHtmlTemplate;
+        template.SmsTemplate = dto.SmsContent ?? template.SmsTemplate;
+        template.PushTitleTemplate = dto.PushTitle ?? template.PushTitleTemplate;
+        template.PushBodyTemplate = dto.PushBody ?? template.PushBodyTemplate;
+        template.IsActive = dto.IsActive ?? template.IsActive;
+        template.ModifiedAt = DateTime.UtcNow;
+
+        var result = await _templateRepository.UpdateAsync(template);
+        _logger.LogInformation("Template updated successfully");
+
+        return MapToDto(result);
+    }
+
+    /// <summary>
+    /// Gets a template by ID
+    /// </summary>
+    public async Task<NotificationTemplateDto?> GetTemplateAsync(Guid templateId)
+    {
+        var template = await _templateRepository.GetByIdAsync(templateId);
+        if (template == null)
+        {
+            _logger.LogWarning("Template with ID {TemplateId} not found", templateId);
+            return null;
+        }
+
+        return MapToDto(template);
+    }
+
+    /// <summary>
+    /// Gets template by notification type and language
+    /// </summary>
+    public async Task<NotificationTemplateDto?> GetTemplateAsync(NotificationType notificationType, string language)
+    {
+        var template = await _templateRepository.GetByTypeAndLanguageAsync(notificationType, language);
+        if (template == null)
+        {
+            _logger.LogWarning("Template not found for notification type {Type} and language {Language}", 
+                notificationType, language);
+            return null;
+        }
+
+        return MapToDto(template);
+    }
+
+    /// <summary>
+    /// Gets all templates with pagination and filtering
+    /// </summary>
+    public async Task<PagedResult<NotificationTemplateDto>> GetTemplatesAsync(TemplateFilterDto filter)
+    {
+        var (templates, totalCount) = await _templateRepository.GetTemplatesAsync(
+            filter.Page,
+            filter.PageSize,
+            filter.Language,
+            filter.NotificationType,
+            filter.IsActive ?? true);
+
+        var result = new PagedResult<NotificationTemplateDto>
+        {
+            Items = templates.Select(MapToDto).ToList(),
+            TotalCount = totalCount,
+            PageNumber = filter.Page,
+            PageSize = filter.PageSize
+        };
+
+        return result;
+    }
+
+    /// <summary>
+    /// Activates or deactivates a template
+    /// </summary>
+    public async Task<bool> SetTemplateActiveStatusAsync(Guid templateId, bool isActive)
+    {
+        using var scope = _logger.BeginScope("Setting template {TemplateId} active status to {IsActive}", templateId, isActive);
+
+        var template = await _templateRepository.GetByIdAsync(templateId);
+        if (template == null)
+        {
+            _logger.LogWarning("Template not found");
+            return false;
+        }
+
+        template.IsActive = isActive;
+        template.ModifiedAt = DateTime.UtcNow;
+
+        await _templateRepository.UpdateAsync(template);
+        _logger.LogInformation("Template active status updated successfully");
+
+        return true;
+    }
+
+    /// <summary>
+    /// Deletes a template (soft delete)
+    /// </summary>
+    public async Task<bool> DeleteTemplateAsync(Guid templateId)
+    {
+        using var scope = _logger.BeginScope("Deleting template {TemplateId}", templateId);
+
+        var template = await _templateRepository.GetByIdAsync(templateId);
+        if (template == null)
+        {
+            _logger.LogWarning("Template not found");
+            return false;
+        }
+
+        await _templateRepository.DeleteAsync(templateId);
+        _logger.LogInformation("Template deleted successfully");
+
+        return true;
+    }
+
+    /// <summary>
+    /// Processes template with variable substitution
+    /// </summary>
+    public async Task<ProcessedTemplate> ProcessTemplateAsync(NotificationTemplateDto template, Dictionary<string, object> variables)
+    {
+        using var scope = _logger.BeginScope("Processing template {TemplateId} with {VariableCount} variables", 
+            template.Id, variables.Count);
+
+        // Process main template
+        var processedMessage = await ProcessTemplateContentAsync(template.Message, variables);
+        var processedSubject = await ProcessTemplateContentAsync(template.Subject, variables);
+
+        // Process channel-specific templates
+        var processedEmailHtml = !string.IsNullOrEmpty(template.EmailHtml) 
+            ? await ProcessTemplateContentAsync(template.EmailHtml, variables)
+            : null;
+            
+        var processedSmsContent = !string.IsNullOrEmpty(template.SmsContent)
+            ? await ProcessTemplateContentAsync(template.SmsContent, variables)
+            : null;
+            
+        var processedPushTitle = !string.IsNullOrEmpty(template.PushTitle)
+            ? await ProcessTemplateContentAsync(template.PushTitle, variables)
+            : null;
+            
+        var processedPushBody = !string.IsNullOrEmpty(template.PushBody)
+            ? await ProcessTemplateContentAsync(template.PushBody, variables)
+            : null;
+
+        return new ProcessedTemplate
+        {
+            Subject = processedSubject,
+            Message = processedMessage,
+            EmailHtml = processedEmailHtml,
+            SmsContent = processedSmsContent,
+            PushTitle = processedPushTitle,
+            PushBody = processedPushBody
+        };
+    }
+
+    /// <summary>
+    /// Processes template content directly without template entity
+    /// </summary>
+    public async Task<string> ProcessTemplateContentAsync(string templateContent, Dictionary<string, object> variables)
+    {
+        if (string.IsNullOrEmpty(templateContent))
+        {
+            return string.Empty;
+        }
+
+        // Replace all variables in the template
+        var result = _variablePattern.Replace(templateContent, match =>
+        {
+            var variableName = match.Groups[1].Value;
+            if (variables.TryGetValue(variableName, out var value))
+            {
+                return value?.ToString() ?? string.Empty;
+            }
+            // Keep unmatched variables as-is
+            return match.Value;
+        });
+
+        return await Task.FromResult(result);
+    }
+
+    /// <summary>
+    /// Validates template syntax and variable placeholders
+    /// </summary>
+    public async Task<TemplateValidationResult> ValidateTemplateAsync(string templateContent)
+    {
+        var result = new TemplateValidationResult
+        {
+            IsValid = true,
+            Errors = new List<string>(),
+            Warnings = new List<string>(),
+            FoundVariables = new List<string>()
+        };
+
+        if (string.IsNullOrWhiteSpace(templateContent))
+        {
+            result.IsValid = false;
+            result.Errors.Add("Template content cannot be empty");
+            return await Task.FromResult(result);
+        }
+
+        // Find all variables in the template
+        var matches = _variablePattern.Matches(templateContent);
+        foreach (Match match in matches)
+        {
+            var variable = match.Groups[1].Value;
+            if (!result.FoundVariables.Contains(variable))
+            {
+                result.FoundVariables.Add(variable);
+            }
+        }
+
+        // Check for unclosed variables (e.g., {{variable)
+        var unclosedVariables = Regex.Matches(templateContent, @"\{\{([^}]+)(?!\}\})");
+        if (unclosedVariables.Count > 0)
+        {
+            result.IsValid = false;
+            result.Errors.Add("Unclosed variable placeholders found");
+        }
+
+        return await Task.FromResult(result);
+    }
+
+    /// <summary>
+    /// Gets available template variables for a notification type
+    /// </summary>
+    public async Task<List<TemplateVariable>> GetAvailableVariablesAsync(NotificationType notificationType)
+    {
+        var variables = notificationType switch
+        {
+            NotificationType.Welcome => new List<TemplateVariable>
+            {
+                new TemplateVariable { Name = "user.name", Description = "User's full name", IsRequired = true },
+                new TemplateVariable { Name = "user.email", Description = "User's email address", IsRequired = false }
+            },
+            NotificationType.PasswordReset => new List<TemplateVariable>
+            {
+                new TemplateVariable { Name = "user.name", Description = "User's full name", IsRequired = true },
+                new TemplateVariable { Name = "reset.link", Description = "Password reset link", IsRequired = true },
+                new TemplateVariable { Name = "reset.expiry", Description = "Link expiration time", IsRequired = false }
+            },
+            NotificationType.ExamReminder => new List<TemplateVariable>
+            {
+                new TemplateVariable { Name = "exam.title", Description = "Exam title", IsRequired = true },
+                new TemplateVariable { Name = "exam.start", Description = "Exam start time", IsRequired = true },
+                new TemplateVariable { Name = "exam.duration", Description = "Exam duration in minutes", IsRequired = false }
+            },
+            // Add more notification types as needed
+            _ => new List<TemplateVariable>()
+        };
+
+        return await Task.FromResult(variables);
+    }
+
+    /// <summary>
+    /// Creates default templates for all notification types and languages
+    /// </summary>
+    public async Task<int> CreateDefaultTemplatesAsync(bool overwriteExisting = false)
+    {
+        using var scope = _logger.BeginScope("Creating default templates, overwrite={OverwriteExisting}", overwriteExisting);
+
+        var defaultTemplates = GetDefaultTemplates();
+        int createdCount = 0;
+
+        foreach (var template in defaultTemplates)
+        {
+            var existingTemplate = await _templateRepository.GetByTypeAndLanguageAsync(
+                template.Type, 
+                template.Language);
+
+            if (existingTemplate != null)
+            {
+                if (!overwriteExisting)
+                {
+                    _logger.LogInformation("Template already exists for {Type} and {Language}, skipping", 
+                        template.Type, template.Language);
+                    continue;
+                }
+
+                // Update existing template
+                template.Id = existingTemplate.Id;
+                template.ModifiedAt = DateTime.UtcNow;
+                await _templateRepository.UpdateAsync(template);
+                _logger.LogInformation("Updated existing template for {Type} and {Language}", 
+                    template.Type, template.Language);
+            }
+            else
+            {
+                // Create new template
+                template.Id = Guid.NewGuid();
+                template.CreatedAt = DateTime.UtcNow;
+                await _templateRepository.AddAsync(template);
+                _logger.LogInformation("Created new template for {Type} and {Language}", 
+                    template.Type, template.Language);
+            }
+
+            createdCount++;
+        }
+
+        _logger.LogInformation("Created/updated {Count} default templates", createdCount);
+        return createdCount;
+    }
+
+    /// <summary>
+    /// Imports templates from JSON or CSV file
+    /// </summary>
+    public async Task<TemplateImportResult> ImportTemplatesAsync(string fileContent, TemplateImportType fileType)
+    {
+        var result = new TemplateImportResult
+        {
+            TemplatesCreated = 0,
+            TemplatesUpdated = 0,
+            TemplatesSkipped = 0,
+            Errors = new List<string>(),
+            Warnings = new List<string>()
+        };
+
+        if (string.IsNullOrWhiteSpace(fileContent))
+        {
+            result.Errors.Add("File content is empty");
+            return result;
+        }
+
+        try
+        {
+            List<NotificationTemplate> templates = new();
+
+            switch (fileType)
+            {
+                case TemplateImportType.Json:
+                    templates = JsonSerializer.Deserialize<List<NotificationTemplate>>(fileContent, 
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+                    break;
+                    
+                case TemplateImportType.Csv:
+                    result.Errors.Add("CSV import not implemented");
+                    return result;
+                    
+                case TemplateImportType.Excel:
+                    result.Errors.Add("Excel import not implemented");
+                    return result;
+            }
+
+            if (templates.Count == 0)
+            {
+                result.Warnings.Add("No templates found in the import file");
+                return result;
+            }
+
+            foreach (var template in templates)
+            {
+                try
+                {
+                    var existingTemplate = await _templateRepository.GetByTypeAndLanguageAsync(
+                        template.Type, template.Language);
+
+                    if (existingTemplate != null)
+                    {
+                        // Update existing template
+                        template.Id = existingTemplate.Id;
+                        template.ModifiedAt = DateTime.UtcNow;
+                        await _templateRepository.UpdateAsync(template);
+                        result.TemplatesUpdated++;
+                    }
+                    else
+                    {
+                        // Create new template
+                        template.Id = Guid.NewGuid();
+                        template.CreatedAt = DateTime.UtcNow;
+                        await _templateRepository.AddAsync(template);
+                        result.TemplatesCreated++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result.Errors.Add($"Error processing template for {template.Type} in {template.Language}: {ex.Message}");
+                    result.TemplatesSkipped++;
+                }
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            result.Errors.Add($"Failed to parse import file: {ex.Message}");
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Exports templates to JSON format
+    /// </summary>
+    public async Task<string> ExportTemplatesAsync(string? language = null, NotificationType? notificationType = null)
+    {
+        var (templates, _) = await _templateRepository.GetTemplatesAsync(1, int.MaxValue, language, notificationType, false);
+        
+        var options = new JsonSerializerOptions 
+        { 
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+        
+        return JsonSerializer.Serialize(templates, options);
+    }
+
+    /// <summary>
+    /// Gets template usage statistics
+    /// </summary>
+        public async Task<TemplateUsageStats> GetTemplateUsageStatsAsync(Guid templateId, DateTime startDate, DateTime endDate)
+    {
+        var template = await _templateRepository.GetByIdAsync(templateId);
+        if (template == null)
+        {
+            throw new KeyNotFoundException($"Template with ID {templateId} not found");
+        }
+
+        // TODO: Implement usage statistics when repository methods are available
+        // var usageCount = await _historyRepository.GetTemplateUsageCountAsync(templateId.GetHashCode(), startDate, endDate);
+        // var deliveryStats = await _historyRepository.GetTemplateDeliveryStatsAsync(templateId.GetHashCode(), startDate, endDate);
+
+        // For now, return empty stats
+        var usageCount = 0;
+        var deliveryStats = new { SuccessCount = 0, FailureCount = 0 };
+
+        return new TemplateUsageStats
+        {
+            TemplateId = templateId,
+            TemplateName = $"{template.Type} ({template.Language})",
+            TotalUsage = usageCount,
+            SuccessfulDeliveries = deliveryStats.SuccessCount,
+            FailedDeliveries = deliveryStats.FailureCount,
+            SuccessRate = usageCount > 0 ? (double)deliveryStats.SuccessCount / usageCount : 0,
+            PeriodStart = startDate,
+            PeriodEnd = endDate
+        };
+    }
+
+    /// <summary>
+    /// Duplicates a template with new language
+    /// </summary>
+    public async Task<NotificationTemplateDto> DuplicateTemplateAsync(Guid sourceTemplateId, string targetLanguage, bool translateContent = false)
+    {
+        using var scope = _logger.BeginScope("Duplicating template {TemplateId} to language {Language}", 
+            sourceTemplateId, targetLanguage);
+
+        var sourceTemplate = await _templateRepository.GetByIdAsync(sourceTemplateId);
+        if (sourceTemplate == null)
+        {
+            throw new KeyNotFoundException($"Source template with ID {sourceTemplateId} not found");
+        }
+
+        var existingTarget = await _templateRepository.GetByTypeAndLanguageAsync(
+            sourceTemplate.Type, targetLanguage);
+            
+        if (existingTarget != null)
+        {
+            throw new InvalidOperationException($"Template already exists for notification type {sourceTemplate.Type} and language {targetLanguage}");
+        }
+
+        var newTemplate = new NotificationTemplate
+        {
+            Id = Guid.NewGuid(),
+            Type = sourceTemplate.Type,
+            Language = targetLanguage,
+            Name = $"{sourceTemplate.Type} ({targetLanguage})",
+            SubjectTemplate = sourceTemplate.SubjectTemplate,
+            MessageTemplate = sourceTemplate.MessageTemplate,
+            EmailHtmlTemplate = sourceTemplate.EmailHtmlTemplate,
+            SmsTemplate = sourceTemplate.SmsTemplate,
+            PushTitleTemplate = sourceTemplate.PushTitleTemplate,
+            PushBodyTemplate = sourceTemplate.PushBodyTemplate,
+            IsActive = false,  // Default to inactive to allow review
+            CreatedAt = DateTime.UtcNow
+        };
+
+        if (translateContent)
+        {
+            // TODO: Implement translation service integration
+            _logger.LogWarning("Translation service not implemented, content copied as-is");
+        }
+
+        var result = await _templateRepository.AddAsync(newTemplate);
+        _logger.LogInformation("Template duplicated successfully with ID {TemplateId}", result.Id);
+
+        return MapToDto(result);
+    }
+
+    #region Private Helper Methods
+
+    private NotificationTemplateDto MapToDto(NotificationTemplate entity)
+    {
+        return new NotificationTemplateDto
+        {
+            Id = entity.Id,
+            NotificationType = entity.Type,
+            Language = entity.Language,
+            Subject = entity.SubjectTemplate,
+            Message = entity.MessageTemplate,
+            EmailHtml = entity.EmailHtmlTemplate,
+            SmsContent = entity.SmsTemplate,
+            PushTitle = entity.PushTitleTemplate,
+            PushBody = entity.PushBodyTemplate,
+            IsActive = entity.IsActive,
+            CreatedAt = entity.CreatedAt,
+            ModifiedAt = entity.ModifiedAt ?? DateTime.MinValue
+        };
+    }
+
+    private List<NotificationTemplate> GetDefaultTemplates()
+    {
+        return new List<NotificationTemplate>
+        {
+            // Welcome notification - English
+            new NotificationTemplate
+            {
+                Type = NotificationType.Welcome,
+                Language = "en",
+                Name = "Welcome Email - English",
+                SubjectTemplate = "Welcome to Ikhtibar - Your Educational Journey Begins!",
+                MessageTemplate = "Hello {{user.name}},\n\nWelcome to Ikhtibar! We're excited to have you join our educational platform.\n\nYour account has been created successfully and you're ready to start your educational journey.\n\nBest regards,\nThe Ikhtibar Team",
+                EmailHtmlTemplate = "<h1>Welcome to Ikhtibar!</h1><p>Hello {{user.name}},</p><p>We're excited to have you join our educational platform.</p><p>Your account has been created successfully and you're ready to start your educational journey.</p><p>Best regards,<br>The Ikhtibar Team</p>",
+                SmsTemplate = "Welcome to Ikhtibar, {{user.name}}! Your educational journey begins now. Login to get started.",
+                PushTitleTemplate = "Welcome to Ikhtibar",
+                PushBodyTemplate = "Hello {{user.name}}, your account is ready! Start your educational journey now.",
+                IsActive = true
+            },
+
+            // Welcome notification - Arabic
+            new NotificationTemplate
+            {
+                Type = NotificationType.Welcome,
+                Language = "ar",
+                Name = "Welcome Email - Arabic",
+                SubjectTemplate = "مرحبًا بك في اختبار - تبدأ رحلتك التعليمية!",
+                MessageTemplate = "مرحبًا {{user.name}}،\n\nأهلاً بك في اختبار! نحن متحمسون لانضمامك إلى منصتنا التعليمية.\n\nتم إنشاء حسابك بنجاح وأنت جاهز لبدء رحلتك التعليمية.\n\nمع أطيب التحيات،\nفريق اختبار",
+                EmailHtmlTemplate = "<h1>مرحبًا بك في اختبار!</h1><p>مرحبًا {{user.name}}،</p><p>نحن متحمسون لانضمامك إلى منصتنا التعليمية.</p><p>تم إنشاء حسابك بنجاح وأنت جاهز لبدء رحلتك التعليمية.</p><p>مع أطيب التحيات،<br>فريق اختبار</p>",
+                SmsTemplate = "مرحبًا بك في اختبار، {{user.name}}! تبدأ رحلتك التعليمية الآن. سجل الدخول للبدء.",
+                PushTitleTemplate = "مرحبًا بك في اختبار",
+                PushBodyTemplate = "مرحبًا {{user.name}}، حسابك جاهز! ابدأ رحلتك التعليمية الآن.",
+                IsActive = true
+            },
+
+            // Password Reset notification - English
+            new NotificationTemplate
+            {
+                Type = NotificationType.PasswordReset,
+                Language = "en",
+                Name = "Password Reset - English",
+                SubjectTemplate = "Ikhtibar Password Reset Request",
+                MessageTemplate = "Hello {{user.name}},\n\nA password reset was requested for your Ikhtibar account. Please use the following link to reset your password:\n\n{{reset.link}}\n\nThis link will expire in {{reset.expiry}} minutes.\n\nIf you did not request this password reset, please ignore this message.\n\nBest regards,\nThe Ikhtibar Team",
+                EmailHtmlTemplate = "<h1>Password Reset Request</h1><p>Hello {{user.name}},</p><p>A password reset was requested for your Ikhtibar account. Please click the button below to reset your password:</p><p><a href='{{reset.link}}' style='padding: 10px 15px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;'>Reset Password</a></p><p>This link will expire in {{reset.expiry}} minutes.</p><p>If you did not request this password reset, please ignore this message.</p><p>Best regards,<br>The Ikhtibar Team</p>",
+                SmsTemplate = "Ikhtibar password reset: {{reset.link}} (Valid for {{reset.expiry}} minutes). Ignore if you didn't request this.",
+                PushTitleTemplate = "Password Reset Request",
+                PushBodyTemplate = "Click to reset your Ikhtibar password. Link valid for {{reset.expiry}} minutes.",
+                IsActive = true
+            },
+
+            // Password Reset notification - Arabic
+            new NotificationTemplate
+            {
+                Type = NotificationType.PasswordReset,
+                Language = "ar",
+                Name = "Password Reset - Arabic",
+                SubjectTemplate = "طلب إعادة تعيين كلمة المرور لاختبار",
+                MessageTemplate = "مرحبًا {{user.name}}،\n\nتم طلب إعادة تعيين كلمة المرور لحسابك في اختبار. يرجى استخدام الرابط التالي لإعادة تعيين كلمة المرور:\n\n{{reset.link}}\n\nستنتهي صلاحية هذا الرابط في غضون {{reset.expiry}} دقيقة.\n\nإذا لم تطلب إعادة تعيين كلمة المرور هذه، يرجى تجاهل هذه الرسالة.\n\nمع أطيب التحيات،\nفريق اختبار",
+                EmailHtmlTemplate = "<h1>طلب إعادة تعيين كلمة المرور</h1><p>مرحبًا {{user.name}}،</p><p>تم طلب إعادة تعيين كلمة المرور لحسابك في اختبار. يرجى النقر على الزر أدناه لإعادة تعيين كلمة المرور:</p><p><a href='{{reset.link}}' style='padding: 10px 15px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;'>إعادة تعيين كلمة المرور</a></p><p>ستنتهي صلاحية هذا الرابط في غضون {{reset.expiry}} دقيقة.</p><p>إذا لم تطلب إعادة تعيين كلمة المرور هذه، يرجى تجاهل هذه الرسالة.</p><p>مع أطيب التحيات،<br>فريق اختبار</p>",
+                SmsTemplate = "إعادة تعيين كلمة المرور لاختبار: {{reset.link}} (صالح لمدة {{reset.expiry}} دقيقة). تجاهل إذا لم تطلب هذا.",
+                PushTitleTemplate = "طلب إعادة تعيين كلمة المرور",
+                PushBodyTemplate = "انقر لإعادة تعيين كلمة المرور الخاصة باختبار. الرابط صالح لمدة {{reset.expiry}} دقيقة.",
+                IsActive = true
+            },
+
+            // Exam Reminder notification - English
+            new NotificationTemplate
+            {
+                Type = NotificationType.ExamReminder,
+                Language = "en",
+                Name = "Exam Reminder - English",
+                SubjectTemplate = "Reminder: Your Exam Starts Soon",
+                MessageTemplate = "Hello {{user.name}},\n\nThis is a reminder that your exam \"{{exam.title}}\" starts on {{exam.start}}.\n\nPlease make sure you're ready and have all necessary materials prepared.\n\nExam duration: {{exam.duration}} minutes\n\nGood luck!\n\nBest regards,\nThe Ikhtibar Team",
+                EmailHtmlTemplate = "<h1>Exam Reminder</h1><p>Hello {{user.name}},</p><p>This is a reminder that your exam <strong>\"{{exam.title}}\"</strong> starts on <strong>{{exam.start}}</strong>.</p><p>Please make sure you're ready and have all necessary materials prepared.</p><p><strong>Exam duration:</strong> {{exam.duration}} minutes</p><p>Good luck!</p><p>Best regards,<br>The Ikhtibar Team</p>",
+                SmsTemplate = "Reminder: Your exam \"{{exam.title}}\" starts on {{exam.start}}. Duration: {{exam.duration}} min. Good luck!",
+                PushTitleTemplate = "Exam Starting Soon",
+                PushBodyTemplate = "Your exam \"{{exam.title}}\" starts on {{exam.start}}. Be prepared!",
+                IsActive = true
+            },
+
+            // Exam Reminder notification - Arabic
+            new NotificationTemplate
+            {
+                Type = NotificationType.ExamReminder,
+                Language = "ar",
+                Name = "Exam Reminder - Arabic",
+                SubjectTemplate = "تذكير: امتحانك يبدأ قريبًا",
+                MessageTemplate = "مرحبًا {{user.name}}،\n\nهذا تذكير بأن امتحانك \"{{exam.title}}\" يبدأ في {{exam.start}}.\n\nيرجى التأكد من أنك مستعد ولديك جميع المواد اللازمة.\n\nمدة الامتحان: {{exam.duration}} دقيقة\n\nحظاً موفقاً!\n\nمع أطيب التحيات،\nفريق اختبار",
+                EmailHtmlTemplate = "<h1>تذكير بالامتحان</h1><p>مرحبًا {{user.name}}،</p><p>هذا تذكير بأن امتحانك <strong>\"{{exam.title}}\"</strong> يبدأ في <strong>{{exam.start}}</strong>.</p><p>يرجى التأكد من أنك مستعد ولديك جميع المواد اللازمة.</p><p><strong>مدة الامتحان:</strong> {{exam.duration}} دقيقة</p><p>حظاً موفقاً!</p><p>مع أطيب التحيات،<br>فريق اختبار</p>",
+                SmsTemplate = "تذكير: امتحانك \"{{exam.title}}\" يبدأ في {{exam.start}}. المدة: {{exam.duration}} دقيقة. حظاً موفقاً!",
+                PushTitleTemplate = "الامتحان يبدأ قريبًا",
+                PushBodyTemplate = "امتحانك \"{{exam.title}}\" يبدأ في {{exam.start}}. كن مستعداً!",
+                IsActive = true
+            }
+        };
+    }
+
+    #endregion
+}

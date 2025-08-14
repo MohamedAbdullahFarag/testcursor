@@ -1,0 +1,33 @@
+export const contentManagmentAr = {
+    contentManagment: {
+        title: 'إدارة المحتوى',
+        nationalId: 'الهوية الوطنية',
+    },
+    sharedValidation: {
+        required: 'الرجاء إدخال {0}',
+        requiredAn: 'الرجاء إدخال {0}',
+        requiredThe: 'الرجاء إدخال {0}',
+        requiredSelect: 'الرجاء اختيار {0}',
+        requiredSelectAn: 'الرجاء اختيار {0}',
+        requiredSelectThe: 'الرجاء اختيار {0}',
+        valid: 'الرجاء إدخال {0} بشكل صحيح',
+        requiredAttachment: 'الرجاء إرفاق {0}',
+        requiredAccount: 'الرجاء إدخال حساب {0}',
+        exceedsTheAllowedLimit: 'عدد خانات الحقل تجاوز الحد المسموح به',
+        acceptLettersAndNumbers: 'حقل {0} يقبل حروف وأرقام فقط',
+        acceptNumbers: 'الحقل يقبل أرقام فقط',
+        lessThan: 'قيمة الحقل يجب ألا تزيد عن {0}',
+        greaterThan: 'قيمة الحقل يجب ألا تقل عن {0}',
+        canNotAcceptSpecialCharacter: "لايسمح بادخال الرموز الخاصة مثل: !@#$%^&*()_+-'~<>/\\?|÷×",
+        acceptLetters: 'حقل {0} يقبل حروف فقط',
+        noAccount: 'في حال عدم وجود حساب {0} الرجاء ادخال قيمة "لا يوجد"',
+        noArabicLetters: 'حقل {0} لا يقبل حروف عربية',
+        usedID: 'رقم الهوية المدخل مسجل مسبقا في اختبار.',
+        maximunStudiPeriod: 'الحد الأقصى للدراسة خمس سنوات و11 شهر',
+        maximunFiles: 'الحد الأقصى 4 ملفات',
+        acceptedPassport: 'الرجاء إدخال جواز سفر ساري الصلاحية',
+        endDateMustBeGreaterThan: '{0} يجب أن يكون أكبر من {1}',
+        dateMustBeGreaterThanToday: '{0} يجب أن يكون أصغر من تاريخ اليوم',
+    },
+   
+} as const

@@ -1,0 +1,707 @@
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Entities;
+using Ikhtibar.Shared.Models;
+using Ikhtibar.Shared.Enums;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Core.Services.Interfaces;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
+
+namespace Ikhtibar.Infrastructure.Services;
+
+/// <summary>
+/// Main notification service implementation
+/// Orchestrates notification creation, delivery, and tracking
+/// </summary>
+public class NotificationService : INotificationService
+{
+    private readonly INotificationRepository _notificationRepository;
+    private readonly INotificationTemplateRepository _templateRepository;
+    private readonly INotificationPreferenceRepository _preferenceRepository;
+    private readonly INotificationHistoryRepository _historyRepository;
+    private readonly ILogger<NotificationService> _logger;
+
+    public NotificationService(
+        INotificationRepository notificationRepository,
+        INotificationTemplateRepository templateRepository,
+        INotificationPreferenceRepository preferenceRepository,
+        INotificationHistoryRepository historyRepository,
+        ILogger<NotificationService> logger)
+    {
+        _notificationRepository = notificationRepository;
+        _templateRepository = templateRepository;
+        _preferenceRepository = preferenceRepository;
+        _historyRepository = historyRepository;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Creates a new notification
+    /// </summary>
+    public async Task<NotificationDto> CreateNotificationAsync(CreateNotificationDto dto)
+    {
+        using var scope = _logger.BeginScope("Creating notification for user {UserId} of type {Type}", 
+            dto.UserId, dto.NotificationType);
+
+        var notification = new Notification
+        {
+            Id = Guid.NewGuid(),
+            UserId = dto.UserId,
+            Type = dto.NotificationType,
+            Title = dto.Subject,
+            Message = dto.Message,
+            Priority = dto.Priority,
+            Status = NotificationStatus.Pending,
+            ScheduledAt = dto.ScheduledAt ?? DateTime.UtcNow,
+            EntityType = dto.EntityType,
+            EntityId = dto.EntityId,
+            TemplateId = dto.TemplateId?.GetHashCode(), // Convert Guid to int
+            MetadataJson = dto.Variables.Any() || dto.ChannelData.Any() || dto.Metadata.Any() ? 
+                JsonSerializer.Serialize(new { Variables = dto.Variables, ChannelData = dto.ChannelData, Metadata = dto.Metadata }) : null,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var result = await _notificationRepository.AddAsync(notification);
+        _logger.LogInformation("Notification created with ID {NotificationId}", result.Id);
+
+        return MapToDto(result);
+    }
+
+    /// <summary>
+    /// Sends a notification through appropriate channels based on user preferences
+    /// </summary>
+    public async Task<bool> SendNotificationAsync(Guid notificationId)
+    {
+        using var scope = _logger.BeginScope("Sending notification {NotificationId}", notificationId);
+
+        var notification = await _notificationRepository.GetByIdAsync(notificationId);
+        if (notification == null)
+        {
+            _logger.LogWarning("Notification not found");
+            return false;
+        }
+
+        // Get user preferences to determine channels
+        var preferences = await _preferenceRepository.GetUserPreferencesAsync(notification.UserId);
+        var typePreference = preferences.FirstOrDefault(p => p.NotificationType == notification.Type);
+
+        var channels = GetEnabledChannels(typePreference);
+        if (!channels.Any())
+        {
+            _logger.LogInformation("No enabled channels for user preferences");
+            await _notificationRepository.UpdateStatusAsync(notificationId, NotificationStatus.Cancelled);
+            return true;
+        }
+
+        var success = true;
+        foreach (var channel in channels)
+        {
+            try
+            {
+                var delivered = await DeliverToChannelAsync(notification, channel);
+                if (!delivered) success = false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to deliver notification to channel {Channel}", channel);
+                success = false;
+            }
+        }
+
+        var finalStatus = success ? NotificationStatus.Sent : NotificationStatus.Failed;
+        await _notificationRepository.UpdateStatusAsync(notificationId, finalStatus, DateTime.UtcNow);
+
+        return success;
+    }
+
+    /// <summary>
+    /// Creates and immediately sends a notification
+    /// </summary>
+    public async Task<bool> SendImmediateNotificationAsync(CreateNotificationDto dto)
+    {
+        var notification = await CreateNotificationAsync(dto);
+        return await SendNotificationAsync(notification.Id);
+    }
+
+    /// <summary>
+    /// Gets paginated notifications for a user
+    /// </summary>
+    public async Task<PagedResult<NotificationDto>> GetUserNotificationsAsync(int userId, NotificationFilterDto filter)
+    {
+        _logger.LogDebug("Getting notifications for user {UserId}, page {Page}", userId, filter.Page);
+
+        var (notifications, totalCount) = await _notificationRepository.GetUserNotificationsAsync(
+            userId, filter.Page, filter.PageSize, filter.IsRead == false, filter.NotificationType);
+
+        var notificationDtos = notifications.Select(MapToDto).ToList();
+
+        return new PagedResult<NotificationDto>
+        {
+            Items = notificationDtos,
+            TotalCount = totalCount,
+            PageNumber = filter.Page,
+            PageSize = filter.PageSize
+        };
+    }
+
+    /// <summary>
+    /// Marks a notification as read
+    /// </summary>
+    public async Task<bool> MarkAsReadAsync(Guid notificationId, int userId)
+    {
+        using var scope = _logger.BeginScope("Marking notification {NotificationId} as read for user {UserId}", 
+            notificationId, userId);
+
+        var notification = await _notificationRepository.GetByIdAsync(notificationId);
+        if (notification == null || notification.UserId != userId)
+        {
+            _logger.LogWarning("Notification not found or user mismatch");
+            return false;
+        }
+
+        var success = await _notificationRepository.MarkAsReadAsync(notificationId, userId);
+        if (success) _logger.LogInformation("Notification marked as read");
+
+        return success;
+    }
+
+    /// <summary>
+    /// Marks all notifications as read for a user
+    /// </summary>
+    public async Task<int> MarkAllAsReadAsync(int userId)
+    {
+        using var scope = _logger.BeginScope("Marking all notifications as read for user {UserId}", userId);
+
+        var count = await _notificationRepository.MarkAllAsReadAsync(userId);
+        _logger.LogInformation("Marked {Count} notifications as read", count);
+
+        return count;
+    }
+
+    /// <summary>
+    /// Gets count of unread notifications for a user
+    /// </summary>
+    public async Task<int> GetUnreadCountAsync(int userId)
+    {
+        return await _notificationRepository.GetUnreadCountAsync(userId);
+    }
+
+    /// <summary>
+    /// Sends notifications to multiple users
+    /// </summary>
+    public async Task<int> SendBulkNotificationAsync(List<CreateNotificationDto> notifications)
+    {
+        using var scope = _logger.BeginScope("Sending bulk notifications to {Count} recipients", notifications.Count);
+
+        var successCount = 0;
+        foreach (var notificationDto in notifications)
+        {
+            try
+            {
+                var success = await SendImmediateNotificationAsync(notificationDto);
+                if (success) successCount++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send notification to user {UserId}", notificationDto.UserId);
+            }
+        }
+
+        _logger.LogInformation("Bulk notification completed: {Sent}/{Total} sent successfully", 
+            successCount, notifications.Count);
+
+        return successCount;
+    }
+
+    /// <summary>
+    /// Schedules a notification for future delivery
+    /// </summary>
+    public async Task<bool> ScheduleNotificationAsync(CreateNotificationDto dto, DateTime scheduleTime)
+    {
+        if (scheduleTime <= DateTime.UtcNow)
+            throw new ArgumentException("Scheduled time must be in the future", nameof(scheduleTime));
+
+        dto.ScheduledAt = scheduleTime;
+        var notification = await CreateNotificationAsync(dto);
+        
+        // Update status to scheduled
+        await _notificationRepository.UpdateStatusAsync(notification.Id, NotificationStatus.Scheduled);
+        
+        _logger.LogInformation("Notification scheduled for {ScheduledTime}", scheduleTime);
+        return true;
+    }
+
+    /// <summary>
+    /// Cancels a pending or scheduled notification
+    /// </summary>
+    public async Task<bool> CancelNotificationAsync(Guid notificationId)
+    {
+        using var scope = _logger.BeginScope("Cancelling notification {NotificationId}", notificationId);
+
+        var notification = await _notificationRepository.GetByIdAsync(notificationId);
+        if (notification == null)
+        {
+            _logger.LogWarning("Notification not found");
+            return false;
+        }
+
+        if (notification.Status == NotificationStatus.Sent)
+        {
+            _logger.LogWarning("Cannot cancel already sent notification");
+            return false;
+        }
+
+        var success = await _notificationRepository.UpdateStatusAsync(notificationId, NotificationStatus.Cancelled);
+        if (success) _logger.LogInformation("Notification cancelled");
+
+        return success;
+    }
+
+    /// <summary>
+    /// Gets a notification by ID for a specific user
+    /// </summary>
+    public async Task<NotificationDto?> GetNotificationByIdAsync(Guid notificationId, int userId)
+    {
+        using var scope = _logger.BeginScope("Getting notification {NotificationId} for user {UserId}", 
+            notificationId, userId);
+
+        var notification = await _notificationRepository.GetByIdAsync(notificationId);
+        if (notification == null || notification.UserId != userId)
+        {
+            _logger.LogWarning("Notification not found or user mismatch");
+            return null;
+        }
+
+        return MapToDto(notification);
+    }
+
+    /// <summary>
+    /// Deletes a notification for a specific user
+    /// </summary>
+    public async Task<bool> DeleteNotificationAsync(Guid notificationId, int userId)
+    {
+        using var scope = _logger.BeginScope("Deleting notification {NotificationId} for user {UserId}", 
+            notificationId, userId);
+
+        var notification = await _notificationRepository.GetByIdAsync(notificationId);
+        if (notification == null || notification.UserId != userId)
+        {
+            _logger.LogWarning("Notification not found or user mismatch");
+            return false;
+        }
+
+        var success = await _notificationRepository.DeleteAsync(notificationId);
+        if (success) _logger.LogInformation("Notification deleted");
+
+        return success;
+    }
+
+    /// <summary>
+    /// Sends exam reminder notification to enrolled students
+    /// </summary>
+    public async Task SendExamReminderAsync(int examId, int reminderMinutes)
+    {
+        _logger.LogInformation("Sending exam reminder for exam {ExamId}, {Minutes} minutes before start", 
+            examId, reminderMinutes);
+
+        // TODO: Get enrolled students from exam service
+        var studentIds = new List<int>(); // Placeholder
+
+        var notifications = studentIds.Select(studentId => new CreateNotificationDto
+        {
+            UserId = studentId,
+            NotificationType = NotificationType.ExamReminder,
+            Subject = "Exam Reminder",
+            Message = $"Your exam starts in {reminderMinutes} minutes. Please be ready.",
+            Priority = NotificationPriority.High,
+            EntityType = "Exam",
+            EntityId = examId
+        }).ToList();
+
+        await SendBulkNotificationAsync(notifications);
+    }
+
+    /// <summary>
+    /// Sends exam start notification to enrolled students
+    /// </summary>
+    public async Task SendExamStartNotificationAsync(int examId)
+    {
+        _logger.LogInformation("Sending exam start notification for exam {ExamId}", examId);
+
+        // TODO: Get enrolled students and exam details
+        var studentIds = new List<int>(); // Placeholder
+
+        var notifications = studentIds.Select(studentId => new CreateNotificationDto
+        {
+            UserId = studentId,
+            NotificationType = NotificationType.ExamReminder,
+            Subject = "Exam Started",
+            Message = "Your exam has started. Click here to begin.",
+            Priority = NotificationPriority.High,
+            EntityType = "Exam",
+            EntityId = examId
+        }).ToList();
+
+        await SendBulkNotificationAsync(notifications);
+    }
+
+    /// <summary>
+    /// Sends exam end notification to enrolled students
+    /// </summary>
+    public async Task SendExamEndNotificationAsync(int examId)
+    {
+        _logger.LogInformation("Sending exam end notification for exam {ExamId}", examId);
+
+        // TODO: Get enrolled students
+        var studentIds = new List<int>(); // Placeholder
+
+        var notifications = studentIds.Select(studentId => new CreateNotificationDto
+        {
+            UserId = studentId,
+            NotificationType = NotificationType.ExamReminder,
+            Subject = "Exam Ended",
+            Message = "The exam has ended. Your responses have been submitted.",
+            Priority = NotificationPriority.Normal,
+            EntityType = "Exam",
+            EntityId = examId
+        }).ToList();
+
+        await SendBulkNotificationAsync(notifications);
+    }
+
+    /// <summary>
+    /// Sends grading complete notification to student
+    /// </summary>
+    public async Task SendGradingCompleteNotificationAsync(int examId, int studentId, decimal score, string grade)
+    {
+        _logger.LogInformation("Sending grading complete notification for exam {ExamId} to student {StudentId}", 
+            examId, studentId);
+
+        var notification = new CreateNotificationDto
+        {
+            UserId = studentId,
+            NotificationType = NotificationType.GradingComplete,
+            Subject = "Exam Graded",
+            Message = $"Your exam has been graded. Score: {score:F1}%, Grade: {grade}",
+            Priority = NotificationPriority.Normal,
+            EntityType = "Exam",
+            EntityId = examId,
+            Variables = new Dictionary<string, object>
+            {
+                { "score", score },
+                { "grade", grade }
+            }
+        };
+
+        await SendImmediateNotificationAsync(notification);
+    }
+
+    /// <summary>
+    /// Sends deadline reminder notification
+    /// </summary>
+    public async Task SendDeadlineReminderAsync(string entityType, int entityId, DateTime deadline, List<int> userIds)
+    {
+        _logger.LogInformation("Sending deadline reminder for {EntityType} {EntityId} to {UserCount} users", 
+            entityType, entityId, userIds.Count);
+
+        var notifications = userIds.Select(userId => new CreateNotificationDto
+        {
+            UserId = userId,
+            NotificationType = NotificationType.ExamReminder,
+            Subject = $"{entityType} Deadline Reminder",
+            Message = $"Reminder: {entityType} deadline is {deadline:f}",
+            Priority = NotificationPriority.Normal,
+            EntityType = entityType,
+            EntityId = entityId,
+            Variables = new Dictionary<string, object>
+            {
+                { "deadline", deadline }
+            }
+        }).ToList();
+
+        await SendBulkNotificationAsync(notifications);
+    }
+
+    /// <summary>
+    /// Sends welcome notification to new user
+    /// </summary>
+    public async Task SendWelcomeNotificationAsync(int userId)
+    {
+        _logger.LogInformation("Sending welcome notification to user {UserId}", userId);
+
+        var notification = new CreateNotificationDto
+        {
+            UserId = userId,
+            NotificationType = NotificationType.Welcome,
+            Subject = "Welcome to Ikhtibar",
+            Message = "Welcome to the Ikhtibar exam management system. We're glad to have you!",
+            Priority = NotificationPriority.Normal
+        };
+
+        await SendImmediateNotificationAsync(notification);
+    }
+
+    /// <summary>
+    /// Sends password reset notification
+    /// </summary>
+    public async Task SendPasswordResetNotificationAsync(int userId, string resetToken, string resetUrl)
+    {
+        _logger.LogInformation("Sending password reset notification to user {UserId}", userId);
+
+        var notification = new CreateNotificationDto
+        {
+            UserId = userId,
+            NotificationType = NotificationType.PasswordReset,
+            Subject = "Password Reset Request",
+            Message = $"Click here to reset your password: {resetUrl}",
+            Priority = NotificationPriority.High,
+            Variables = new Dictionary<string, object>
+            {
+                { "resetToken", resetToken },
+                { "resetUrl", resetUrl }
+            }
+        };
+
+        await SendImmediateNotificationAsync(notification);
+    }
+
+    /// <summary>
+    /// Sends role assignment notification
+    /// </summary>
+    public async Task SendRoleAssignmentNotificationAsync(int userId, string roleName, string assignedBy)
+    {
+        _logger.LogInformation("Sending role assignment notification to user {UserId} for role {Role}", 
+            userId, roleName);
+
+        var notification = new CreateNotificationDto
+        {
+            UserId = userId,
+            NotificationType = NotificationType.Announcement,
+            Subject = "Role Assignment",
+            Message = $"You have been assigned the role '{roleName}' by {assignedBy}",
+            Priority = NotificationPriority.Normal,
+            Variables = new Dictionary<string, object>
+            {
+                { "roleName", roleName },
+                { "assignedBy", assignedBy }
+            }
+        };
+
+        await SendImmediateNotificationAsync(notification);
+    }
+
+    /// <summary>
+    /// Sends system maintenance notification to all users
+    /// </summary>
+    public async Task SendSystemMaintenanceNotificationAsync(DateTime maintenanceStart, DateTime maintenanceEnd, string description)
+    {
+        _logger.LogInformation("Sending system maintenance notification");
+
+        // TODO: Get all active users
+        var userIds = new List<int>(); // Placeholder
+
+        var notifications = userIds.Select(userId => new CreateNotificationDto
+        {
+            UserId = userId,
+            NotificationType = NotificationType.Announcement,
+            Subject = "System Maintenance",
+            Message = $"System maintenance scheduled from {maintenanceStart:f} to {maintenanceEnd:f}. {description}",
+            Priority = NotificationPriority.High,
+            Variables = new Dictionary<string, object>
+            {
+                { "maintenanceStart", maintenanceStart },
+                { "maintenanceEnd", maintenanceEnd },
+                { "description", description }
+            }
+        }).ToList();
+
+        await SendBulkNotificationAsync(notifications);
+    }
+
+    /// <summary>
+    /// Processes pending scheduled notifications
+    /// </summary>
+    public async Task<int> ProcessScheduledNotificationsAsync(int batchSize = 100)
+    {
+        var pendingNotifications = await _notificationRepository.GetDueScheduledNotificationsAsync(batchSize);
+        var processedCount = 0;
+
+        foreach (var notification in pendingNotifications)
+        {
+            try
+            {
+                await SendNotificationAsync(notification.Id);
+                processedCount++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to process scheduled notification {NotificationId}", notification.Id);
+            }
+        }
+
+        _logger.LogInformation("Processed {Count} scheduled notifications", processedCount);
+        return processedCount;
+    }
+
+    /// <summary>
+    /// Retries failed notification deliveries
+    /// </summary>
+    public Task<int> RetryFailedNotificationsAsync(int maxRetryCount = 3, int batchSize = 50)
+    {
+        // TODO: Implement retry logic with exponential backoff
+        _logger.LogInformation("Retry failed notifications not yet implemented");
+        return Task.FromResult(0);
+    }
+
+    /// <summary>
+    /// Gets notification statistics for admin dashboard
+    /// </summary>
+    public async Task<NotificationSystemStats> GetSystemStatsAsync(DateTime fromDate, DateTime toDate)
+    {
+        var deliveryStats = await _historyRepository.GetDeliveryStatsAsync(fromDate, toDate, null);
+
+        return new NotificationSystemStats
+        {
+            TotalNotifications = deliveryStats.TotalAttempts,
+            SentNotifications = deliveryStats.SuccessfulDeliveries,
+            FailedNotifications = deliveryStats.FailedDeliveries,
+            PendingNotifications = deliveryStats.PendingDeliveries,
+            OverallSuccessRate = deliveryStats.SuccessRate,
+            FromDate = fromDate,
+            ToDate = toDate
+        };
+    }
+
+    /// <summary>
+    /// Cleans up old notifications and history records
+    /// </summary>
+    public Task<CleanupResult> CleanupOldDataAsync(int notificationRetentionDays = 90, int historyRetentionDays = 180)
+    {
+        var startTime = DateTime.UtcNow;
+        var result = new CleanupResult { CleanupDate = startTime };
+
+        try
+        {
+            var notificationCutoff = DateTime.UtcNow.AddDays(-notificationRetentionDays);
+            var historyCutoff = DateTime.UtcNow.AddDays(-historyRetentionDays);
+
+            // TODO: Implement actual cleanup logic
+            result.NotificationsDeleted = 0;
+            result.HistoryRecordsDeleted = 0;
+            result.IsSuccessful = true;
+
+            _logger.LogInformation("Cleanup completed: {NotificationCount} notifications, {HistoryCount} history records",
+                result.NotificationsDeleted, result.HistoryRecordsDeleted);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Cleanup failed");
+            result.IsSuccessful = false;
+            result.ErrorMessage = ex.Message;
+        }
+
+        result.CleanupDuration = DateTime.UtcNow - startTime;
+        return Task.FromResult(result);
+    }
+
+    // Private helper methods
+
+    private static IEnumerable<NotificationChannel> GetEnabledChannels(NotificationPreference? preference)
+    {
+        if (preference == null)
+            return new[] { NotificationChannel.InApp }; // Default to in-app only
+
+        var channels = new List<NotificationChannel>();
+
+        if (preference.EmailEnabled) channels.Add(NotificationChannel.Email);
+        if (preference.SmsEnabled) channels.Add(NotificationChannel.Sms);
+        if (preference.InAppEnabled) channels.Add(NotificationChannel.InApp);
+        if (preference.PushEnabled) channels.Add(NotificationChannel.Push);
+
+        return channels.Any() ? channels : new[] { NotificationChannel.InApp };
+    }
+
+    private async Task<bool> DeliverToChannelAsync(Notification notification, NotificationChannel channel)
+    {
+        // Record delivery attempt
+        var history = await _historyRepository.RecordDeliveryAttemptAsync(
+            notification.Id, channel, NotificationDeliveryStatus.Pending);
+
+        try
+        {
+            // TODO: Implement actual delivery logic for each channel
+            var success = await SimulateDeliveryAsync(channel);
+
+            var status = success ? NotificationDeliveryStatus.Sent : NotificationDeliveryStatus.Failed;
+            await _historyRepository.UpdateDeliveryStatusAsync(history.Id, status, DateTime.UtcNow);
+
+            return success;
+        }
+        catch (Exception ex)
+        {
+            await _historyRepository.UpdateDeliveryStatusAsync(
+                history.Id, NotificationDeliveryStatus.Failed, responseData: ex.Message);
+            throw;
+        }
+    }
+
+    private static async Task<bool> SimulateDeliveryAsync(NotificationChannel channel)
+    {
+        // Simulate delivery delay
+        await Task.Delay(100);
+        
+        // Simulate 95% success rate
+        return Random.Shared.NextDouble() > 0.05;
+    }
+
+    private static NotificationDto MapToDto(Notification notification)
+    {
+        Dictionary<string, object> variables = new();
+        Dictionary<string, object> channelData = new();
+        Dictionary<string, object> metadata = new();
+
+        if (!string.IsNullOrEmpty(notification.MetadataJson))
+        {
+            try
+            {
+                var parsedData = JsonSerializer.Deserialize<Dictionary<string, object>>(notification.MetadataJson);
+                if (parsedData != null)
+                {
+                    if (parsedData.ContainsKey("Variables"))
+                        variables = JsonSerializer.Deserialize<Dictionary<string, object>>(parsedData["Variables"].ToString() ?? "{}") ?? new();
+                    if (parsedData.ContainsKey("ChannelData"))
+                        channelData = JsonSerializer.Deserialize<Dictionary<string, object>>(parsedData["ChannelData"].ToString() ?? "{}") ?? new();
+                    if (parsedData.ContainsKey("Metadata"))
+                        metadata = JsonSerializer.Deserialize<Dictionary<string, object>>(parsedData["Metadata"].ToString() ?? "{}") ?? new();
+                }
+            }
+            catch
+            {
+                // If parsing fails, leave empty dictionaries
+            }
+        }
+
+        return new NotificationDto
+        {
+            Id = notification.Id,
+            UserId = notification.UserId,
+            NotificationType = notification.Type,
+            Priority = notification.Priority,
+            Status = notification.Status,
+            Subject = notification.Title,
+            Message = notification.Message,
+            IsRead = notification.ReadAt.HasValue,
+            ReadAt = notification.ReadAt,
+            SentAt = notification.SentAt,
+            ScheduledAt = notification.ScheduledAt,
+            EntityType = notification.EntityType,
+            EntityId = notification.EntityId,
+            TemplateId = notification.TemplateId.HasValue ? new Guid(notification.TemplateId.Value, 0, 0, new byte[8]) : null,
+            Variables = variables,
+            ChannelData = channelData,
+            Metadata = metadata,
+            CreatedAt = notification.CreatedAt,
+            ModifiedAt = notification.ModifiedAt ?? notification.CreatedAt
+        };
+    }
+}

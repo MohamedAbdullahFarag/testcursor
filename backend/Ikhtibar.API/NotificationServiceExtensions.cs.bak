@@ -1,0 +1,68 @@
+using System;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Ikhtibar.Core.Hubs;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Core.Events;
+using Ikhtibar.Core.Handlers;
+using Ikhtibar.Infrastructure.Hubs;
+using Ikhtibar.Infrastructure.Services;
+
+namespace Ikhtibar.API;
+
+/// <summary>
+/// Extension methods for service registration in the notification system
+/// </summary>
+public static class NotificationServiceExtensions
+{
+    /// <summary>
+    /// Adds notification system services to the service collection
+    /// </summary>
+    public static IServiceCollection AddNotificationSystem(this IServiceCollection services)
+    {
+        // Register core services
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<INotificationJobService, NotificationJobService>();
+        
+        // Register SignalR hub service
+        services.AddScoped<INotificationHub, NotificationHubService>();
+
+        // Register event bus service
+        services.AddSingleton<IEventBusService, EventBusService>();
+
+        // Register event handlers
+        RegisterEventHandlers(services);
+
+        return services;
+    }
+    
+    /// <summary>
+    /// Registers notification event handlers with the event bus
+    /// </summary>
+    private static void RegisterEventHandlers(IServiceCollection services)
+    {
+        // Register event handlers with the event bus service
+        services.AddTransient<ExamNotificationHandler>();
+        services.AddTransient<UserNotificationHandler>();
+        
+        // Configure the registrations during application startup
+        services.AddTransient<Action<IServiceProvider>>(sp => provider =>
+        {
+            var eventBus = provider.GetRequiredService<IEventBusService>();
+            
+            // Register exam event handlers
+            eventBus.RegisterHandler<ExamCreatedEvent, ExamNotificationHandler>();
+            eventBus.RegisterHandler<ExamStartingEvent, ExamNotificationHandler>();
+            eventBus.RegisterHandler<ExamDeadlineApproachingEvent, ExamNotificationHandler>();
+            eventBus.RegisterHandler<ExamCompletedEvent, ExamNotificationHandler>();
+            eventBus.RegisterHandler<ExamResultsPublishedEvent, ExamNotificationHandler>();
+            
+            // Register user event handlers
+            eventBus.RegisterHandler<UserAccountCreatedEvent, UserNotificationHandler>();
+            eventBus.RegisterHandler<UserRoleChangedEvent, UserNotificationHandler>();
+            eventBus.RegisterHandler<UserAccountDeactivatedEvent, UserNotificationHandler>();
+            eventBus.RegisterHandler<UserLoginEvent, UserNotificationHandler>();
+            eventBus.RegisterHandler<UserPasswordResetEvent, UserNotificationHandler>();
+        });
+    }
+}

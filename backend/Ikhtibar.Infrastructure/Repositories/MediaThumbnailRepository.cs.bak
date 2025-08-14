@@ -1,0 +1,731 @@
+using System.Data;
+using Dapper;
+using Microsoft.Extensions.Logging;
+using Ikhtibar.Core.Entities;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Infrastructure.Data;
+using CoreThumbnailSize = Ikhtibar.Core.Entities.ThumbnailSize;
+
+namespace Ikhtibar.Infrastructure.Repositories;
+
+/// <summary>
+/// Repository implementation for MediaThumbnail entity operations
+/// Provides specialized methods for thumbnail management and optimization using Dapper
+/// </summary>
+public class MediaThumbnailRepository : BaseRepository<MediaThumbnail>, IMediaThumbnailRepository
+{
+    private readonly ILogger<MediaThumbnailRepository> _logger;
+
+    public MediaThumbnailRepository(IDbConnectionFactory connectionFactory, ILogger<MediaThumbnailRepository> logger)
+        : base(connectionFactory)
+    {
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Gets all thumbnails for a specific media file
+    /// </summary>
+    public async Task<IEnumerable<MediaThumbnail>> GetByMediaFileAsync(Guid mediaFileId, ThumbnailStatus? statusFilter = null)
+    {
+        using var scope = _logger.BeginScope("GetByMediaFileAsync: MediaFileId={MediaFileId}, StatusFilter={StatusFilter}", 
+            mediaFileId, statusFilter);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaThumbnails 
+                WHERE MediaFileId = @MediaFileId 
+                AND IsDeleted = 0";
+            
+            object parameters = new { MediaFileId = mediaFileId };
+            
+            if (statusFilter.HasValue)
+            {
+                sql += " AND Status = @Status";
+                parameters = new { MediaFileId = mediaFileId, Status = (int)statusFilter.Value };
+            }
+            
+            sql += " ORDER BY Size, Width, Height";
+            
+            var thumbnails = await connection.QueryAsync<MediaThumbnail>(sql, parameters);
+            
+            _logger.LogInformation("Retrieved {Count} thumbnails for media file {MediaFileId}", 
+                thumbnails.Count(), mediaFileId);
+            return thumbnails;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving thumbnails for media file {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets thumbnail by media file and size
+    /// </summary>
+    public async Task<MediaThumbnail?> GetByMediaFileAndSizeAsync(Guid mediaFileId, CoreThumbnailSize size, string? format = null)
+    {
+        using var scope = _logger.BeginScope("GetByMediaFileAndSizeAsync: MediaFileId={MediaFileId}, Size={Size}, Format={Format}", 
+            mediaFileId, size, format);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaThumbnails 
+                WHERE MediaFileId = @MediaFileId 
+                AND Size = @Size 
+                AND IsDeleted = 0";
+            
+            object parameters = new { MediaFileId = mediaFileId, Size = (int)size };
+            
+            if (!string.IsNullOrEmpty(format))
+            {
+                sql += " AND Format = @Format";
+                parameters = new { MediaFileId = mediaFileId, Size = (int)size, Format = format };
+            }
+            
+            sql += " ORDER BY IsDefault DESC, CreatedAt DESC";
+            
+            var thumbnail = await connection.QueryFirstOrDefaultAsync<MediaThumbnail>(sql, parameters);
+            
+            _logger.LogInformation("Retrieved thumbnail for media file {MediaFileId}, size {Size}: {Found}", 
+                mediaFileId, size, thumbnail != null);
+            return thumbnail;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving thumbnail for media file {MediaFileId}, size {Size}", mediaFileId, size);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets the default thumbnail for a media file and size
+    /// </summary>
+    public async Task<MediaThumbnail?> GetDefaultThumbnailAsync(Guid mediaFileId, CoreThumbnailSize size)
+    {
+        using var scope = _logger.BeginScope("GetDefaultThumbnailAsync: MediaFileId={MediaFileId}, Size={Size}", 
+            mediaFileId, size);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaThumbnails 
+                WHERE MediaFileId = @MediaFileId 
+                AND Size = @Size 
+                AND IsDefault = 1
+                AND IsDeleted = 0";
+            
+            var thumbnail = await connection.QueryFirstOrDefaultAsync<MediaThumbnail>(sql, 
+                new { MediaFileId = mediaFileId, Size = (int)size });
+            
+            _logger.LogInformation("Retrieved default thumbnail for media file {MediaFileId}, size {Size}: {Found}", 
+                mediaFileId, size, thumbnail != null);
+            return thumbnail;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving default thumbnail for media file {MediaFileId}, size {Size}", 
+                mediaFileId, size);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets thumbnails by status
+    /// </summary>
+    public async Task<IEnumerable<MediaThumbnail>> GetByStatusAsync(ThumbnailStatus status, int limit = 100)
+    {
+        using var scope = _logger.BeginScope("GetByStatusAsync: Status={Status}, Limit={Limit}", status, limit);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT TOP (@Limit) * FROM MediaThumbnails 
+                WHERE Status = @Status 
+                AND IsDeleted = 0
+                ORDER BY CreatedAt";
+            
+            var thumbnails = await connection.QueryAsync<MediaThumbnail>(sql, 
+                new { Status = (int)status, Limit = limit });
+            
+            _logger.LogInformation("Retrieved {Count} thumbnails with status {Status}", thumbnails.Count(), status);
+            return thumbnails;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving thumbnails by status {Status}", status);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets thumbnails by format
+    /// </summary>
+    public async Task<IEnumerable<MediaThumbnail>> GetByFormatAsync(string format)
+    {
+        using var scope = _logger.BeginScope("GetByFormatAsync: Format={Format}", format);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaThumbnails 
+                WHERE Format = @Format 
+                AND IsDeleted = 0
+                ORDER BY CreatedAt DESC";
+            
+            var thumbnails = await connection.QueryAsync<MediaThumbnail>(sql, new { Format = format });
+            
+            _logger.LogInformation("Retrieved {Count} thumbnails with format {Format}", thumbnails.Count(), format);
+            return thumbnails;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving thumbnails by format {Format}", format);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets thumbnails larger than specified dimensions
+    /// </summary>
+    public async Task<IEnumerable<MediaThumbnail>> GetLargerThanAsync(int minWidth, int minHeight)
+    {
+        using var scope = _logger.BeginScope("GetLargerThanAsync: MinWidth={MinWidth}, MinHeight={MinHeight}", 
+            minWidth, minHeight);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaThumbnails 
+                WHERE Width >= @MinWidth 
+                AND Height >= @MinHeight 
+                AND IsDeleted = 0
+                ORDER BY Width DESC, Height DESC";
+            
+            var thumbnails = await connection.QueryAsync<MediaThumbnail>(sql, 
+                new { MinWidth = minWidth, MinHeight = minHeight });
+            
+            _logger.LogInformation("Retrieved {Count} thumbnails larger than {MinWidth}x{MinHeight}", 
+                thumbnails.Count(), minWidth, minHeight);
+            return thumbnails;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving thumbnails larger than {MinWidth}x{MinHeight}", minWidth, minHeight);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets thumbnails that need regeneration (failed or outdated)
+    /// </summary>
+    public async Task<IEnumerable<MediaThumbnail>> GetNeedingRegenerationAsync(int olderThanDays = 30, int limit = 100)
+    {
+        using var scope = _logger.BeginScope("GetNeedingRegenerationAsync: OlderThanDays={OlderThanDays}, Limit={Limit}", 
+            olderThanDays, limit);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT TOP (@Limit) * FROM MediaThumbnails 
+                WHERE IsDeleted = 0
+                AND (
+                    Status = @FailedStatus
+                    OR (Status = @GeneratingStatus AND CreatedAt < @CutoffDate)
+                    OR (Status = @GeneratingStatus AND CreatedAt < @ProcessingCutoffDate)
+                )
+                ORDER BY CreatedAt";
+            
+            var cutoffDate = DateTime.UtcNow.AddDays(-olderThanDays);
+            var processingCutoffDate = DateTime.UtcNow.AddHours(-1); // Processing should not take more than 1 hour
+            
+            var thumbnails = await connection.QueryAsync<MediaThumbnail>(sql, new
+            {
+                Limit = limit,
+                FailedStatus = (int)ThumbnailStatus.Failed,
+                GeneratingStatus = (int)ThumbnailStatus.Generating,
+                CutoffDate = cutoffDate,
+                ProcessingCutoffDate = processingCutoffDate
+            });
+            
+            _logger.LogInformation("Retrieved {Count} thumbnails needing regeneration", thumbnails.Count());
+            return thumbnails;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving thumbnails needing regeneration");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets thumbnails by generation method
+    /// </summary>
+    public async Task<IEnumerable<MediaThumbnail>> GetByGenerationMethodAsync(ThumbnailGenerationMethod method)
+    {
+        using var scope = _logger.BeginScope("GetByGenerationMethodAsync: Method={Method}", method);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaThumbnails 
+                WHERE GenerationMethod = @Method 
+                AND IsDeleted = 0
+                ORDER BY CreatedAt DESC";
+            
+            var thumbnails = await connection.QueryAsync<MediaThumbnail>(sql, 
+                new { Method = (int)method });
+            
+            _logger.LogInformation("Retrieved {Count} thumbnails generated with method {Method}", 
+                thumbnails.Count(), method);
+            return thumbnails;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving thumbnails by generation method {Method}", method);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets storage statistics for thumbnails
+    /// </summary>
+    public async Task<long> GetTotalStorageUsedAsync()
+    {
+        using var scope = _logger.BeginScope("GetTotalStorageUsedAsync");
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT ISNULL(SUM(FileSizeBytes), 0) 
+                FROM MediaThumbnails 
+                WHERE IsDeleted = 0";
+            
+            var totalStorage = await connection.QuerySingleAsync<long>(sql);
+            
+            _logger.LogInformation("Total thumbnail storage used: {Storage} bytes", totalStorage);
+            return totalStorage;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calculating total thumbnail storage");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets storage statistics grouped by size category
+    /// </summary>
+    public async Task<Dictionary<CoreThumbnailSize, long>> GetStorageStatsBySizeAsync()
+    {
+        using var scope = _logger.BeginScope("GetStorageStatsBySizeAsync");
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT Size, ISNULL(SUM(FileSizeBytes), 0) as TotalSize
+                FROM MediaThumbnails 
+                WHERE IsDeleted = 0
+                GROUP BY Size";
+            
+            var results = await connection.QueryAsync<(int Size, long TotalSize)>(sql);
+            var statistics = results.ToDictionary(r => (CoreThumbnailSize)r.Size, r => r.TotalSize);
+            
+            _logger.LogInformation("Retrieved storage statistics for {Count} size categories", statistics.Count);
+            return statistics;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving storage statistics by size");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets storage statistics grouped by format
+    /// </summary>
+    public async Task<Dictionary<string, long>> GetStorageStatsByFormatAsync()
+    {
+        using var scope = _logger.BeginScope("GetStorageStatsByFormatAsync");
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT Format, ISNULL(SUM(FileSizeBytes), 0) as TotalSize
+                FROM MediaThumbnails 
+                WHERE IsDeleted = 0
+                GROUP BY Format
+                ORDER BY TotalSize DESC";
+            
+            var results = await connection.QueryAsync<(string Format, long TotalSize)>(sql);
+            var statistics = results.ToDictionary(r => r.Format, r => r.TotalSize);
+            
+            _logger.LogInformation("Retrieved storage statistics for {Count} formats", statistics.Count);
+            return statistics;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving storage statistics by format");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets generation performance statistics
+    /// </summary>
+    public async Task<Dictionary<CoreThumbnailSize, double>> GetGenerationStatsAsync()
+    {
+        using var scope = _logger.BeginScope("GetGenerationStatsAsync");
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT Size, AVG(CAST(GenerationTimeMs as float)) as AvgTime
+                FROM MediaThumbnails 
+                WHERE IsDeleted = 0
+                AND GenerationTimeMs IS NOT NULL
+                AND GenerationTimeMs > 0
+                GROUP BY Size";
+            
+            var results = await connection.QueryAsync<(int Size, double AvgTime)>(sql);
+            var statistics = results.ToDictionary(r => (CoreThumbnailSize)r.Size, r => r.AvgTime);
+            
+            _logger.LogInformation("Retrieved generation statistics for {Count} size categories", statistics.Count);
+            return statistics;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving generation statistics");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Sets a thumbnail as the default for its size category
+    /// </summary>
+    public async Task<bool> SetAsDefaultAsync(Guid thumbnailId)
+    {
+        using var scope = _logger.BeginScope("SetAsDefaultAsync: ThumbnailId={ThumbnailId}", thumbnailId);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var transaction = connection.BeginTransaction();
+            
+            try
+            {
+                // First, get the thumbnail to know its MediaFileId and Size
+                var getThumbnailSql = @"
+                    SELECT MediaFileId, Size FROM MediaThumbnails 
+                    WHERE Id = @ThumbnailId AND IsDeleted = 0";
+                
+                var thumbnailInfo = await connection.QueryFirstOrDefaultAsync<(Guid MediaFileId, int Size)>(
+                    getThumbnailSql, new { ThumbnailId = thumbnailId }, transaction);
+                
+                if (thumbnailInfo.MediaFileId == Guid.Empty)
+                {
+                    _logger.LogWarning("Thumbnail {ThumbnailId} not found", thumbnailId);
+                    transaction.Rollback();
+                    return false;
+                }
+                
+                // Clear existing default for this media file and size
+                var clearDefaultSql = @"
+                    UPDATE MediaThumbnails 
+                    SET IsDefault = 0, ModifiedAt = @ModifiedAt
+                    WHERE MediaFileId = @MediaFileId 
+                    AND Size = @Size 
+                    AND IsDefault = 1
+                    AND IsDeleted = 0";
+                
+                await connection.ExecuteAsync(clearDefaultSql, new
+                {
+                    MediaFileId = thumbnailInfo.MediaFileId,
+                    Size = thumbnailInfo.Size,
+                    ModifiedAt = DateTime.UtcNow
+                }, transaction);
+                
+                // Set the new default
+                var setDefaultSql = @"
+                    UPDATE MediaThumbnails 
+                    SET IsDefault = 1, ModifiedAt = @ModifiedAt
+                    WHERE Id = @ThumbnailId";
+                
+                var affectedRows = await connection.ExecuteAsync(setDefaultSql, new
+                {
+                    ThumbnailId = thumbnailId,
+                    ModifiedAt = DateTime.UtcNow
+                }, transaction);
+                
+                transaction.Commit();
+                
+                var success = affectedRows > 0;
+                _logger.LogInformation("Set thumbnail {ThumbnailId} as default: {Success}", thumbnailId, success);
+                return success;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting thumbnail {ThumbnailId} as default", thumbnailId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Updates thumbnail status and error information
+    /// </summary>
+    public async Task<bool> UpdateStatusAsync(Guid thumbnailId, ThumbnailStatus status, string? errorMessage = null, int? generationTimeMs = null)
+    {
+        using var scope = _logger.BeginScope("UpdateStatusAsync: ThumbnailId={ThumbnailId}, Status={Status}", 
+            thumbnailId, status);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                UPDATE MediaThumbnails 
+                SET Status = @Status, 
+                    ErrorMessage = @ErrorMessage, 
+                    GenerationTimeMs = COALESCE(@GenerationTimeMs, GenerationTimeMs),
+                    ModifiedAt = @ModifiedAt
+                WHERE Id = @ThumbnailId 
+                AND IsDeleted = 0";
+            
+            var affectedRows = await connection.ExecuteAsync(sql, new
+            {
+                Status = (int)status,
+                ErrorMessage = errorMessage,
+                GenerationTimeMs = generationTimeMs,
+                ModifiedAt = DateTime.UtcNow,
+                ThumbnailId = thumbnailId
+            });
+            
+            var success = affectedRows > 0;
+            _logger.LogInformation("Updated thumbnail {ThumbnailId} status to {Status}: {Success}", 
+                thumbnailId, status, success);
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating thumbnail {ThumbnailId} status", thumbnailId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Bulk updates thumbnail status
+    /// </summary>
+    public async Task<int> BulkUpdateStatusAsync(IEnumerable<Guid> thumbnailIds, ThumbnailStatus status)
+    {
+        using var scope = _logger.BeginScope("BulkUpdateStatusAsync: Count={Count}, Status={Status}", 
+            thumbnailIds.Count(), status);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var idsArray = thumbnailIds.ToArray();
+            if (!idsArray.Any())
+            {
+                return 0;
+            }
+            
+            var sql = @"
+                UPDATE MediaThumbnails 
+                SET Status = @Status, ModifiedAt = @ModifiedAt
+                WHERE Id IN @ThumbnailIds 
+                AND IsDeleted = 0";
+            
+            var affectedRows = await connection.ExecuteAsync(sql, new
+            {
+                Status = (int)status,
+                ModifiedAt = DateTime.UtcNow,
+                ThumbnailIds = idsArray
+            });
+            
+            _logger.LogInformation("Bulk updated {Count} thumbnails to status {Status}", affectedRows, status);
+            return affectedRows;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error bulk updating thumbnail status");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Deletes all thumbnails for a media file
+    /// </summary>
+    public async Task<int> DeleteByMediaFileAsync(Guid mediaFileId)
+    {
+        using var scope = _logger.BeginScope("DeleteByMediaFileAsync: MediaFileId={MediaFileId}", mediaFileId);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                UPDATE MediaThumbnails 
+                SET IsDeleted = 1, ModifiedAt = @ModifiedAt
+                WHERE MediaFileId = @MediaFileId 
+                AND IsDeleted = 0";
+            
+            var affectedRows = await connection.ExecuteAsync(sql, new
+            {
+                MediaFileId = mediaFileId,
+                ModifiedAt = DateTime.UtcNow
+            });
+            
+            _logger.LogInformation("Deleted {Count} thumbnails for media file {MediaFileId}", affectedRows, mediaFileId);
+            return affectedRows;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting thumbnails for media file {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Deletes thumbnails by status (e.g., cleanup failed thumbnails)
+    /// </summary>
+    public async Task<int> DeleteByStatusAsync(ThumbnailStatus status, int olderThanDays = 7)
+    {
+        using var scope = _logger.BeginScope("DeleteByStatusAsync: Status={Status}, OlderThanDays={OlderThanDays}", 
+            status, olderThanDays);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                UPDATE MediaThumbnails 
+                SET IsDeleted = 1, ModifiedAt = @ModifiedAt
+                WHERE Status = @Status 
+                AND CreatedAt < @CutoffDate
+                AND IsDeleted = 0";
+            
+            var cutoffDate = DateTime.UtcNow.AddDays(-olderThanDays);
+            
+            var affectedRows = await connection.ExecuteAsync(sql, new
+            {
+                Status = (int)status,
+                CutoffDate = cutoffDate,
+                ModifiedAt = DateTime.UtcNow
+            });
+            
+            _logger.LogInformation("Deleted {Count} thumbnails with status {Status} older than {OlderThanDays} days", 
+                affectedRows, status, olderThanDays);
+            return affectedRows;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting thumbnails by status {Status}", status);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets orphaned thumbnails (thumbnails without corresponding media files)
+    /// </summary>
+    public async Task<IEnumerable<MediaThumbnail>> GetOrphanedThumbnailsAsync(int limit = 1000)
+    {
+        using var scope = _logger.BeginScope("GetOrphanedThumbnailsAsync: Limit={Limit}", limit);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT TOP (@Limit) t.* 
+                FROM MediaThumbnails t
+                LEFT JOIN MediaFiles mf ON t.MediaFileId = mf.Id AND mf.IsDeleted = 0
+                WHERE t.IsDeleted = 0
+                AND mf.Id IS NULL
+                ORDER BY t.CreatedAt";
+            
+            var orphanedThumbnails = await connection.QueryAsync<MediaThumbnail>(sql, new { Limit = limit });
+            
+            _logger.LogInformation("Found {Count} orphaned thumbnails", orphanedThumbnails.Count());
+            return orphanedThumbnails;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving orphaned thumbnails");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Checks if a thumbnail exists for the given media file and specifications
+    /// </summary>
+    public async Task<bool> ExistsAsync(Guid mediaFileId, CoreThumbnailSize size, int width, int height, string format)
+    {
+        using var scope = _logger.BeginScope("ExistsAsync: MediaFileId={MediaFileId}, Size={Size}, Dimensions={Width}x{Height}, Format={Format}", 
+            mediaFileId, size, width, height, format);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT COUNT(1) 
+                FROM MediaThumbnails 
+                WHERE MediaFileId = @MediaFileId 
+                AND Size = @Size 
+                AND Width = @Width 
+                AND Height = @Height 
+                AND Format = @Format 
+                AND IsDeleted = 0";
+            
+            var count = await connection.QuerySingleAsync<int>(sql, new
+            {
+                MediaFileId = mediaFileId,
+                Size = (int)size,
+                Width = width,
+                Height = height,
+                Format = format
+            });
+            
+            var exists = count > 0;
+            _logger.LogInformation("Thumbnail exists check for media file {MediaFileId}: {Exists}", mediaFileId, exists);
+            return exists;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking thumbnail existence for media file {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+}

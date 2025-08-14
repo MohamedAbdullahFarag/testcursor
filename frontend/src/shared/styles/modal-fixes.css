@@ -1,0 +1,46 @@
+/* Simplified Modal Positioning Fixes for Third-Party Components */
+/* Targeted fixes for mada-design-system and other external dialog components */
+
+/* Force proper modal positioning for external libraries */
+.modal-portal,
+[data-radix-portal] > div[data-state="open"],
+[data-radix-dialog-overlay] {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 9999 !important;
+}
+
+/* Fix modal content positioning for external libraries */
+.modal-content,
+[data-radix-portal] div[role="dialog"],
+[data-radix-dialog-content] {
+  position: relative !important;
+  margin: auto !important;
+  transform: none !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+}
+
+/* RTL-specific fixes for external components */
+[dir="rtl"] [data-radix-dialog-content],
+[dir="rtl"] .modal-content {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Prevent off-screen positioning */
+div[style*="position: fixed"] {
+  left: 0 !important;
+  right: 0 !important;
+}
+
+/* Ensure external dialogs are centered */
+.fixed.inset-0.flex {
+  justify-content: center !important;
+  align-items: center !important;
+}

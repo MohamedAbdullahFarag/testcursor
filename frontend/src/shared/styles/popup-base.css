@@ -1,0 +1,280 @@
+/* Popup Base Styles - Consolidated styling system for all popup components */
+/* Replaces redundant styles across Modal, RTLModal, and RTLDialog components */
+
+/* CSS Custom Properties for consistent theming */
+:root {
+  --popup-z-modal: 9999;
+  --popup-z-tooltip: 10000;
+  --popup-backdrop-blur: 4px;
+  --popup-max-height: 90vh;
+  --popup-transition-duration: 200ms;
+  --popup-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --popup-overlay-bg: rgba(0, 0, 0, 0.5);
+  --popup-border-radius: 0.5rem; /* 8px */
+  --popup-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Base Popup Overlay */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--popup-z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: var(--popup-overlay-bg);
+  backdrop-filter: blur(var(--popup-backdrop-blur));
+  transition: all var(--popup-transition-duration) var(--popup-transition-easing);
+}
+
+/* Base Popup Content */
+.popup-content {
+  position: relative;
+  margin: auto;
+  background-color: white;
+  border-radius: var(--popup-border-radius);
+  box-shadow: var(--popup-shadow);
+  max-height: var(--popup-max-height);
+  overflow: auto;
+  transform: scale(0.95);
+  opacity: 0;
+  transition: all var(--popup-transition-duration) var(--popup-transition-easing);
+}
+
+/* Popup Content when visible */
+.popup-overlay[data-state="open"] .popup-content,
+.popup-content.popup-visible {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Popup Header */
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb; /* gray-200 */
+}
+
+/* RTL-aware popup header */
+.popup-header[dir="rtl"] {
+  flex-direction: row-reverse;
+}
+
+/* Popup Title */
+.popup-title {
+  font-size: 1.25rem; /* text-xl */
+  font-weight: 600; /* font-semibold */
+  color: #111827; /* gray-900 */
+  margin: 0;
+}
+
+/* RTL-aware title spacing */
+.popup-title[dir="rtl"] {
+  margin-left: 1rem;
+}
+
+.popup-title:not([dir="rtl"]) {
+  margin-right: 1rem;
+}
+
+/* Popup Body */
+.popup-body {
+  padding: 1.5rem;
+}
+
+/* Close Button */
+.popup-close-button {
+  color: #9ca3af; /* gray-400 */
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: color var(--popup-transition-duration) var(--popup-transition-easing);
+}
+
+.popup-close-button:hover {
+  color: #4b5563; /* gray-600 */
+}
+
+.popup-close-button:focus {
+  outline: 2px solid #3b82f6; /* blue-500 */
+  outline-offset: 2px;
+}
+
+/* RTL-aware close button positioning */
+.popup-close-button[dir="rtl"] {
+  margin-right: auto;
+}
+
+.popup-close-button:not([dir="rtl"]) {
+  margin-left: auto;
+}
+
+/* Size Variants */
+.popup-content--sm {
+  width: 100%;
+  max-width: 24rem; /* 384px */
+}
+
+@media (min-width: 640px) {
+  .popup-content--sm {
+    width: 24rem;
+  }
+}
+
+.popup-content--md {
+  width: 100%;
+  max-width: 28rem; /* 448px */
+}
+
+@media (min-width: 640px) {
+  .popup-content--md {
+    width: 28rem;
+  }
+}
+
+.popup-content--lg {
+  width: 100%;
+  max-width: 32rem; /* 512px */
+}
+
+@media (min-width: 640px) {
+  .popup-content--lg {
+    width: 32rem;
+  }
+}
+
+.popup-content--xl {
+  width: 100%;
+  max-width: 36rem; /* 576px */
+}
+
+@media (min-width: 640px) {
+  .popup-content--xl {
+    width: 36rem;
+  }
+}
+
+.popup-content--2xl {
+  width: 100%;
+  max-width: 42rem; /* 672px */
+}
+
+@media (min-width: 640px) {
+  .popup-content--2xl {
+    width: 42rem;
+  }
+}
+
+.popup-content--4xl {
+  width: 100%;
+  max-width: 56rem; /* 896px */
+}
+
+@media (min-width: 640px) {
+  .popup-content--4xl {
+    width: 56rem;
+  }
+}
+
+/* RTL-specific fixes */
+[dir="rtl"] .popup-overlay {
+  left: 0 !important;
+  right: 0 !important;
+}
+
+[dir="rtl"] .popup-content {
+  text-align: right;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Animation keyframes for entrance/exit */
+@keyframes popup-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes popup-fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Animation classes */
+.popup-enter {
+  animation: popup-fade-in var(--popup-transition-duration) var(--popup-transition-easing);
+}
+
+.popup-exit {
+  animation: popup-fade-out var(--popup-transition-duration) var(--popup-transition-easing);
+}
+
+/* Prevent body scroll when modal is open */
+.popup-no-scroll {
+  overflow: hidden;
+}
+
+/* Focus trap styling */
+.popup-content:focus {
+  outline: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .popup-overlay {
+    padding: 0.5rem;
+  }
+  
+  .popup-header {
+    padding: 1rem;
+  }
+  
+  .popup-body {
+    padding: 1rem;
+  }
+  
+  .popup-content {
+    max-height: 95vh;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .popup-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+  
+  .popup-content {
+    border: 2px solid #000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .popup-overlay,
+  .popup-content,
+  .popup-close-button {
+    transition: none;
+  }
+  
+  .popup-enter,
+  .popup-exit {
+    animation: none;
+  }
+}

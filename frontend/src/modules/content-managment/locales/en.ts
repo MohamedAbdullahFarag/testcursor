@@ -1,0 +1,33 @@
+export const contentManagmentEn = {
+    contentManagment: {
+        title: 'Content managment',
+        nationalId: 'National ID',
+    },
+    sharedValidation: {
+        required: 'This field is mandatory. Please Enter a {0}.',
+        requiredAn: 'This field is mandatory. Please Enter an {0}.',
+        requiredThe: 'This field is mandatory. Please Enter the {0}.',
+        requiredSelect: 'This field is mandatory. Please select a {0}.',
+        requiredSelectAn: 'This field is mandatory. Please select an {0}.',
+        requiredSelectThe: 'This field is mandatory. Please select the {0}.',
+        valid: 'The {0} entered is incorrect',
+        requiredAttachment: 'Please attach {1} {0}',
+        requiredAccount: 'Please enter {0} account',
+        exceedsTheAllowedLimit: 'You have reached the maximum limit of allowed characters',
+        acceptLettersAndNumbers: 'The {0} field accepts letters and numbers only',
+        acceptNumbers: 'The field accepts numbers only',
+        lessThan: 'The value of field must be less than or  equal to {0}',
+        greaterThan: 'The value of the field must be greater than or equal to {0}',
+        canNotAcceptSpecialCharacter: "It is not allowed to enter special characters like: !@#$%^&*()_+-'~<>/\\?|÷×",
+        acceptLetters: 'The {0} field accepts letters only',
+        noAccount: 'In case you do not have a {0} account please enter "nothing"',
+        noArabicLetters: 'The {0} field does not accept Arabic letters',
+        usedID: 'National ID already registered',
+        maximunStudiPeriod: 'Maximum study is five years and 11 months',
+        maximunFiles: 'Maximum 4 files',
+        acceptedPassport: 'Please enter a valid passport',
+        endDateMustBeGreaterThan: '{0} must be greater than {1}',
+        dateMustBeGreaterThanToday: "{0} must be greater than today's date",
+
+    },
+} as const

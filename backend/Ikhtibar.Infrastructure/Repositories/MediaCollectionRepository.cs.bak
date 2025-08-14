@@ -1,0 +1,993 @@
+using Dapper;
+using Microsoft.Extensions.Logging;
+using Ikhtibar.Infrastructure.Data;
+using Ikhtibar.Core.Repositories.Interfaces;
+using CoreEntities = Ikhtibar.Core.Entities;
+
+namespace Ikhtibar.Infrastructure.Repositories
+{
+    /// <summary>
+    /// Repository implementation for MediaCollection entity using Dapper
+    /// Provides comprehensive collection management with user access control and search functionality
+    /// </summary>
+    public class MediaCollectionRepository : BaseRepository<CoreEntities.MediaCollection>, IMediaCollectionRepository
+    {
+        private readonly ILogger<MediaCollectionRepository> _logger;
+
+        public MediaCollectionRepository(IDbConnectionFactory connectionFactory, ILogger<MediaCollectionRepository> logger)
+            : base(connectionFactory)
+        {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        /// <summary>
+        /// Gets collections created by a specific user
+        /// </summary>
+        public async Task<IEnumerable<CoreEntities.MediaCollection>> GetByUserAsync(Guid userId, bool includePrivate = true, int offset = 0, int limit = 50)
+        {
+            using var scope = _logger.BeginScope("Getting collections for user {UserId}", userId);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var whereConditions = new List<string> { "mc.CreatedByUserId = @UserId", "mc.IsDeleted = 0" };
+                var parameters = new { UserId = userId, Offset = offset, Limit = limit };
+
+                if (!includePrivate)
+                {
+                    whereConditions.Add("mc.IsPublic = 1");
+                }
+
+                var sql = $@"
+                    SELECT mc.Id, mc.Name, mc.Description, mc.Slug, mc.CollectionType, mc.IsPublic, 
+                           mc.IsFeatured, mc.ViewCount, mc.Tags, mc.CreatedByUserId, mc.CreatedAt, 
+                           mc.ModifiedAt, mc.IsDeleted, mc.DeletedAt, mc.RowVersion
+                    FROM MediaCollections mc
+                    WHERE {string.Join(" AND ", whereConditions)}
+                    ORDER BY mc.CreatedAt DESC
+                    OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY";
+
+                var result = await connection.QueryAsync<CoreEntities.MediaCollection>(sql, parameters);
+
+                _logger.LogInformation("Retrieved {Count} collections for user {UserId}", result.Count(), userId);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting collections for user {UserId}", userId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets collections by type
+        /// </summary>
+        public async Task<IEnumerable<CoreEntities.MediaCollection>> GetByTypeAsync(CoreEntities.CollectionType collectionType, bool publicOnly = true, int offset = 0, int limit = 50)
+        {
+            using var scope = _logger.BeginScope("Getting collections by type {CollectionType}", collectionType);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var whereConditions = new List<string> { "mc.CollectionType = @CollectionType", "mc.IsDeleted = 0" };
+                var parameters = new { CollectionType = (int)collectionType, Offset = offset, Limit = limit };
+
+                if (publicOnly)
+                {
+                    whereConditions.Add("mc.IsPublic = 1");
+                }
+
+                var sql = $@"
+                    SELECT mc.Id, mc.Name, mc.Description, mc.Slug, mc.CollectionType, mc.IsPublic, 
+                           mc.IsFeatured, mc.ViewCount, mc.Tags, mc.CreatedByUserId, mc.CreatedAt, 
+                           mc.ModifiedAt, mc.IsDeleted, mc.DeletedAt, mc.RowVersion
+                    FROM MediaCollections mc
+                    WHERE {string.Join(" AND ", whereConditions)}
+                    ORDER BY mc.ViewCount DESC, mc.CreatedAt DESC
+                    OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY";
+
+                var result = await connection.QueryAsync<CoreEntities.MediaCollection>(sql, parameters);
+
+                _logger.LogInformation("Retrieved {Count} collections by type {CollectionType}", result.Count(), collectionType);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting collections by type {CollectionType}", collectionType);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets a collection by its slug
+        /// </summary>
+        public async Task<CoreEntities.MediaCollection?> GetBySlugAsync(string slug, bool publicOnly = true)
+        {
+            using var scope = _logger.BeginScope("Getting collection by slug {Slug}", slug);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var whereConditions = new List<string> { "mc.Slug = @Slug", "mc.IsDeleted = 0" };
+                var parameters = new { Slug = slug };
+
+                if (publicOnly)
+                {
+                    whereConditions.Add("mc.IsPublic = 1");
+                }
+
+                var sql = $@"
+                    SELECT mc.Id, mc.Name, mc.Description, mc.Slug, mc.CollectionType, mc.IsPublic, 
+                           mc.IsFeatured, mc.ViewCount, mc.Tags, mc.CreatedByUserId, mc.CreatedAt, 
+                           mc.ModifiedAt, mc.IsDeleted, mc.DeletedAt, mc.RowVersion
+                    FROM MediaCollections mc
+                    WHERE {string.Join(" AND ", whereConditions)}";
+
+                var result = await connection.QueryFirstOrDefaultAsync<CoreEntities.MediaCollection>(sql, parameters);
+
+                if (result != null)
+                {
+                    _logger.LogInformation("Found collection {CollectionId} by slug {Slug}", result.Id, slug);
+                }
+                else
+                {
+                    _logger.LogWarning("Collection not found for slug {Slug}", slug);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting collection by slug {Slug}", slug);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets featured collections
+        /// </summary>
+        public async Task<IEnumerable<CoreEntities.MediaCollection>> GetFeaturedAsync(CoreEntities.CollectionType? collectionType = null, int limit = 10)
+        {
+            using var scope = _logger.BeginScope("Getting featured collections");
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var whereConditions = new List<string> { "mc.IsFeatured = 1", "mc.IsPublic = 1", "mc.IsDeleted = 0" };
+                object parameters = new { Limit = limit };
+
+                if (collectionType.HasValue)
+                {
+                    whereConditions.Add("mc.CollectionType = @CollectionType");
+                    parameters = new { CollectionType = (int)collectionType.Value, Limit = limit };
+                }
+
+                var sql = $@"
+                    SELECT TOP (@Limit) mc.Id, mc.Name, mc.Description, mc.Slug, mc.CollectionType, mc.IsPublic, 
+                           mc.IsFeatured, mc.ViewCount, mc.Tags, mc.CreatedByUserId, mc.CreatedAt, 
+                           mc.ModifiedAt, mc.IsDeleted, mc.DeletedAt, mc.RowVersion
+                    FROM MediaCollections mc
+                    WHERE {string.Join(" AND ", whereConditions)}
+                    ORDER BY mc.ViewCount DESC, mc.CreatedAt DESC";
+
+                var result = await connection.QueryAsync<CoreEntities.MediaCollection>(sql, parameters);
+
+                _logger.LogInformation("Retrieved {Count} featured collections", result.Count());
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting featured collections");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets public collections with pagination
+        /// </summary>
+        public async Task<IEnumerable<CoreEntities.MediaCollection>> GetPublicAsync(int offset = 0, int limit = 50, string? orderBy = null)
+        {
+            using var scope = _logger.BeginScope("Getting public collections");
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var orderClause = "mc.ViewCount DESC, mc.CreatedAt DESC";
+                if (!string.IsNullOrEmpty(orderBy))
+                {
+                    orderClause = orderBy;
+                }
+
+                var sql = $@"
+                    SELECT mc.Id, mc.Name, mc.Description, mc.Slug, mc.CollectionType, mc.IsPublic, 
+                           mc.IsFeatured, mc.ViewCount, mc.Tags, mc.CreatedByUserId, mc.CreatedAt, 
+                           mc.ModifiedAt, mc.IsDeleted, mc.DeletedAt, mc.RowVersion
+                    FROM MediaCollections mc
+                    WHERE mc.IsPublic = 1 AND mc.IsDeleted = 0
+                    ORDER BY {orderClause}
+                    OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY";
+
+                var result = await connection.QueryAsync<CoreEntities.MediaCollection>(sql, new { Offset = offset, Limit = limit });
+
+                _logger.LogInformation("Retrieved {Count} public collections", result.Count());
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting public collections");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets most viewed collections
+        /// </summary>
+        public async Task<IEnumerable<CoreEntities.MediaCollection>> GetMostViewedAsync(CoreEntities.CollectionType? collectionType = null, bool publicOnly = true, int limit = 10)
+        {
+            using var scope = _logger.BeginScope("Getting most viewed collections");
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var whereConditions = new List<string> { "mc.IsDeleted = 0" };
+                object parameters = new { Limit = limit };
+
+                if (publicOnly)
+                {
+                    whereConditions.Add("mc.IsPublic = 1");
+                }
+
+                if (collectionType.HasValue)
+                {
+                    whereConditions.Add("mc.CollectionType = @CollectionType");
+                    parameters = new { CollectionType = (int)collectionType.Value, Limit = limit };
+                }
+
+                var sql = $@"
+                    SELECT TOP (@Limit) mc.Id, mc.Name, mc.Description, mc.Slug, mc.CollectionType, mc.IsPublic, 
+                           mc.IsFeatured, mc.ViewCount, mc.Tags, mc.CreatedByUserId, mc.CreatedAt, 
+                           mc.ModifiedAt, mc.IsDeleted, mc.DeletedAt, mc.RowVersion
+                    FROM MediaCollections mc
+                    WHERE {string.Join(" AND ", whereConditions)}
+                    ORDER BY mc.ViewCount DESC, mc.CreatedAt DESC";
+
+                var result = await connection.QueryAsync<CoreEntities.MediaCollection>(sql, parameters);
+
+                _logger.LogInformation("Retrieved {Count} most viewed collections", result.Count());
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting most viewed collections");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets recently created collections
+        /// </summary>
+        public async Task<IEnumerable<CoreEntities.MediaCollection>> GetRecentAsync(int days = 7, bool publicOnly = true, int limit = 10)
+        {
+            using var scope = _logger.BeginScope("Getting recent collections from last {Days} days", days);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var cutoffDate = DateTime.UtcNow.AddDays(-days);
+                var whereConditions = new List<string> { "mc.CreatedAt >= @CutoffDate", "mc.IsDeleted = 0" };
+                var parameters = new { CutoffDate = cutoffDate, Limit = limit };
+
+                if (publicOnly)
+                {
+                    whereConditions.Add("mc.IsPublic = 1");
+                }
+
+                var sql = $@"
+                    SELECT TOP (@Limit) mc.Id, mc.Name, mc.Description, mc.Slug, mc.CollectionType, mc.IsPublic, 
+                           mc.IsFeatured, mc.ViewCount, mc.Tags, mc.CreatedByUserId, mc.CreatedAt, 
+                           mc.ModifiedAt, mc.IsDeleted, mc.DeletedAt, mc.RowVersion
+                    FROM MediaCollections mc
+                    WHERE {string.Join(" AND ", whereConditions)}
+                    ORDER BY mc.CreatedAt DESC";
+
+                var result = await connection.QueryAsync<CoreEntities.MediaCollection>(sql, parameters);
+
+                _logger.LogInformation("Retrieved {Count} recent collections from last {Days} days", result.Count(), days);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting recent collections");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Searches collections by name, description, or tags
+        /// </summary>
+        public async Task<IEnumerable<CoreEntities.MediaCollection>> SearchAsync(string searchTerm, CoreEntities.CollectionType? collectionType = null, bool publicOnly = true, int offset = 0, int limit = 50)
+        {
+            using var scope = _logger.BeginScope("Searching collections with term '{SearchTerm}'", searchTerm);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var whereConditions = new List<string> { "mc.IsDeleted = 0" };
+                object parameters = new { SearchTerm = $"%{searchTerm}%", Offset = offset, Limit = limit };
+
+                if (publicOnly)
+                {
+                    whereConditions.Add("mc.IsPublic = 1");
+                }
+
+                if (collectionType.HasValue)
+                {
+                    whereConditions.Add("mc.CollectionType = @CollectionType");
+                    parameters = new { SearchTerm = $"%{searchTerm}%", CollectionType = (int)collectionType.Value, Offset = offset, Limit = limit };
+                }
+
+                whereConditions.Add("(mc.Name LIKE @SearchTerm OR mc.Description LIKE @SearchTerm OR mc.Tags LIKE @SearchTerm)");
+
+                var sql = $@"
+                    SELECT mc.Id, mc.Name, mc.Description, mc.Slug, mc.CollectionType, mc.IsPublic, 
+                           mc.IsFeatured, mc.ViewCount, mc.Tags, mc.CreatedByUserId, mc.CreatedAt, 
+                           mc.ModifiedAt, mc.IsDeleted, mc.DeletedAt, mc.RowVersion
+                    FROM MediaCollections mc
+                    WHERE {string.Join(" AND ", whereConditions)}
+                    ORDER BY 
+                        CASE WHEN mc.Name LIKE @SearchTerm THEN 1 ELSE 2 END,
+                        mc.ViewCount DESC,
+                        mc.CreatedAt DESC
+                    OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY";
+
+                var result = await connection.QueryAsync<CoreEntities.MediaCollection>(sql, parameters);
+
+                _logger.LogInformation("Search returned {Count} collections for term '{SearchTerm}'", result.Count(), searchTerm);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching collections with term '{SearchTerm}'", searchTerm);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets collections that contain a specific media file
+        /// </summary>
+        public async Task<IEnumerable<CoreEntities.MediaCollection>> GetContainingMediaFileAsync(Guid mediaFileId, bool publicOnly = true)
+        {
+            using var scope = _logger.BeginScope("Getting collections containing media file {MediaFileId}", mediaFileId);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var whereConditions = new List<string> { "mc.IsDeleted = 0" };
+                object parameters = new { MediaFileId = mediaFileId };
+
+                if (publicOnly)
+                {
+                    whereConditions.Add("mc.IsPublic = 1");
+                }
+
+                var sql = $@"
+                    SELECT mc.Id, mc.Name, mc.Description, mc.Slug, mc.CollectionType, mc.IsPublic, 
+                           mc.IsFeatured, mc.ViewCount, mc.Tags, mc.CreatedByUserId, mc.CreatedAt, 
+                           mc.ModifiedAt, mc.IsDeleted, mc.DeletedAt, mc.RowVersion
+                    FROM MediaCollections mc
+                    INNER JOIN MediaCollectionItems mci ON mc.Id = mci.CollectionId
+                    WHERE mci.MediaFileId = @MediaFileId AND {string.Join(" AND ", whereConditions)}
+                    ORDER BY mc.CreatedAt DESC";
+
+                var result = await connection.QueryAsync<CoreEntities.MediaCollection>(sql, parameters);
+
+                _logger.LogInformation("Found {Count} collections containing media file {MediaFileId}", result.Count(), mediaFileId);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting collections containing media file {MediaFileId}", mediaFileId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets collections by tags with matching options
+        /// </summary>
+        public async Task<IEnumerable<CoreEntities.MediaCollection>> GetByTagsAsync(string tags, bool matchAll = false, bool publicOnly = true)
+        {
+            using var scope = _logger.BeginScope("Getting collections by tags '{Tags}' (matchAll: {MatchAll})", tags, matchAll);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var tagList = tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                  .Select(t => t.Trim())
+                                  .Where(t => !string.IsNullOrEmpty(t))
+                                  .ToList();
+
+                if (!tagList.Any())
+                {
+                    _logger.LogWarning("No valid tags provided");
+                    return Enumerable.Empty<CoreEntities.MediaCollection>();
+                }
+
+                var whereConditions = new List<string> { "mc.IsDeleted = 0" };
+                object parameters;
+
+                if (publicOnly)
+                {
+                    whereConditions.Add("mc.IsPublic = 1");
+                }
+
+                if (matchAll)
+                {
+                    // All tags must be present
+                    var tagChecks = tagList.Select((_, index) => $"mc.Tags LIKE @Tag{index}").ToList();
+                    whereConditions.AddRange(tagChecks);
+
+                    var tagParams = new Dictionary<string, object>();
+                    for (int i = 0; i < tagList.Count; i++)
+                    {
+                        tagParams[$"Tag{i}"] = $"%{tagList[i]}%";
+                    }
+                    parameters = tagParams;
+                }
+                else
+                {
+                    // Any tag can match
+                    var tagChecks = tagList.Select((_, index) => $"mc.Tags LIKE @Tag{index}").ToList();
+                    whereConditions.Add($"({string.Join(" OR ", tagChecks)})");
+
+                    var tagParams = new Dictionary<string, object>();
+                    for (int i = 0; i < tagList.Count; i++)
+                    {
+                        tagParams[$"Tag{i}"] = $"%{tagList[i]}%";
+                    }
+                    parameters = tagParams;
+                }
+
+                var sql = $@"
+                    SELECT mc.Id, mc.Name, mc.Description, mc.Slug, mc.CollectionType, mc.IsPublic, 
+                           mc.IsFeatured, mc.ViewCount, mc.Tags, mc.CreatedByUserId, mc.CreatedAt, 
+                           mc.ModifiedAt, mc.IsDeleted, mc.DeletedAt, mc.RowVersion
+                    FROM MediaCollections mc
+                    WHERE {string.Join(" AND ", whereConditions)}
+                    ORDER BY mc.ViewCount DESC, mc.CreatedAt DESC";
+
+                var result = await connection.QueryAsync<CoreEntities.MediaCollection>(sql, parameters);
+
+                _logger.LogInformation("Found {Count} collections matching tags '{Tags}'", result.Count(), tags);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting collections by tags '{Tags}'", tags);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets the count of media files in a collection
+        /// </summary>
+        public async Task<int> GetMediaFileCountAsync(Guid collectionId)
+        {
+            using var scope = _logger.BeginScope("Getting media file count for collection {CollectionId}", collectionId);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var sql = @"
+                    SELECT COUNT(*)
+                    FROM MediaCollectionItems mci
+                    INNER JOIN MediaFiles mf ON mci.MediaFileId = mf.Id
+                    WHERE mci.CollectionId = @CollectionId AND mf.IsDeleted = 0";
+
+                var count = await connection.QuerySingleAsync<int>(sql, new { CollectionId = collectionId });
+
+                _logger.LogDebug("Collection {CollectionId} contains {Count} media files", collectionId, count);
+                return count;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting media file count for collection {CollectionId}", collectionId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets the total size of all media files in a collection
+        /// </summary>
+        public async Task<long> GetTotalSizeAsync(Guid collectionId)
+        {
+            using var scope = _logger.BeginScope("Getting total size for collection {CollectionId}", collectionId);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var sql = @"
+                    SELECT ISNULL(SUM(mf.FileSizeInBytes), 0)
+                    FROM MediaCollectionItems mci
+                    INNER JOIN MediaFiles mf ON mci.MediaFileId = mf.Id
+                    WHERE mci.CollectionId = @CollectionId AND mf.IsDeleted = 0";
+
+                var totalSize = await connection.QuerySingleAsync<long>(sql, new { CollectionId = collectionId });
+
+                _logger.LogDebug("Collection {CollectionId} total size: {TotalSize} bytes", collectionId, totalSize);
+                return totalSize;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting total size for collection {CollectionId}", collectionId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Checks if a slug is available for a new collection
+        /// </summary>
+        public async Task<bool> IsSlugAvailableAsync(string slug, Guid? excludeId = null)
+        {
+            using var scope = _logger.BeginScope("Checking if slug '{Slug}' is available", slug);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var whereConditions = new List<string> { "Slug = @Slug", "IsDeleted = 0" };
+                object parameters = new { Slug = slug };
+
+                if (excludeId.HasValue)
+                {
+                    whereConditions.Add("Id != @ExcludeId");
+                    parameters = new { Slug = slug, ExcludeId = excludeId.Value };
+                }
+
+                var sql = $@"
+                    SELECT COUNT(*)
+                    FROM MediaCollections
+                    WHERE {string.Join(" AND ", whereConditions)}";
+
+                var count = await connection.QuerySingleAsync<int>(sql, parameters);
+                var isAvailable = count == 0;
+
+                _logger.LogDebug("Slug '{Slug}' availability: {IsAvailable}", slug, isAvailable);
+                return isAvailable;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking slug availability for '{Slug}'", slug);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Updates the view count for a collection
+        /// </summary>
+        public async Task<int> IncrementViewCountAsync(Guid collectionId)
+        {
+            using var scope = _logger.BeginScope("Incrementing view count for collection {CollectionId}", collectionId);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var sql = @"
+                    UPDATE MediaCollections 
+                    SET ViewCount = ViewCount + 1,
+                        ModifiedAt = @ModifiedAt
+                    OUTPUT INSERTED.ViewCount
+                    WHERE Id = @CollectionId AND IsDeleted = 0";
+
+                var newViewCount = await connection.QuerySingleOrDefaultAsync<int?>(sql, new 
+                { 
+                    CollectionId = collectionId, 
+                    ModifiedAt = DateTime.UtcNow 
+                });
+
+                if (newViewCount.HasValue)
+                {
+                    _logger.LogInformation("Collection {CollectionId} view count updated to {ViewCount}", collectionId, newViewCount.Value);
+                    return newViewCount.Value;
+                }
+
+                _logger.LogWarning("Collection {CollectionId} not found or deleted", collectionId);
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error incrementing view count for collection {CollectionId}", collectionId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Adds a media file to a collection
+        /// </summary>
+        public async Task<bool> AddMediaFileAsync(Guid collectionId, Guid mediaFileId, int sortOrder = 0, string? caption = null, bool isFeatured = false)
+        {
+            using var scope = _logger.BeginScope("Adding media file {MediaFileId} to collection {CollectionId}", mediaFileId, collectionId);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                // Check if already exists
+                var existsSql = @"
+                    SELECT COUNT(*)
+                    FROM MediaCollectionItems
+                    WHERE CollectionId = @CollectionId AND MediaFileId = @MediaFileId";
+
+                var exists = await connection.QuerySingleAsync<int>(existsSql, new { CollectionId = collectionId, MediaFileId = mediaFileId }) > 0;
+
+                if (exists)
+                {
+                    _logger.LogWarning("Media file {MediaFileId} already exists in collection {CollectionId}", mediaFileId, collectionId);
+                    return false;
+                }
+
+                var insertSql = @"
+                    INSERT INTO MediaCollectionItems (Id, CollectionId, MediaFileId, SortOrder, Caption, IsFeatured, CreatedAt)
+                    VALUES (@Id, @CollectionId, @MediaFileId, @SortOrder, @Caption, @IsFeatured, @CreatedAt)";
+
+                var rowsAffected = await connection.ExecuteAsync(insertSql, new
+                {
+                    Id = Guid.NewGuid(),
+                    CollectionId = collectionId,
+                    MediaFileId = mediaFileId,
+                    SortOrder = sortOrder,
+                    Caption = caption,
+                    IsFeatured = isFeatured,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+                var success = rowsAffected > 0;
+                if (success)
+                {
+                    _logger.LogInformation("Media file {MediaFileId} added to collection {CollectionId}", mediaFileId, collectionId);
+                }
+
+                return success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding media file {MediaFileId} to collection {CollectionId}", mediaFileId, collectionId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Removes a media file from a collection
+        /// </summary>
+        public async Task<bool> RemoveMediaFileAsync(Guid collectionId, Guid mediaFileId)
+        {
+            using var scope = _logger.BeginScope("Removing media file {MediaFileId} from collection {CollectionId}", mediaFileId, collectionId);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var sql = @"
+                    DELETE FROM MediaCollectionItems
+                    WHERE CollectionId = @CollectionId AND MediaFileId = @MediaFileId";
+
+                var rowsAffected = await connection.ExecuteAsync(sql, new { CollectionId = collectionId, MediaFileId = mediaFileId });
+
+                var success = rowsAffected > 0;
+                if (success)
+                {
+                    _logger.LogInformation("Media file {MediaFileId} removed from collection {CollectionId}", mediaFileId, collectionId);
+                }
+                else
+                {
+                    _logger.LogWarning("Media file {MediaFileId} not found in collection {CollectionId}", mediaFileId, collectionId);
+                }
+
+                return success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing media file {MediaFileId} from collection {CollectionId}", mediaFileId, collectionId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Updates the sort order of media files in a collection
+        /// </summary>
+        public async Task<int> UpdateSortOrderAsync(Guid collectionId, IEnumerable<Guid> mediaFileIds)
+        {
+            using var scope = _logger.BeginScope("Updating sort order for collection {CollectionId}", collectionId);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+                using var transaction = connection.BeginTransaction();
+
+                try
+                {
+                    var mediaFileIdList = mediaFileIds.ToList();
+                    var updatedCount = 0;
+
+                    for (int i = 0; i < mediaFileIdList.Count; i++)
+                    {
+                        var sql = @"
+                            UPDATE MediaCollectionItems
+                            SET SortOrder = @SortOrder
+                            WHERE CollectionId = @CollectionId AND MediaFileId = @MediaFileId";
+
+                        var rowsAffected = await connection.ExecuteAsync(sql, new
+                        {
+                            CollectionId = collectionId,
+                            MediaFileId = mediaFileIdList[i],
+                            SortOrder = i
+                        }, transaction);
+
+                        updatedCount += rowsAffected;
+                    }
+
+                    transaction.Commit();
+
+                    _logger.LogInformation("Updated sort order for {UpdatedCount} items in collection {CollectionId}", updatedCount, collectionId);
+                    return updatedCount;
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating sort order for collection {CollectionId}", collectionId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets all collection items for a collection with their details
+        /// </summary>
+        public async Task<IEnumerable<CoreEntities.MediaCollectionItem>> GetCollectionItemsAsync(Guid collectionId, int offset = 0, int limit = 100)
+        {
+            using var scope = _logger.BeginScope("Getting collection items for collection {CollectionId}", collectionId);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var sql = @"
+                    SELECT mci.Id, mci.CollectionId, mci.MediaFileId, mci.SortOrder, mci.Caption, 
+                           mci.IsFeatured, mci.CreatedAt
+                    FROM MediaCollectionItems mci
+                    INNER JOIN MediaFiles mf ON mci.MediaFileId = mf.Id
+                    WHERE mci.CollectionId = @CollectionId AND mf.IsDeleted = 0
+                    ORDER BY mci.SortOrder, mci.CreatedAt
+                    OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY";
+
+                var result = await connection.QueryAsync<CoreEntities.MediaCollectionItem>(sql, new 
+                { 
+                    CollectionId = collectionId, 
+                    Offset = offset, 
+                    Limit = limit 
+                });
+
+                _logger.LogInformation("Retrieved {Count} collection items for collection {CollectionId}", result.Count(), collectionId);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting collection items for collection {CollectionId}", collectionId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets featured items from a collection
+        /// </summary>
+        public async Task<IEnumerable<CoreEntities.MediaCollectionItem>> GetFeaturedItemsAsync(Guid collectionId, int limit = 5)
+        {
+            using var scope = _logger.BeginScope("Getting featured items for collection {CollectionId}", collectionId);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var sql = @"
+                    SELECT TOP (@Limit) mci.Id, mci.CollectionId, mci.MediaFileId, mci.SortOrder, 
+                           mci.Caption, mci.IsFeatured, mci.CreatedAt
+                    FROM MediaCollectionItems mci
+                    INNER JOIN MediaFiles mf ON mci.MediaFileId = mf.Id
+                    WHERE mci.CollectionId = @CollectionId AND mci.IsFeatured = 1 AND mf.IsDeleted = 0
+                    ORDER BY mci.SortOrder, mci.CreatedAt";
+
+                var result = await connection.QueryAsync<CoreEntities.MediaCollectionItem>(sql, new 
+                { 
+                    CollectionId = collectionId, 
+                    Limit = limit 
+                });
+
+                _logger.LogInformation("Retrieved {Count} featured items for collection {CollectionId}", result.Count(), collectionId);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting featured items for collection {CollectionId}", collectionId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Duplicates a collection with all its items
+        /// </summary>
+        public async Task<CoreEntities.MediaCollection> DuplicateCollectionAsync(Guid collectionId, string newName, string newSlug, Guid userId)
+        {
+            using var scope = _logger.BeginScope("Duplicating collection {CollectionId} as '{NewName}'", collectionId, newName);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+                using var transaction = connection.BeginTransaction();
+
+                try
+                {
+                    // Get original collection
+                    var originalSql = @"
+                        SELECT Id, Name, Description, Slug, CollectionType, IsPublic, IsFeatured, 
+                               ViewCount, Tags, CreatedByUserId, CreatedAt, ModifiedAt, IsDeleted, DeletedAt, RowVersion
+                        FROM MediaCollections
+                        WHERE Id = @CollectionId AND IsDeleted = 0";
+
+                    var original = await connection.QueryFirstOrDefaultAsync<CoreEntities.MediaCollection>(originalSql, new { CollectionId = collectionId }, transaction);
+
+                    if (original == null)
+                    {
+                        throw new InvalidOperationException($"Collection {collectionId} not found");
+                    }
+
+                    // Create new collection
+                    var newCollectionId = Guid.NewGuid();
+                    var newCollection = new CoreEntities.MediaCollection
+                    {
+                        Id = newCollectionId,
+                        Name = newName,
+                        Description = original.Description,
+                        Slug = newSlug,
+                        CollectionType = original.CollectionType,
+                        IsPublic = false, // Default to private
+                        IsFeatured = false, // Default to not featured
+                        ViewCount = 0,
+                        Tags = original.Tags,
+                        CreatedByUserId = userId,
+                        CreatedAt = DateTime.UtcNow,
+                        ModifiedAt = DateTime.UtcNow,
+                        IsDeleted = false
+                    };
+
+                    var insertCollectionSql = @"
+                        INSERT INTO MediaCollections (Id, Name, Description, Slug, CollectionType, IsPublic, IsFeatured, 
+                                                     ViewCount, Tags, CreatedByUserId, CreatedAt, ModifiedAt, IsDeleted)
+                        VALUES (@Id, @Name, @Description, @Slug, @CollectionType, @IsPublic, @IsFeatured, 
+                                @ViewCount, @Tags, @CreatedByUserId, @CreatedAt, @ModifiedAt, @IsDeleted)";
+
+                    await connection.ExecuteAsync(insertCollectionSql, newCollection, transaction);
+
+                    // Copy collection items
+                    var copyItemsSql = @"
+                        INSERT INTO MediaCollectionItems (Id, CollectionId, MediaFileId, SortOrder, Caption, IsFeatured, CreatedAt)
+                        SELECT NEWID(), @NewCollectionId, MediaFileId, SortOrder, Caption, IsFeatured, @CreatedAt
+                        FROM MediaCollectionItems
+                        WHERE CollectionId = @OriginalCollectionId";
+
+                    await connection.ExecuteAsync(copyItemsSql, new 
+                    { 
+                        NewCollectionId = newCollectionId, 
+                        OriginalCollectionId = collectionId,
+                        CreatedAt = DateTime.UtcNow
+                    }, transaction);
+
+                    transaction.Commit();
+
+                    _logger.LogInformation("Successfully duplicated collection {CollectionId} as {NewCollectionId}", collectionId, newCollectionId);
+                    return newCollection;
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error duplicating collection {CollectionId}", collectionId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets collection statistics
+        /// </summary>
+        public async Task<dynamic> GetCollectionStatsAsync()
+        {
+            using var scope = _logger.BeginScope("Getting collection statistics");
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var sql = @"
+                    SELECT 
+                        COUNT(*) as TotalCollections,
+                        SUM(CASE WHEN IsPublic = 1 THEN 1 ELSE 0 END) as PublicCollections,
+                        SUM(CASE WHEN IsPublic = 0 THEN 1 ELSE 0 END) as PrivateCollections,
+                        SUM(CASE WHEN IsFeatured = 1 THEN 1 ELSE 0 END) as FeaturedCollections,
+                        SUM(ViewCount) as TotalViews,
+                        AVG(CAST(ViewCount as FLOAT)) as AverageViews,
+                        COUNT(DISTINCT CreatedByUserId) as UniqueCreators
+                    FROM MediaCollections
+                    WHERE IsDeleted = 0";
+
+                var stats = await connection.QueryFirstAsync(sql);
+
+                _logger.LogInformation("Retrieved collection statistics");
+                return stats;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting collection statistics");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets collections that are empty (no media files)
+        /// </summary>
+        public async Task<IEnumerable<CoreEntities.MediaCollection>> GetEmptyCollectionsAsync(int olderThanDays = 30, int limit = 100)
+        {
+            using var scope = _logger.BeginScope("Getting empty collections older than {Days} days", olderThanDays);
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var cutoffDate = DateTime.UtcNow.AddDays(-olderThanDays);
+
+                var sql = @"
+                    SELECT TOP (@Limit) mc.Id, mc.Name, mc.Description, mc.Slug, mc.CollectionType, mc.IsPublic, 
+                           mc.IsFeatured, mc.ViewCount, mc.Tags, mc.CreatedByUserId, mc.CreatedAt, 
+                           mc.ModifiedAt, mc.IsDeleted, mc.DeletedAt, mc.RowVersion
+                    FROM MediaCollections mc
+                    LEFT JOIN MediaCollectionItems mci ON mc.Id = mci.CollectionId
+                    WHERE mc.IsDeleted = 0 
+                      AND mc.CreatedAt < @CutoffDate
+                      AND mci.CollectionId IS NULL
+                    ORDER BY mc.CreatedAt";
+
+                var result = await connection.QueryAsync<CoreEntities.MediaCollection>(sql, new 
+                { 
+                    CutoffDate = cutoffDate, 
+                    Limit = limit 
+                });
+
+                _logger.LogInformation("Found {Count} empty collections older than {Days} days", result.Count(), olderThanDays);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting empty collections");
+                throw;
+            }
+        }
+    }
+}
