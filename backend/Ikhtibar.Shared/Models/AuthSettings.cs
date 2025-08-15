@@ -1,77 +1,77 @@
 namespace Ikhtibar.Shared.Models;
 
 /// <summary>
-/// General authentication configuration settings
+/// Authentication configuration settings
 /// </summary>
 public class AuthSettings
 {
     /// <summary>
-    /// Whether to enable two-factor authentication
+    /// JWT secret key for signing tokens
     /// </summary>
-    public bool EnableTwoFactor { get; set; } = false;
+    public string JwtSecretKey { get; set; } = string.Empty;
 
     /// <summary>
-    /// Number of failed login attempts before account lockout
+    /// JWT issuer for token validation
     /// </summary>
-    public int LockoutThreshold { get; set; } = 5;
+    public string JwtIssuer { get; set; } = string.Empty;
 
     /// <summary>
-    /// Duration of account lockout in minutes
+    /// JWT audience for token validation
+    /// </summary>
+    public string JwtAudience { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Access token expiration time in minutes
+    /// </summary>
+    public int AccessTokenExpirationMinutes { get; set; } = 60;
+
+    /// <summary>
+    /// Refresh token expiration time in days
+    /// </summary>
+    public int RefreshTokenExpirationDays { get; set; } = 7;
+
+    /// <summary>
+    /// Maximum failed login attempts before lockout
+    /// </summary>
+    public int MaxFailedLoginAttempts { get; set; } = 5;
+
+    /// <summary>
+    /// Lockout duration in minutes
     /// </summary>
     public int LockoutDurationMinutes { get; set; } = 15;
 
     /// <summary>
-    /// Whether to enable account lockout
+    /// Whether to use HTTP-only cookies for refresh tokens
     /// </summary>
-    public bool EnableAccountLockout { get; set; } = true;
+    public bool UseHttpOnlyCookies { get; set; } = true;
 
     /// <summary>
-    /// Password minimum length requirement
+    /// Name of the refresh token cookie
     /// </summary>
-    public int PasswordMinimumLength { get; set; } = 8;
+    public string RefreshTokenCookieName { get; set; } = "refresh_token";
 
     /// <summary>
-    /// Whether to require digits in password
+    /// Whether to require HTTPS for cookies
     /// </summary>
-    public bool PasswordRequireDigit { get; set; } = true;
+    public bool RequireHttps { get; set; } = true;
 
     /// <summary>
-    /// Whether to require lowercase letters in password
+    /// Cookie domain for refresh tokens
     /// </summary>
-    public bool PasswordRequireLowercase { get; set; } = true;
+    public string? CookieDomain { get; set; }
 
     /// <summary>
-    /// Whether to require uppercase letters in password
+    /// Cookie path for refresh tokens
     /// </summary>
-    public bool PasswordRequireUppercase { get; set; } = true;
-
-    /// <summary>
-    /// Whether to require special characters in password
-    /// </summary>
-    public bool PasswordRequireSpecialCharacter { get; set; } = true;
-
-    /// <summary>
-    /// Maximum number of refresh tokens per user
-    /// </summary>
-    public int MaxRefreshTokensPerUser { get; set; } = 5;
+    public string CookiePath { get; set; } = "/";
 
     /// <summary>
     /// Whether to enable refresh token rotation
     /// </summary>
-    public bool EnableRefreshTokenRotation { get; set; } = true;
+    public bool EnableTokenRotation { get; set; } = true;
 
     /// <summary>
-    /// Default session timeout in minutes
+    /// Maximum concurrent refresh tokens per user
     /// </summary>
-    public int DefaultSessionTimeoutMinutes { get; set; } = 30;
-
-    /// <summary>
-    /// Whether to require email verification
-    /// </summary>
-    public bool RequireEmailVerification { get; set; } = true;
-
-    /// <summary>
-    /// Whether to allow multiple concurrent sessions
-    /// </summary>
-    public bool AllowMultipleSessions { get; set; } = true;
+    public int MaxConcurrentTokens { get; set; } = 5;
 }

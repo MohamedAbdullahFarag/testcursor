@@ -1,21 +1,25 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Ikhtibar.Shared.Entities;
+using Ikhtibar.Shared.Enums;
 
 namespace Ikhtibar.Core.Entities;
 
 /// <summary>
-/// Thumbnail management entity for storing generated thumbnails
-/// Supports multiple sizes and formats for different use cases
+/// Media thumbnail entity for storing generated thumbnails
 /// </summary>
-[Table("MediaThumbnails")]
-public class MediaThumbnail : BaseEntity
+public class MediaThumbnail
 {
     /// <summary>
-    /// Original media file this thumbnail was generated from
+    /// Unique identifier for the thumbnail
+    /// </summary>
+    [Key]
+    public int Id { get; set; }
+
+    /// <summary>
+    /// Reference to the original media file
     /// </summary>
     [Required]
-    public Guid MediaFileId { get; set; }
+    public int MediaFileId { get; set; }
 
     /// <summary>
     /// Thumbnail size category
@@ -36,13 +40,6 @@ public class MediaThumbnail : BaseEntity
     public int Height { get; set; }
 
     /// <summary>
-    /// Thumbnail file format (e.g., webp, jpeg, png)
-    /// </summary>
-    [Required]
-    [StringLength(10)]
-    public string Format { get; set; } = string.Empty;
-
-    /// <summary>
     /// Storage path for the thumbnail file
     /// </summary>
     [Required]
@@ -50,7 +47,7 @@ public class MediaThumbnail : BaseEntity
     public string StoragePath { get; set; } = string.Empty;
 
     /// <summary>
-    /// File size of the thumbnail in bytes
+    /// Thumbnail file size in bytes
     /// </summary>
     [Required]
     public long FileSizeBytes { get; set; }
@@ -63,32 +60,41 @@ public class MediaThumbnail : BaseEntity
     public string ContentType { get; set; } = string.Empty;
 
     /// <summary>
-    /// Quality setting used for generation (1-100)
+    /// Thumbnail generation method used
     /// </summary>
-    public int? Quality { get; set; }
-
-    /// <summary>
-    /// Whether this thumbnail is the default for its size
-    /// </summary>
-    [Required]
-    public bool IsDefault { get; set; } = false;
-
-    /// <summary>
-    /// Generation method used
-    /// </summary>
-    [Required]
-    public ThumbnailGenerationMethod GenerationMethod { get; set; } = ThumbnailGenerationMethod.Resize;
+    public ThumbnailGenerationMethod GenerationMethod { get; set; }
 
     /// <summary>
     /// Processing status of the thumbnail
     /// </summary>
-    [Required]
-    public ThumbnailStatus Status { get; set; } = ThumbnailStatus.Generating;
+    public ThumbnailStatus Status { get; set; }
 
     /// <summary>
-    /// Time taken to generate this thumbnail (in milliseconds)
+    /// Quality setting used for generation (1-100)
     /// </summary>
-    public int? GenerationTimeMs { get; set; }
+    public int Quality { get; set; } = 85;
+
+    /// <summary>
+    /// Additional metadata for the thumbnail
+    /// </summary>
+    [StringLength(1000)]
+    public string? Metadata { get; set; }
+
+    /// <summary>
+    /// When the thumbnail was created
+    /// </summary>
+    [Required]
+    public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// When the thumbnail was last modified
+    /// </summary>
+    public DateTime? ModifiedAt { get; set; }
+
+    /// <summary>
+    /// Processing duration in milliseconds
+    /// </summary>
+    public long? ProcessingDurationMs { get; set; }
 
     /// <summary>
     /// Error message if generation failed
@@ -103,37 +109,6 @@ public class MediaThumbnail : BaseEntity
     /// </summary>
     [ForeignKey(nameof(MediaFileId))]
     public virtual MediaFile MediaFile { get; set; } = null!;
-}
-
-/// <summary>
-/// Standard thumbnail size categories
-/// </summary>
-public enum ThumbnailSize
-{
-    /// <summary>
-    /// Small thumbnail (typically 64x64 or 100x100)
-    /// </summary>
-    Small = 1,
-
-    /// <summary>
-    /// Medium thumbnail (typically 150x150 or 200x200)
-    /// </summary>
-    Medium = 2,
-
-    /// <summary>
-    /// Large thumbnail (typically 300x300 or 400x400)
-    /// </summary>
-    Large = 3,
-
-    /// <summary>
-    /// Extra large thumbnail (typically 600x600 or 800x800)
-    /// </summary>
-    ExtraLarge = 4,
-
-    /// <summary>
-    /// Custom size thumbnail
-    /// </summary>
-    Custom = 5
 }
 
 /// <summary>

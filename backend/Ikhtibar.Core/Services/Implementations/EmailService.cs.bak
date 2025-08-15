@@ -1,0 +1,135 @@
+using Ikhtibar.Core.DTOs;
+using Ikhtibar.Core.Services.Interfaces;
+using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
+
+namespace Ikhtibar.Core.Services.Implementations;
+
+/// <summary>
+/// Email service implementation
+/// Handles email sending, validation, and delivery tracking
+/// </summary>
+public class EmailService : IEmailService
+{
+    private readonly IEmailProvider _emailProvider;
+    private readonly ILogger<EmailService> _logger;
+
+    public EmailService(
+        IEmailProvider emailProvider,
+        ILogger<EmailService> logger)
+    {
+        _emailProvider = emailProvider;
+        _logger = logger;
+    }
+
+    public async Task<EmailResult> SendEmailAsync(EmailRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Sending email to: {Recipient}", request.To);
+
+            // Validate email request
+            if (!ValidateEmailRequest(request))
+            {
+                return new EmailResult { Success = false, ErrorMessage = "Invalid email request" };
+            }
+
+            // Send email through provider
+            var result = await _emailProvider.SendEmailAsync(request);
+            
+            _logger.LogInformation("Email send result for {Recipient}: Success={Success}", 
+                request.To, result.Success);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending email to: {Recipient}", request.To);
+            return new EmailResult { Success = false, ErrorMessage = ex.Message };
+        }
+    }
+
+    public async Task<EmailResult> SendTemplatedEmailAsync(TemplatedEmailRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Sending templated email to: {Recipient}, Template: {TemplateName}", 
+                request.To, request.TemplateName);
+
+            // Validate email request
+            if (!ValidateEmailRequest(request))
+            {
+                return new EmailResult { Success = false, ErrorMessage = "Invalid email request" };
+            }
+
+            // Process template variables
+            var processedSubject = ProcessTemplate(request.Subject, request.TemplateVariables);
+            var processedBody = ProcessTemplate(request.Body, request.TemplateVariables);
+
+            // Create processed email request
+            var processedRequest = new EmailRequest
+            {
+                From = request.From,
+                FromName = request.FromName,
+                To = request.To,
+                Subject = processedSubject,
+                Body = processedBody,
+                IsHtml = request.IsHtml,
+                ReplyTo = request.ReplyTo,
+                Attachments = request.Attachments
+            };
+
+            // Send processed email
+            var result = await SendEmailAsync(processedRequest);
+            
+            _logger.LogInformation("Templated email send result for {Recipient}: Success={Success}", 
+                request.To, result.Success);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending templated email to: {Recipient}", request.To);
+            return new EmailResult { Success = false, ErrorMessage = ex.Message };
+        }
+    }
+
+    public async Task<bool> ValidateEmailAsync(string email)
+    {
+        try
+        {
+            var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+            return emailRegex.IsMatch(email);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private bool ValidateEmailRequest(EmailRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.To) || 
+            string.IsNullOrWhiteSpace(request.Subject) || 
+            string.IsNullOrWhiteSpace(request.Body))
+        {
+            return false;
+        }
+
+        return ValidateEmailAsync(request.To).Result;
+    }
+
+    private string ProcessTemplate(string template, Dictionary<string, object> variables)
+    {
+        var processedTemplate = template;
+        
+        foreach (var variable in variables)
+        {
+            var placeholder = $"{{{variable.Key}}}";
+            var value = variable.Value?.ToString() ?? string.Empty;
+            processedTemplate = processedTemplate.Replace(placeholder, value);
+        }
+        
+        return processedTemplate;
+    }
+}

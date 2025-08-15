@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Ikhtibar.API.Controllers.Base;
-using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Core.DTOs;
 using Ikhtibar.Core.Services.Interfaces;
 
 namespace Ikhtibar.API.Controllers.UserManagement;
@@ -111,7 +111,7 @@ public class UserRolesController : ApiControllerBase
                 RoleId = assignRoleDto.RoleId
             };
 
-            await _userRoleService.AssignRoleToUserAsync(coreAssignRoleDto);
+            await _userRoleService.AssignRoleAsync(coreAssignRoleDto.UserId, coreAssignRoleDto.RoleId);
 
             return Ok(new { Message = "Role assigned successfully" });
         }
@@ -144,7 +144,7 @@ public class UserRolesController : ApiControllerBase
         try
         {
             _logger.LogInformation("Removing role {RoleId} from user {UserId}", roleId, userId);
-            await _userRoleService.RemoveRoleFromUserAsync(userId, roleId);
+            await _userRoleService.RemoveRoleAsync(userId, roleId);
 
             return Ok(new { Message = "Role removed successfully" });
         }

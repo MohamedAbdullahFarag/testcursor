@@ -25,6 +25,30 @@ public class MoveCategoryDto
 }
 
 /// <summary>
+/// DTO for copying categories
+/// </summary>
+public class CopyCategoryDto
+{
+    public int? NewParentId { get; set; }
+    public string? NewName { get; set; }
+    public bool IncludeChildren { get; set; } = true;
+    public bool IncludeQuestions { get; set; } = false;
+    public bool PreserveMetadata { get; set; } = true;
+    public Dictionary<string, object>? Customizations { get; set; }
+}
+
+/// <summary>
+/// DTO for reordering categories
+/// </summary>
+public class ReorderCategoriesDto
+{
+    public List<int> CategoryIds { get; set; } = new();
+    public int? ParentId { get; set; }
+    public bool PreserveExistingOrder { get; set; } = true;
+    public Dictionary<int, int>? CustomOrder { get; set; }
+}
+
+/// <summary>
 /// DTO for tree validation results
 /// </summary>
 public class TreeValidationResultDto

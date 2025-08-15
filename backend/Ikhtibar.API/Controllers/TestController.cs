@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Ikhtibar.Core.Services.Interfaces;
 using System.Security.Cryptography;
 using System.Text;
-using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Core.DTOs;
 
 namespace Ikhtibar.API.Controllers;
 
@@ -40,9 +40,8 @@ public class TestController : ControllerBase
             var users = await _userService.GetAllUsersAsync();
             return Ok(new { 
                 success = true, 
-                count = users?.Items?.Count() ?? 0,
-                totalCount = users?.TotalCount ?? 0,
-                users = users?.Items 
+                count = users?.Count() ?? 0,
+                users = users 
             });
         }
         catch (Exception ex)
@@ -107,8 +106,8 @@ public class TestController : ControllerBase
     {
         try
         {
-            // Create a simple User entity for token generation
-            var testUser = new Ikhtibar.Shared.Entities.User
+            // Create a simple UserDto for token generation
+            var testUser = new UserDto
             {
                 UserId = 1,
                 Username = "testuser",
@@ -116,7 +115,8 @@ public class TestController : ControllerBase
                 FirstName = "Test",
                 LastName = "User",
                 IsActive = true,
-                EmailVerified = true
+                EmailVerified = true,
+                Roles = new List<string> { "User" }
             };
 
             // Generate JWT token

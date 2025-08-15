@@ -1,0 +1,156 @@
+using Ikhtibar.Core.Entities;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Microsoft.Extensions.Logging;
+
+namespace Ikhtibar.Core.Services.Implementations;
+
+/// <summary>
+/// Notification template service implementation
+/// Handles template CRUD operations and variable substitution
+/// </summary>
+public class NotificationTemplateService : INotificationTemplateService
+{
+    private readonly INotificationTemplateRepository _templateRepository;
+    private readonly ILogger<NotificationTemplateService> _logger;
+
+    public NotificationTemplateService(
+        INotificationTemplateRepository templateRepository,
+        ILogger<NotificationTemplateService> logger)
+    {
+        _templateRepository = templateRepository;
+        _logger = logger;
+    }
+
+    public async Task<NotificationTemplate?> GetTemplateAsync(NotificationType type, string language)
+    {
+        try
+        {
+            _logger.LogInformation("Getting template for type {Type} and language {Language}", type, language);
+            
+            var template = await _templateRepository.GetByTypeAndLanguageAsync(type, language);
+            
+            if (template == null)
+            {
+                _logger.LogWarning("No template found for type {Type} and language {Language}", type, language);
+            }
+            
+            return template;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting template for type {Type} and language {Language}", type, language);
+            throw;
+        }
+    }
+
+    public async Task<string> ProcessTemplateAsync(NotificationTemplate template, Dictionary<string, object> variables)
+    {
+        try
+        {
+            _logger.LogInformation("Processing template {TemplateId} with {VariableCount} variables", template.Id, variables.Count);
+            
+            var processedMessage = template.MessageTemplate;
+            
+            foreach (var variable in variables)
+            {
+                var placeholder = $"{{{variable.Key}}}";
+                var value = variable.Value?.ToString() ?? string.Empty;
+                processedMessage = processedMessage.Replace(placeholder, value);
+            }
+            
+            _logger.LogDebug("Template processed successfully. Original length: {OriginalLength}, Processed length: {ProcessedLength}", 
+                template.MessageTemplate.Length, processedMessage.Length);
+            
+            return processedMessage;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing template {TemplateId}", template.Id);
+            throw;
+        }
+    }
+
+    public async Task<NotificationTemplate> CreateTemplateAsync(NotificationTemplate template)
+    {
+        try
+        {
+            _logger.LogInformation("Creating new notification template: {Name}", template.Name);
+            
+            var createdTemplate = await _templateRepository.AddAsync(template);
+            
+            _logger.LogInformation("Successfully created template {TemplateId}: {Name}", createdTemplate.Id, createdTemplate.Name);
+            
+            return createdTemplate;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating notification template: {Name}", template.Name);
+            throw;
+        }
+    }
+
+    public async Task<NotificationTemplate> UpdateTemplateAsync(NotificationTemplate template)
+    {
+        try
+        {
+            _logger.LogInformation("Updating notification template {TemplateId}: {Name}", template.Id, template.Name);
+            
+            var updatedTemplate = await _templateRepository.UpdateAsync(template);
+            
+            _logger.LogInformation("Successfully updated template {TemplateId}: {Name}", updatedTemplate.Id, updatedTemplate.Name);
+            
+            return updatedTemplate;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating notification template {TemplateId}: {Name}", template.Id, template.Name);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteTemplateAsync(int templateId)
+    {
+        try
+        {
+            _logger.LogInformation("Deleting notification template {TemplateId}", templateId);
+            
+            var result = await _templateRepository.DeleteAsync(templateId);
+            
+            if (result)
+            {
+                _logger.LogInformation("Successfully deleted template {TemplateId}", templateId);
+            }
+            else
+            {
+                _logger.LogWarning("Template {TemplateId} not found or already deleted", templateId);
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting notification template {TemplateId}", templateId);
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<NotificationTemplate>> GetTemplatesByTypeAsync(NotificationType type)
+    {
+        try
+        {
+            _logger.LogInformation("Getting all templates for type {Type}", type);
+            
+            var templates = await _templateRepository.GetByTypeAsync(type);
+            
+            _logger.LogInformation("Found {TemplateCount} templates for type {Type}", templates.Count(), type);
+            
+            return templates;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting templates for type {Type}", type);
+            throw;
+        }
+    }
+}

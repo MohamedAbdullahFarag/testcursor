@@ -1,72 +1,63 @@
 using Ikhtibar.Shared.Entities;
 
-using Ikhtibar.Shared.Models;
 namespace Ikhtibar.Core.Repositories.Interfaces;
 
 /// <summary>
-/// Repository interface for UserRole junction entity operations
-/// Following SRP: ONLY user-role relationship operations
+/// Repository interface for UserRole entity operations
+/// Following SRP: ONLY UserRole data operations
 /// </summary>
-public interface IUserRoleRepository
+public interface IUserRoleRepository : IRepository<UserRole>
 {
     /// <summary>
-    /// Assigns a role to a user
+    /// Assign a role to a user
     /// </summary>
-    /// <param name="userId">The user identifier</param>
-    /// <param name="roleId">The role identifier</param>
-    /// <returns>Task representing the async operation</returns>
+    /// <param name="userId">User ID</param>
+    /// <param name="roleId">Role ID</param>
+    /// <returns>Task</returns>
     Task AssignRoleAsync(int userId, int roleId);
 
     /// <summary>
-    /// Removes a role from a user
+    /// Remove a role from a user
     /// </summary>
-    /// <param name="userId">The user identifier</param>
-    /// <param name="roleId">The role identifier</param>
-    /// <returns>Task representing the async operation</returns>
+    /// <param name="userId">User ID</param>
+    /// <param name="roleId">Role ID</param>
+    /// <returns>Task</returns>
     Task RemoveRoleAsync(int userId, int roleId);
 
     /// <summary>
-    /// Gets all roles assigned to a user
+    /// Get all roles for a specific user
     /// </summary>
-    /// <param name="userId">The user identifier</param>
-    /// <returns>Collection of roles assigned to the user</returns>
-    Task<IEnumerable<Role>> GetUserRolesAsync(int userId);
+    /// <param name="userId">User ID</param>
+    /// <returns>Collection of user roles</returns>
+    Task<IEnumerable<UserRole>> GetUserRolesAsync(int userId);
 
     /// <summary>
-    /// Gets all users assigned to a role
+    /// Get all users for a specific role
     /// </summary>
-    /// <param name="roleId">The role identifier</param>
-    /// <returns>Collection of users assigned to the role</returns>
-    Task<IEnumerable<User>> GetRoleUsersAsync(int roleId);
+    /// <param name="roleId">Role ID</param>
+    /// <returns>Collection of user roles</returns>
+    Task<IEnumerable<UserRole>> GetRoleUsersAsync(int roleId);
 
     /// <summary>
-    /// Checks if a user has a specific role
+    /// Check if a user has a specific role
     /// </summary>
-    /// <param name="userId">The user identifier</param>
-    /// <param name="roleId">The role identifier</param>
+    /// <param name="userId">User ID</param>
+    /// <param name="roleId">Role ID</param>
     /// <returns>True if user has the role, false otherwise</returns>
     Task<bool> UserHasRoleAsync(int userId, int roleId);
 
     /// <summary>
-    /// Checks if a user has a specific role by role code
+    /// Remove all roles from a user
     /// </summary>
-    /// <param name="userId">The user identifier</param>
-    /// <param name="roleCode">The role code</param>
-    /// <returns>True if user has the role, false otherwise</returns>
-    Task<bool> UserHasRoleAsync(int userId, string roleCode);
-
-    /// <summary>
-    /// Removes all roles from a user
-    /// </summary>
-    /// <param name="userId">The user identifier</param>
-    /// <returns>Task representing the async operation</returns>
+    /// <param name="userId">User ID</param>
+    /// <returns>Task</returns>
     Task RemoveAllUserRolesAsync(int userId);
 
     /// <summary>
-    /// Gets the user-role assignment record
+    /// Get user role by user ID and role ID
     /// </summary>
-    /// <param name="userId">The user identifier</param>
-    /// <param name="roleId">The role identifier</param>
-    /// <returns>The user-role assignment if found, null otherwise</returns>
+    /// <param name="userId">User ID</param>
+    /// <param name="roleId">Role ID</param>
+    /// <returns>UserRole entity if found, null otherwise</returns>
     Task<UserRole?> GetUserRoleAsync(int userId, int roleId);
 }

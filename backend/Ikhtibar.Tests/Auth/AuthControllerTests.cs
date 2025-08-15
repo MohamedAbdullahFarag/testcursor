@@ -9,7 +9,7 @@ using Ikhtibar.API.Controllers;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Core.Services.Interfaces;
 using Ikhtibar.Shared.DTOs;
-using Ikhtibar.Shared.Entities;
+using Ikhtibar.Core.DTOs;
 using Ikhtibar.API.Models;
 
 namespace Ikhtibar.Tests.Auth;
@@ -66,18 +66,19 @@ public class AuthControllerTests
             LastName = "User",
             IsActive = true
         };
-        var user = new User { 
+        var user = new UserDto { 
             UserId = 1, 
             Email = "test@example.com", 
             Username = "testuser",
             FirstName = "Test",
             LastName = "User",
-            IsActive = true
+            IsActive = true,
+            Roles = new List<string> { "User" }
         };
 
         _mockUserService.Setup(x => x.AuthenticateAsync(loginDto.Email, loginDto.Password))
             .ReturnsAsync(userDto);
-        _mockTokenService.Setup(x => x.GenerateJwtAsync(It.IsAny<User>()))
+        _mockTokenService.Setup(x => x.GenerateJwtAsync(It.IsAny<UserDto>()))
             .ReturnsAsync("test-jwt-token");
         _mockTokenService.Setup(x => x.GenerateRefreshTokenAsync())
             .ReturnsAsync("test-refresh-token");
@@ -125,10 +126,11 @@ public class AuthControllerTests
             IsRevoked = false,
             ExpiresAt = DateTime.UtcNow.AddDays(1)
         };
-        var user = new User { 
+        var user = new UserDto { 
             UserId = 1, 
             Email = "test@example.com",
-            Username = "testuser"
+            Username = "testuser",
+            Roles = new List<string> { "User" }
         };
         var userDto = new UserDto { 
             UserId = 1, 
@@ -142,7 +144,7 @@ public class AuthControllerTests
             .ReturnsAsync(user);
         _mockUserService.Setup(x => x.GetByIdAsync(1))
             .ReturnsAsync(userDto);
-        _mockTokenService.Setup(x => x.GenerateJwtAsync(It.IsAny<User>()))
+        _mockTokenService.Setup(x => x.GenerateJwtAsync(It.IsAny<UserDto>()))
             .ReturnsAsync("new-jwt-token");
         _mockTokenService.Setup(x => x.GenerateRefreshTokenAsync())
             .ReturnsAsync("new-refresh-token");
@@ -180,13 +182,14 @@ public class AuthControllerTests
             GivenName = "Test",
             FamilyName = "User"
         };
-        var user = new User {
+        var user = new UserDto {
             UserId = 1,
             Email = "test@example.com",
             Username = "testuser",
             FirstName = "Test",
             LastName = "User",
-            IsActive = true
+            IsActive = true,
+            Roles = new List<string> { "User" }
         };
         var userDto = new UserDto {
             UserId = 1,
@@ -206,7 +209,7 @@ public class AuthControllerTests
             .ReturnsAsync(userDto);
         _mockRefreshTokenRepo.Setup(x => x.GetUserByIdAsync(1))
             .ReturnsAsync(user);
-        _mockTokenService.Setup(x => x.GenerateJwtAsync(It.IsAny<User>()))
+        _mockTokenService.Setup(x => x.GenerateJwtAsync(It.IsAny<UserDto>()))
             .ReturnsAsync("jwt-token");
         _mockTokenService.Setup(x => x.GenerateRefreshTokenAsync())
             .ReturnsAsync("refresh-token");

@@ -93,16 +93,8 @@ public class RoleManagementConfigurationService : IRoleManagementConfigurationSe
         {
             _logger.LogInformation("Ensuring default roles are present");
             
-            var seededCount = await _roleService.SeedDefaultRolesAsync();
-            
-            if (seededCount > 0)
-            {
-                _logger.LogInformation("Seeded {Count} default roles", seededCount);
-            }
-            else
-            {
-                _logger.LogInformation("Default roles already exist");
-            }
+            await _roleService.SeedDefaultRolesAsync();
+            _logger.LogInformation("Default roles seeding completed");
             
             return true;
         }

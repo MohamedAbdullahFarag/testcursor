@@ -45,13 +45,13 @@ existing_implementations:
     why: Zustand-based authentication state management
 
 guidelines:
-  - file: .github/copilot/backend-guidelines.md
+  - file: .cursor/copilot/backend-guidelines.md
     why: SRP enforcement rules and service layer patterns
     
-  - file: .github/copilot/api-guidelines.md
+  - file: .cursor/copilot/api-guidelines.md
     why: API design standards and authentication patterns
     
-  - file: .github/copilot/frontend-guidelines.md
+  - file: .cursor/copilot/frontend-guidelines.md
     why: React component and hook patterns
 ```
 

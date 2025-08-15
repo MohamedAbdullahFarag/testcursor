@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Mail;
 using Ikhtibar.Core.Integrations.EmailProviders;
 using Ikhtibar.Shared.Enums;
-using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Core.DTOs;
 using EmailDeliveryStatusType = Ikhtibar.Core.Services.Providers.EmailDeliveryStatus;
 using DeliveryEventType = Ikhtibar.Core.Services.Providers.DeliveryEvent;
 using EmailStatusType = Ikhtibar.Core.Services.Providers.EmailStatus;

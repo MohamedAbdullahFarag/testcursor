@@ -99,12 +99,43 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 
-    // Optional: Add specific policies
+    // Role-based policies for educational assessment platform
+    options.AddPolicy("SystemAdmin", policy =>
+        policy.RequireRole("system-admin"));
+    
+    options.AddPolicy("ContentManager", policy =>
+        policy.RequireRole("system-admin", "exam-manager", "creator"));
+    
+    options.AddPolicy("ExamStaff", policy =>
+        policy.RequireRole("system-admin", "exam-manager", "supervisor", "grader"));
+        
+    options.AddPolicy("QualityControl", policy =>
+        policy.RequireRole("system-admin", "reviewer", "quality-reviewer"));
+    
+    options.AddPolicy("QuestionManagement", policy =>
+        policy.RequireRole("system-admin", "creator", "reviewer"));
+    
+    options.AddPolicy("ExamManagement", policy =>
+        policy.RequireRole("system-admin", "exam-manager", "supervisor"));
+    
+    options.AddPolicy("GradingAccess", policy =>
+        policy.RequireRole("system-admin", "grader", "quality-reviewer"));
+    
+    options.AddPolicy("StudentAccess", policy =>
+        policy.RequireRole("student"));
+    
+    options.AddPolicy("SupervisorAccess", policy =>
+        policy.RequireRole("system-admin", "supervisor"));
+    
+    options.AddPolicy("ReviewerAccess", policy =>
+        policy.RequireRole("system-admin", "reviewer", "quality-reviewer"));
+    
+    // Legacy policies for backward compatibility
     options.AddPolicy("AdminOnly", policy =>
-        policy.RequireRole("Admin"));
+        policy.RequireRole("Admin", "system-admin"));
 
     options.AddPolicy("UserOrAdmin", policy =>
-        policy.RequireRole("User", "Admin"));
+        policy.RequireRole("User", "Admin", "system-admin"));
 });
 
 // Add services to the container.
@@ -145,8 +176,7 @@ builder.Services.AddTransient<IDbConnection>(provider =>
 // Register connection string for repositories
 builder.Services.AddScoped<IDbConnectionFactory, DbConnectionFactory>();
 
-// Register repository pattern
-builder.Services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
+
 
 // ===== AUTHENTICATION SERVICES REGISTRATION =====
 // Register specific repositories
@@ -158,6 +188,7 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddAutoMapper(typeof(Ikhtibar.Core.Services.Interfaces.IUserService).Assembly);
 
 // Register user management repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 
@@ -169,6 +200,7 @@ builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.ITreeNodeReposi
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserRoleService, UserRoleService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 
 // Register role management configuration service
 builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.IRoleManagementConfigurationService, Ikhtibar.Infrastructure.Services.RoleManagementConfigurationService>();
@@ -177,8 +209,33 @@ builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.IRoleManagementConfi
 builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.ITreeNodeTypeService, Ikhtibar.Core.Services.Implementations.TreeNodeTypeService>();
 builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.ITreeNodeService, Ikhtibar.Core.Services.Implementations.TreeNodeService>();
 
+// Register question bank tree services
+builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.IQuestionBankTreeService, Ikhtibar.Infrastructure.Services.QuestionBankTreeService>();
+
+// Register media management services
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.Interfaces.IMediaService, Ikhtibar.Infrastructure.Services.MediaService>();
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.Interfaces.IFileUploadService, Ikhtibar.Infrastructure.Services.FileUploadService>();
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.Interfaces.IMediaStorageService, Ikhtibar.Infrastructure.Services.LocalFileStorageService>();
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.Interfaces.IThumbnailService, Ikhtibar.Infrastructure.Services.ThumbnailService>();
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.Interfaces.IMediaValidationService, Ikhtibar.Infrastructure.Services.MediaValidationService>();
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.Interfaces.IMediaSearchService, Ikhtibar.Infrastructure.Services.MediaSearchService>();
+
+// Register question bank repositories
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IQuestionBankCategoryRepository, Ikhtibar.Infrastructure.Repositories.QuestionBankCategoryRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IQuestionBankTreeRepository, Ikhtibar.Infrastructure.Repositories.QuestionBankTreeRepository>();
+
+// Register media management repositories
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaFileRepository, Ikhtibar.Infrastructure.Repositories.MediaFileRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaCategoryRepository, Ikhtibar.Infrastructure.Repositories.MediaCategoryRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaCollectionRepository, Ikhtibar.Infrastructure.Repositories.MediaCollectionRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaMetadataRepository, Ikhtibar.Infrastructure.Repositories.MediaMetadataRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaAccessLogRepository, Ikhtibar.Infrastructure.Repositories.MediaAccessLogRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaThumbnailRepository, Ikhtibar.Infrastructure.Repositories.MediaThumbnailRepository>();
+
 // Register authentication services
 builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.ITokenService, Ikhtibar.Infrastructure.Services.TokenService>();
+builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.IAuthenticationService, Ikhtibar.Core.Services.Implementations.AuthenticationService>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IRefreshTokenRepository, Ikhtibar.Infrastructure.Repositories.RefreshTokenRepository>();
 
 // Register database initialization service
 builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.IDatabaseInitializationService, Ikhtibar.Infrastructure.Services.DatabaseInitializationService>();

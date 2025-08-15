@@ -1,4 +1,5 @@
 using Ikhtibar.Core.Entities;
+using Ikhtibar.Shared.Enums;
 
 namespace Ikhtibar.Core.Repositories.Interfaces;
 
@@ -14,7 +15,14 @@ public interface IMediaThumbnailRepository : IRepository<MediaThumbnail>
     /// <param name="mediaFileId">Media file identifier</param>
     /// <param name="statusFilter">Optional status filter</param>
     /// <returns>Collection of thumbnails for the media file</returns>
-    Task<IEnumerable<MediaThumbnail>> GetByMediaFileAsync(Guid mediaFileId, ThumbnailStatus? statusFilter = null);
+    Task<IEnumerable<MediaThumbnail>> GetByMediaFileAsync(int mediaFileId, ThumbnailStatus? statusFilter = null);
+
+    /// <summary>
+    /// Gets all thumbnails for a specific media file (alias for GetByMediaFileAsync)
+    /// </summary>
+    /// <param name="mediaFileId">Media file identifier</param>
+    /// <returns>Collection of thumbnails for the media file</returns>
+    Task<IEnumerable<MediaThumbnail>> GetByMediaFileIdAsync(int mediaFileId);
 
     /// <summary>
     /// Gets thumbnail by media file and size
@@ -23,7 +31,7 @@ public interface IMediaThumbnailRepository : IRepository<MediaThumbnail>
     /// <param name="size">Thumbnail size category</param>
     /// <param name="format">Optional format filter</param>
     /// <returns>Thumbnail if found, null otherwise</returns>
-    Task<MediaThumbnail?> GetByMediaFileAndSizeAsync(Guid mediaFileId, ThumbnailSize size, string? format = null);
+    Task<MediaThumbnail?> GetByMediaFileAndSizeAsync(int mediaFileId, ThumbnailSize size, string? format = null);
 
     /// <summary>
     /// Gets the default thumbnail for a media file and size
@@ -31,7 +39,7 @@ public interface IMediaThumbnailRepository : IRepository<MediaThumbnail>
     /// <param name="mediaFileId">Media file identifier</param>
     /// <param name="size">Thumbnail size category</param>
     /// <returns>Default thumbnail if found, null otherwise</returns>
-    Task<MediaThumbnail?> GetDefaultThumbnailAsync(Guid mediaFileId, ThumbnailSize size);
+    Task<MediaThumbnail?> GetDefaultThumbnailAsync(int mediaFileId, ThumbnailSize size);
 
     /// <summary>
     /// Gets thumbnails by status
@@ -121,11 +129,11 @@ public interface IMediaThumbnailRepository : IRepository<MediaThumbnail>
     Task<int> BulkUpdateStatusAsync(IEnumerable<Guid> thumbnailIds, ThumbnailStatus status);
 
     /// <summary>
-    /// Deletes all thumbnails for a media file
+    /// Deletes all thumbnails for a specific media file
     /// </summary>
     /// <param name="mediaFileId">Media file identifier</param>
     /// <returns>Number of thumbnails deleted</returns>
-    Task<int> DeleteByMediaFileAsync(Guid mediaFileId);
+    Task<int> DeleteByMediaFileAsync(int mediaFileId);
 
     /// <summary>
     /// Deletes thumbnails by status (e.g., cleanup failed thumbnails)
@@ -143,13 +151,13 @@ public interface IMediaThumbnailRepository : IRepository<MediaThumbnail>
     Task<IEnumerable<MediaThumbnail>> GetOrphanedThumbnailsAsync(int limit = 1000);
 
     /// <summary>
-    /// Checks if a thumbnail exists for the given media file and specifications
+    /// Checks if a thumbnail exists with the specified parameters
     /// </summary>
     /// <param name="mediaFileId">Media file identifier</param>
-    /// <param name="size">Thumbnail size</param>
-    /// <param name="width">Width in pixels</param>
-    /// <param name="height">Height in pixels</param>
+    /// <param name="size">Thumbnail size category</param>
+    /// <param name="width">Thumbnail width in pixels</param>
+    /// <param name="height">Thumbnail height in pixels</param>
     /// <param name="format">Image format</param>
-    /// <returns>True if thumbnail exists</returns>
-    Task<bool> ExistsAsync(Guid mediaFileId, ThumbnailSize size, int width, int height, string format);
+    /// <returns>True if thumbnail exists, false otherwise</returns>
+    Task<bool> ExistsAsync(int mediaFileId, ThumbnailSize size, int width, int height, string format);
 }

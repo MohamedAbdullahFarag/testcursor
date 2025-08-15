@@ -43,6 +43,12 @@ public class Role : BaseEntity
     public bool IsSystemRole { get; set; } = false;
 
     /// <summary>
+    /// Whether the role is active
+    /// </summary>
+    [Required]
+    public bool IsActive { get; set; } = true;
+
+    /// <summary>
     /// Navigation property for role permissions
     /// </summary>
     public virtual ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();

@@ -1,6 +1,7 @@
 using Dapper;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Infrastructure.Data;
+using Microsoft.Extensions.Logging;
 using DifficultyLevelEntity = Ikhtibar.Shared.Entities.DifficultyLevel;
 
 namespace Ikhtibar.Infrastructure.Repositories;
@@ -10,8 +11,8 @@ namespace Ikhtibar.Infrastructure.Repositories;
 /// </summary>
 public class DifficultyLevelRepository : BaseRepository<DifficultyLevelEntity>, IDifficultyLevelRepository
 {
-    public DifficultyLevelRepository(IDbConnectionFactory connectionFactory) 
-        : base(connectionFactory)
+    public DifficultyLevelRepository(IDbConnectionFactory connectionFactory, ILogger<DifficultyLevelRepository> logger) 
+        : base(connectionFactory, logger, "DifficultyLevels", "DifficultyLevelId")
     {
     }
 

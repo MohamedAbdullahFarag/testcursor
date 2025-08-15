@@ -83,6 +83,17 @@ public class User : BaseEntity
     public bool PhoneVerified { get; set; } = false;
 
     /// <summary>
+    /// User's unique code (for external systems)
+    /// </summary>
+    [StringLength(50)]
+    public string? Code { get; set; }
+
+    /// <summary>
+    /// User's last login timestamp
+    /// </summary>
+    public DateTime? LastLoginAt { get; set; }
+
+    /// <summary>
     /// Navigation property for user roles
     /// </summary>
     public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();

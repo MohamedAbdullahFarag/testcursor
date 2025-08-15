@@ -4,7 +4,7 @@
 
 ### 1.1 Authentication System Comprehensive Implementation
 ```bash
-@copilot /generate-prp authentication authentication-system-comprehensive .github/requirements/ikhtibar-features.txt
+@copilot /generate-prp authentication authentication-system-comprehensive .cursor/requirements/ikhtibar-features.txt
 ```
 
 ### Scope & Deliverables
@@ -55,7 +55,7 @@ curl -X GET http://localhost:5000/api/admin/users -H "Authorization: Bearer {stu
 
 ### 1.2 Role Management System
 ```bash
-@copilot /generate-prp user-management role-management-comprehensive .github/requirements/ikhtibar-features.txt
+@copilot /generate-prp user-management role-management-comprehensive .cursor/requirements/ikhtibar-features.txt
 ```
 
 ### Scope & Deliverables
@@ -108,7 +108,7 @@ curl -X GET http://localhost:5000/api/users/2/roles -H "Authorization: Bearer {a
 
 ### 1.3 Audit Logging System
 ```bash
-@copilot /generate-prp infrastructure audit-logging-system .github/requirements/ikhtibar-features.txt
+@copilot /generate-prp infrastructure audit-logging-system .cursor/requirements/ikhtibar-features.txt
 ```
 
 ### Scope & Deliverables
@@ -160,7 +160,7 @@ curl -X GET http://localhost:5000/api/audit-logs/export -H "Authorization: Beare
 
 ### 1.4 Notification System Comprehensive
 ```bash
-@copilot /generate-prp reporting notification-system-comprehensive .github/requirements/ikhtibar-features.txt
+@copilot /generate-prp reporting notification-system-comprehensive .cursor/requirements/ikhtibar-features.txt
 ```
 
 ### Scope & Deliverables
@@ -216,7 +216,7 @@ curl -X PUT http://localhost:5000/api/notifications/1/read -H "Authorization: Be
 
 ### 2.1 Tree Management System
 ```bash
-@copilot /generate-prp infrastructure tree-management-comprehensive .github/requirements/schema.sql
+@copilot /generate-prp infrastructure tree-management-comprehensive .cursor/requirements/schema.sql
 ```
 
 ### Scope & Deliverables
@@ -275,7 +275,7 @@ curl -X GET http://localhost:5000/api/tree-nodes?search=alg -H "Authorization: B
 
 ### 2.2 Media Management System
 ```bash
-@copilot /generate-prp infrastructure media-management-comprehensive .github/requirements/schema.sql
+@copilot /generate-prp infrastructure media-management-comprehensive .cursor/requirements/schema.sql
 ```
 
 ### Scope & Deliverables
@@ -339,7 +339,7 @@ curl -X DELETE http://localhost:5000/api/media/1 -H "Authorization: Bearer {admi
 
 ### 3.1 Question Management System
 ```bash
-@copilot /generate-prp question-bank question-management-comprehensive .github/requirements/ikhtibar-features.txt
+@copilot /generate-prp question-bank question-management-comprehensive .cursor/requirements/ikhtibar-features.txt
 ```
 
 ### Scope & Deliverables
@@ -404,7 +404,7 @@ curl -X GET http://localhost:5000/api/questions?search=water -H "Authorization: 
 
 ### 3.2 Question Review System
 ```bash
-@copilot /generate-prp question-bank question-review-workflow .github/requirements/ikhtibar-features.txt
+@copilot /generate-prp question-bank question-review-workflow .cursor/requirements/ikhtibar-features.txt
 ```
 
 ### Scope & Deliverables
@@ -472,7 +472,7 @@ curl -X GET http://localhost:5000/api/reviews/metrics -H "Authorization: Bearer 
 
 ### 4.1 Exam Creation System
 ```bash
-@copilot /generate-prp exam-management exam-creation-comprehensive .github/requirements/ikhtibar-features.txt
+@copilot /generate-prp exam-management exam-creation-comprehensive .cursor/requirements/ikhtibar-features.txt
 ```
 
 ### Scope & Deliverables
@@ -543,7 +543,7 @@ curl -X GET http://localhost:5000/api/exams/1/preview -H "Authorization: Bearer 
 
 ### 4.2 Exam Scheduling System
 ```bash
-@copilot /generate-prp exam-management exam-scheduling-comprehensive .github/requirements/ikhtibar-features.txt
+@copilot /generate-prp exam-management exam-scheduling-comprehensive .cursor/requirements/ikhtibar-features.txt
 ```
 
 ### Scope & Deliverables

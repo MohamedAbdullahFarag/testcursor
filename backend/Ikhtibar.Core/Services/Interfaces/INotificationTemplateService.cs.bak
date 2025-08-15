@@ -1,0 +1,17 @@
+using Ikhtibar.Core.Entities;
+
+namespace Ikhtibar.Core.Services.Interfaces;
+
+/// <summary>
+/// Notification template service interface for template management
+/// Handles template CRUD operations and variable substitution
+/// </summary>
+public interface INotificationTemplateService
+{
+    Task<NotificationTemplate?> GetTemplateAsync(NotificationType type, string language);
+    Task<string> ProcessTemplateAsync(NotificationTemplate template, Dictionary<string, object> variables);
+    Task<NotificationTemplate> CreateTemplateAsync(NotificationTemplate template);
+    Task<NotificationTemplate> UpdateTemplateAsync(NotificationTemplate template);
+    Task<bool> DeleteTemplateAsync(int templateId);
+    Task<IEnumerable<NotificationTemplate>> GetTemplatesByTypeAsync(NotificationType type);
+}

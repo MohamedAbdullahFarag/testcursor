@@ -1,5 +1,4 @@
-using Ikhtibar.Shared.Entities;
-
+using Ikhtibar.Core.DTOs;
 using Ikhtibar.Shared.Models;
 namespace Ikhtibar.Core.Services.Interfaces;
 
@@ -14,7 +13,7 @@ public interface ITokenService
     /// </summary>
     /// <param name="user">User to generate token for</param>
     /// <returns>JWT access token</returns>
-    Task<string> GenerateJwtAsync(User user);
+    Task<string> GenerateJwtAsync(UserDto user);
 
     /// <summary>
     /// Generate refresh token for token rotation

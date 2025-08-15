@@ -1,0 +1,150 @@
+using Ikhtibar.Core.Entities;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Microsoft.Extensions.Logging;
+
+namespace Ikhtibar.Core.Services.Implementations;
+
+/// <summary>
+/// Notification preference service implementation
+/// Handles user notification preferences and channel settings
+/// </summary>
+public class NotificationPreferenceService : INotificationPreferenceService
+{
+    private readonly INotificationPreferenceRepository _preferenceRepository;
+    private readonly ILogger<NotificationPreferenceService> _logger;
+
+    public NotificationPreferenceService(
+        INotificationPreferenceRepository preferenceRepository,
+        ILogger<NotificationPreferenceService> logger)
+    {
+        _preferenceRepository = preferenceRepository;
+        _logger = logger;
+    }
+
+    public async Task<IEnumerable<NotificationPreference>> GetUserPreferencesAsync(int userId)
+    {
+        try
+        {
+            _logger.LogInformation("Getting notification preferences for user {UserId}", userId);
+            
+            var preferences = await _preferenceRepository.GetByUserIdAsync(userId);
+            
+            _logger.LogInformation("Found {PreferenceCount} preferences for user {UserId}", preferences.Count(), userId);
+            
+            return preferences;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting notification preferences for user {UserId}", userId);
+            throw;
+        }
+    }
+
+    public async Task<NotificationPreference?> GetUserPreferenceAsync(int userId, NotificationType type)
+    {
+        try
+        {
+            _logger.LogInformation("Getting notification preference for user {UserId} and type {Type}", userId, type);
+            
+            var preference = await _preferenceRepository.GetByUserIdAndTypeAsync(userId, type);
+            
+            if (preference == null)
+            {
+                _logger.LogDebug("No preference found for user {UserId} and type {Type}", userId, type);
+            }
+            
+            return preference;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting notification preference for user {UserId} and type {Type}", userId, type);
+            throw;
+        }
+    }
+
+    public async Task<NotificationPreference> UpdateUserPreferenceAsync(NotificationPreference preference)
+    {
+        try
+        {
+            _logger.LogInformation("Updating notification preference for user {UserId} and type {Type}", 
+                preference.UserId, preference.NotificationType);
+            
+            var updatedPreference = await _preferenceRepository.UpdateAsync(preference);
+            
+            _logger.LogInformation("Successfully updated preference for user {UserId} and type {Type}", 
+                updatedPreference.UserId, updatedPreference.NotificationType);
+            
+            return updatedPreference;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating notification preference for user {UserId} and type {Type}", 
+                preference.UserId, preference.NotificationType);
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<NotificationPreference>> SetDefaultPreferencesAsync(int userId)
+    {
+        try
+        {
+            _logger.LogInformation("Setting default notification preferences for user {UserId}", userId);
+            
+            var defaultPreferences = new List<NotificationPreference>();
+            
+            // Create default preferences for all notification types
+            foreach (NotificationType type in Enum.GetValues(typeof(NotificationType)))
+            {
+                var preference = new NotificationPreference
+                {
+                    UserId = userId,
+                    NotificationType = type,
+                    EmailEnabled = true,  // Default to email enabled
+                    SmsEnabled = false,   // Default to SMS disabled
+                    InAppEnabled = true,  // Default to in-app enabled
+                    PushEnabled = true    // Default to push enabled
+                };
+                
+                var createdPreference = await _preferenceRepository.AddAsync(preference);
+                defaultPreferences.Add(createdPreference);
+            }
+            
+            _logger.LogInformation("Successfully created {PreferenceCount} default preferences for user {UserId}", 
+                defaultPreferences.Count, userId);
+            
+            return defaultPreferences;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting default notification preferences for user {UserId}", userId);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteUserPreferencesAsync(int userId)
+    {
+        try
+        {
+            _logger.LogInformation("Deleting all notification preferences for user {UserId}", userId);
+            
+            var result = await _preferenceRepository.DeleteByUserIdAsync(userId);
+            
+            if (result)
+            {
+                _logger.LogInformation("Successfully deleted all preferences for user {UserId}", userId);
+            }
+            else
+            {
+                _logger.LogWarning("No preferences found to delete for user {UserId}", userId);
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting notification preferences for user {UserId}", userId);
+            throw;
+        }
+    }
+}

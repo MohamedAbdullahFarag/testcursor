@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
 using Ikhtibar.Core.Services.Interfaces;
-using Ikhtibar.Shared.Entities;
+using Ikhtibar.Core.DTOs;
 using Ikhtibar.Shared.Models;
 
 namespace Ikhtibar.Infrastructure.Services;
@@ -30,7 +30,7 @@ public class TokenService : ITokenService
     /// </summary>
     /// <param name="user">User to generate token for</param>
     /// <returns>JWT access token</returns>
-    public Task<string> GenerateJwtAsync(User user)
+    public Task<string> GenerateJwtAsync(UserDto user)
     {
         try
         {
@@ -52,9 +52,9 @@ public class TokenService : ITokenService
             };
 
             // Add roles as claims
-            foreach (var userRole in user.UserRoles)
+            foreach (var role in user.Roles)
             {
-                claims.Add(new Claim(ClaimTypes.Role, userRole.Role.Name));
+                claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
             var tokenDescriptor = new SecurityTokenDescriptor

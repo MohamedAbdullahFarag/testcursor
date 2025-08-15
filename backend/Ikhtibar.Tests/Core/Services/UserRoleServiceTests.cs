@@ -10,7 +10,7 @@ using Ikhtibar.Core.Services.Implementations;
 using Ikhtibar.Core.Services.Interfaces;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Shared.DTOs;
-using Ikhtibar.Shared.Entities;
+using Ikhtibar.Core.DTOs;
 
 namespace Ikhtibar.Tests.Core.Services;
 
@@ -312,24 +312,20 @@ public class UserRoleServiceTests
     {
         // Arrange
         var roleId = 1;
-        var users = new List<User>
+        var users = new List<UserDto>
         {
-            new User { UserId = 1, Username = "admin", FullName = "Administrator" },
-            new User { UserId = 2, Username = "user1", FullName = "User One" }
+            new UserDto { UserId = 1, Username = "admin", FullName = "Administrator", Roles = new List<string> { "Admin" } },
+            new UserDto { UserId = 2, Username = "user1", FullName = "User One", Roles = new List<string> { "User" } }
         };
 
-        var userDtos = new List<UserDto>
-        {
-            new UserDto { UserId = 1, Username = "admin", FullName = "Administrator" },
-            new UserDto { UserId = 2, Username = "user1", FullName = "User One" }
-        };
+
 
         _mockRoleRepository.Setup(x => x.RoleExistsAsync(roleId))
                           .ReturnsAsync(true);
         _mockUserRoleRepository.Setup(x => x.GetRoleUsersAsync(roleId))
                               .ReturnsAsync(users);
         _mockMapper.Setup(x => x.Map<IEnumerable<UserDto>>(users))
-                   .Returns(userDtos);
+                   .Returns(users);
 
         // Act
         var result = await _userRoleService.GetRoleUsersAsync(roleId);

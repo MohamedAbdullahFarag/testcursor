@@ -1,0 +1,18 @@
+using Ikhtibar.Core.Entities;
+
+namespace Ikhtibar.Core.Repositories.Interfaces;
+
+/// <summary>
+/// Notification repository interface for data access operations
+/// </summary>
+public interface INotificationRepository : IBaseRepository<Notification>
+{
+    Task<Notification?> GetByIdWithUserAsync(int id);
+    Task<IEnumerable<Notification>> GetUserNotificationsAsync(int userId, int page, int pageSize);
+    Task<int> GetUserNotificationCountAsync(int userId);
+    Task<int> GetUserUnreadCountAsync(int userId);
+    Task<bool> MarkAsReadAsync(int notificationId, int userId);
+    Task<int> MarkAllAsReadAsync(int userId);
+    Task<IEnumerable<Notification>> GetPendingNotificationsAsync(int batchSize);
+    Task<IEnumerable<Notification>> GetScheduledNotificationsAsync(DateTime before);
+}

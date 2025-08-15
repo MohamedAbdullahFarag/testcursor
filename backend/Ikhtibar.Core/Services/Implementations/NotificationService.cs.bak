@@ -1,0 +1,624 @@
+using Ikhtibar.Core.DTOs;
+using Ikhtibar.Core.Entities;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Infrastructure.Messaging;
+using Microsoft.Extensions.Logging;
+
+namespace Ikhtibar.Core.Services.Implementations;
+
+/// <summary>
+/// Main notification service implementation
+/// Handles all notification operations including creation, sending, and management
+/// </summary>
+public class NotificationService : INotificationService
+{
+    private readonly INotificationRepository _notificationRepository;
+    private readonly INotificationTemplateService _templateService;
+    private readonly IEmailService _emailService;
+    private readonly ISmsService _smsService;
+    private readonly INotificationPreferenceService _preferenceService;
+    private readonly INotificationHistoryRepository _historyRepository;
+    private readonly IEventBusService _eventBus;
+    private readonly ILogger<NotificationService> _logger;
+
+    public NotificationService(
+        INotificationRepository notificationRepository,
+        INotificationTemplateService templateService,
+        IEmailService emailService,
+        ISmsService smsService,
+        INotificationPreferenceService preferenceService,
+        INotificationHistoryRepository historyRepository,
+        IEventBusService eventBus,
+        ILogger<NotificationService> logger)
+    {
+        _notificationRepository = notificationRepository;
+        _templateService = templateService;
+        _emailService = emailService;
+        _smsService = smsService;
+        _preferenceService = preferenceService;
+        _historyRepository = historyRepository;
+        _eventBus = eventBus;
+        _logger = logger;
+    }
+
+    public async Task<NotificationDto> CreateNotificationAsync(CreateNotificationDto dto)
+    {
+        try
+        {
+            _logger.LogInformation("Creating notification for user: {UserId}, Type: {Type}", dto.UserId, dto.Type);
+
+            // Create notification entity
+            var notification = new Notification
+            {
+                Title = dto.Title,
+                Message = dto.Message,
+                Type = dto.Type,
+                Priority = dto.Priority,
+                Status = NotificationStatus.Pending,
+                UserId = dto.UserId,
+                EntityType = dto.EntityType,
+                EntityId = dto.EntityId,
+                ScheduledAt = dto.ScheduledAt ?? DateTime.UtcNow,
+                MetadataJson = dto.MetadataJson
+            };
+
+            var savedNotification = await _notificationRepository.AddAsync(notification);
+            
+            _logger.LogInformation("Notification created successfully with ID: {NotificationId}", savedNotification.Id);
+
+            return MapToDto(savedNotification);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating notification for user: {UserId}", dto.UserId);
+            throw;
+        }
+    }
+
+    public async Task<bool> SendNotificationAsync(int notificationId)
+    {
+        try
+        {
+            _logger.LogInformation("Sending notification: {NotificationId}", notificationId);
+
+            var notification = await _notificationRepository.GetByIdWithUserAsync(notificationId);
+            if (notification == null)
+            {
+                _logger.LogWarning("Notification not found: {NotificationId}", notificationId);
+                return false;
+            }
+
+            if (notification.Status != NotificationStatus.Pending)
+            {
+                _logger.LogWarning("Notification {NotificationId} is not in pending status", notificationId);
+                return false;
+            }
+
+            // Get user preferences
+            var preferences = await _preferenceService.GetUserPreferencesAsync(notification.UserId);
+            var typePreference = preferences.FirstOrDefault(p => p.NotificationType == notification.Type);
+
+            var deliveryTasks = new List<Task<bool>>();
+
+            // Send via enabled channels
+            if (typePreference?.EmailEnabled == true && !string.IsNullOrEmpty(notification.User.Email))
+            {
+                deliveryTasks.Add(SendEmailNotificationAsync(notification));
+            }
+
+            if (typePreference?.SmsEnabled == true && !string.IsNullOrEmpty(notification.User.PhoneNumber))
+            {
+                deliveryTasks.Add(SendSmsNotificationAsync(notification));
+            }
+
+            if (typePreference?.InAppEnabled == true)
+            {
+                // In-app notifications are already stored, just mark as sent
+                deliveryTasks.Add(Task.FromResult(true));
+            }
+
+            // Execute all delivery attempts
+            var results = await Task.WhenAll(deliveryTasks);
+            var success = results.Any(r => r);
+
+            // Update notification status
+            notification.Status = success ? NotificationStatus.Sent : NotificationStatus.Failed;
+            notification.SentAt = success ? DateTime.UtcNow : null;
+            await _notificationRepository.UpdateAsync(notification);
+
+            _logger.LogInformation("Notification {NotificationId} sending completed. Success: {Success}", notificationId, success);
+
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending notification: {NotificationId}", notificationId);
+            return false;
+        }
+    }
+
+    public async Task<bool> SendImmediateNotificationAsync(CreateNotificationDto dto)
+    {
+        try
+        {
+            // Create and immediately send notification
+            var notificationDto = await CreateNotificationAsync(dto);
+            return await SendNotificationAsync(notificationDto.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending immediate notification for user: {UserId}", dto.UserId);
+            return false;
+        }
+    }
+
+    public async Task<PagedResult<NotificationDto>> GetUserNotificationsAsync(int userId, NotificationFilterDto filter)
+    {
+        try
+        {
+            _logger.LogInformation("Getting notifications for user: {UserId}, Page: {Page}", userId, filter.Page);
+
+            var notifications = await _notificationRepository.GetUserNotificationsAsync(userId, filter.Page, filter.PageSize);
+            var totalCount = await _notificationRepository.GetUserNotificationCountAsync(userId);
+
+            var notificationDtos = notifications.Select(MapToDto).ToList();
+
+            var result = new PagedResult<NotificationDto>
+            {
+                Data = notificationDtos,
+                TotalCount = totalCount,
+                Page = filter.Page,
+                PageSize = filter.PageSize
+            };
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting notifications for user: {UserId}", userId);
+            throw;
+        }
+    }
+
+    public async Task<bool> MarkAsReadAsync(int notificationId, int userId)
+    {
+        try
+        {
+            _logger.LogInformation("Marking notification {NotificationId} as read for user {UserId}", notificationId, userId);
+
+            var result = await _notificationRepository.MarkAsReadAsync(notificationId, userId);
+
+            if (result)
+            {
+                _logger.LogInformation("Successfully marked notification {NotificationId} as read", notificationId);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to mark notification {NotificationId} as read", notificationId);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error marking notification {NotificationId} as read", notificationId);
+            throw;
+        }
+    }
+
+    public async Task<bool> MarkAllAsReadAsync(int userId)
+    {
+        try
+        {
+            _logger.LogInformation("Marking all notifications as read for user {UserId}", userId);
+
+            var result = await _notificationRepository.MarkAllAsReadAsync(userId);
+
+            _logger.LogInformation("Successfully marked {Count} notifications as read for user {UserId}", result, userId);
+
+            return result > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error marking all notifications as read for user {UserId}", userId);
+            throw;
+        }
+    }
+
+    public async Task<int> GetUnreadCountAsync(int userId)
+    {
+        try
+        {
+            var count = await _notificationRepository.GetUserUnreadCountAsync(userId);
+            return count;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting unread count for user {UserId}", userId);
+            throw;
+        }
+    }
+
+    public async Task<bool> SendBulkNotificationAsync(List<CreateNotificationDto> notifications)
+    {
+        try
+        {
+            _logger.LogInformation("Sending bulk notifications to {Count} users", notifications.Count);
+
+            var tasks = notifications.Select(SendImmediateNotificationAsync);
+            var results = await Task.WhenAll(tasks);
+
+            var successCount = results.Count(r => r);
+            var failureCount = results.Count(r => !r);
+
+            _logger.LogInformation("Bulk notification completed. Success: {SuccessCount}, Failed: {FailureCount}", 
+                successCount, failureCount);
+
+            return successCount > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending bulk notifications");
+            throw;
+        }
+    }
+
+    public async Task<bool> ScheduleNotificationAsync(CreateNotificationDto dto, DateTime scheduleTime)
+    {
+        try
+        {
+            _logger.LogInformation("Scheduling notification for user {UserId} at {ScheduleTime}", dto.UserId, scheduleTime);
+
+            var scheduledDto = new CreateNotificationDto
+            {
+                Title = dto.Title,
+                Message = dto.Message,
+                Type = dto.Type,
+                Priority = dto.Priority,
+                UserId = dto.UserId,
+                EntityType = dto.EntityType,
+                EntityId = dto.EntityId,
+                ScheduledAt = scheduleTime,
+                MetadataJson = dto.MetadataJson
+            };
+
+            var notification = await CreateNotificationAsync(scheduledDto);
+
+            _logger.LogInformation("Successfully scheduled notification {NotificationId} for {ScheduleTime}", 
+                notification.Id, scheduleTime);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error scheduling notification for user {UserId}", dto.UserId);
+            throw;
+        }
+    }
+
+    public async Task<bool> CancelNotificationAsync(int notificationId)
+    {
+        try
+        {
+            _logger.LogInformation("Cancelling notification {NotificationId}", notificationId);
+
+            var notification = await _notificationRepository.GetByIdAsync(notificationId);
+            if (notification == null)
+            {
+                _logger.LogWarning("Notification not found: {NotificationId}", notificationId);
+                return false;
+            }
+
+            notification.Status = NotificationStatus.Cancelled;
+            await _notificationRepository.UpdateAsync(notification);
+
+            _logger.LogInformation("Successfully cancelled notification {NotificationId}", notificationId);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cancelling notification {NotificationId}", notificationId);
+            throw;
+        }
+    }
+
+    // Event-driven notification methods
+    public async Task SendExamReminderAsync(int examId, int reminderMinutes)
+    {
+        try
+        {
+            _logger.LogInformation("Sending exam reminder for exam: {ExamId}, Minutes: {Minutes}", examId, reminderMinutes);
+
+            // This would typically get exam details and enrolled students from exam service
+            // For now, we'll create a placeholder notification
+            var notificationDto = new CreateNotificationDto
+            {
+                UserId = 1, // Placeholder - would get from exam service
+                Type = NotificationType.ExamReminder,
+                Priority = NotificationPriority.High,
+                Title = $"Exam Reminder",
+                Message = $"Your exam starts in {reminderMinutes} minutes",
+                EntityType = "Exam",
+                EntityId = examId
+            };
+
+            await SendImmediateNotificationAsync(notificationDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending exam reminder for exam: {ExamId}", examId);
+        }
+    }
+
+    public async Task SendExamStartNotificationAsync(int examId)
+    {
+        try
+        {
+            _logger.LogInformation("Sending exam start notification for exam: {ExamId}", examId);
+
+            var notificationDto = new CreateNotificationDto
+            {
+                UserId = 1, // Placeholder - would get from exam service
+                Type = NotificationType.ExamStart,
+                Priority = NotificationPriority.High,
+                Title = $"Exam Started",
+                Message = "Your exam has started. Good luck!",
+                EntityType = "Exam",
+                EntityId = examId
+            };
+
+            await SendImmediateNotificationAsync(notificationDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending exam start notification for exam: {ExamId}", examId);
+        }
+    }
+
+    public async Task SendExamEndNotificationAsync(int examId)
+    {
+        try
+        {
+            _logger.LogInformation("Sending exam end notification for exam: {ExamId}", examId);
+
+            var notificationDto = new CreateNotificationDto
+            {
+                UserId = 1, // Placeholder - would get from exam service
+                Type = NotificationType.ExamEnd,
+                Priority = NotificationPriority.Medium,
+                Title = $"Exam Ended",
+                Message = "Your exam has ended. Thank you for participating!",
+                EntityType = "Exam",
+                EntityId = examId
+            };
+
+            await SendImmediateNotificationAsync(notificationDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending exam end notification for exam: {ExamId}", examId);
+        }
+    }
+
+    public async Task SendGradingCompleteNotificationAsync(int examId, int studentId)
+    {
+        try
+        {
+            _logger.LogInformation("Sending grading complete notification for exam: {ExamId}, student: {StudentId}", examId, studentId);
+
+            var notificationDto = new CreateNotificationDto
+            {
+                UserId = studentId,
+                Type = NotificationType.GradingComplete,
+                Priority = NotificationPriority.Medium,
+                Title = $"Grading Complete",
+                Message = "Your exam has been graded. Check your results!",
+                EntityType = "Exam",
+                EntityId = examId
+            };
+
+            await SendImmediateNotificationAsync(notificationDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending grading complete notification for exam: {ExamId}, student: {StudentId}", examId, studentId);
+        }
+    }
+
+    public async Task SendDeadlineReminderAsync(string entityType, int entityId, DateTime deadline)
+    {
+        try
+        {
+            _logger.LogInformation("Sending deadline reminder for {EntityType}: {EntityId}", entityType, entityId);
+
+            var notificationDto = new CreateNotificationDto
+            {
+                UserId = 1, // Placeholder - would get from entity service
+                Type = NotificationType.DeadlineReminder,
+                Priority = NotificationPriority.High,
+                Title = $"Deadline Reminder",
+                Message = $"Deadline approaching for {entityType}. Due: {deadline:yyyy-MM-dd HH:mm}",
+                EntityType = entityType,
+                EntityId = entityId
+            };
+
+            await SendImmediateNotificationAsync(notificationDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending deadline reminder for {EntityType}: {EntityId}", entityType, entityId);
+        }
+    }
+
+    public async Task SendWelcomeNotificationAsync(int userId)
+    {
+        try
+        {
+            _logger.LogInformation("Sending welcome notification for user: {UserId}", userId);
+
+            var notificationDto = new CreateNotificationDto
+            {
+                UserId = userId,
+                Type = NotificationType.UserWelcome,
+                Priority = NotificationPriority.Low,
+                Title = $"Welcome to Ikhtibar!",
+                Message = "Welcome to the Ikhtibar educational platform. We're excited to have you on board!",
+                EntityType = "User",
+                EntityId = userId
+            };
+
+            await SendImmediateNotificationAsync(notificationDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending welcome notification for user: {UserId}", userId);
+        }
+    }
+
+    public async Task SendPasswordResetNotificationAsync(int userId, string resetToken)
+    {
+        try
+        {
+            _logger.LogInformation("Sending password reset notification for user: {UserId}", userId);
+
+            var notificationDto = new CreateNotificationDto
+            {
+                UserId = userId,
+                Type = NotificationType.PasswordReset,
+                Priority = NotificationPriority.High,
+                Title = $"Password Reset Request",
+                Message = $"Your password reset token is: {resetToken}. Use this to reset your password.",
+                EntityType = "User",
+                EntityId = userId
+            };
+
+            await SendImmediateNotificationAsync(notificationDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending password reset notification for user: {UserId}", userId);
+        }
+    }
+
+    public async Task SendRoleAssignmentNotificationAsync(int userId, string roleName)
+    {
+        try
+        {
+            _logger.LogInformation("Sending role assignment notification for user: {UserId}, role: {RoleName}", userId, roleName);
+
+            var notificationDto = new CreateNotificationDto
+            {
+                UserId = userId,
+                Type = NotificationType.RoleAssignment,
+                Priority = NotificationPriority.Medium,
+                Title = $"Role Assignment",
+                Message = $"You have been assigned the role: {roleName}. Your permissions have been updated accordingly.",
+                EntityType = "User",
+                EntityId = userId
+            };
+
+            await SendImmediateNotificationAsync(notificationDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending role assignment notification for user: {UserId}", userId);
+        }
+    }
+
+    private async Task<bool> SendEmailNotificationAsync(Notification notification)
+    {
+        try
+        {
+            var emailRequest = new EmailRequest
+            {
+                To = notification.User.Email,
+                Subject = notification.Title,
+                Body = notification.Message,
+                IsHtml = true
+            };
+
+            var emailResult = await _emailService.SendEmailAsync(emailRequest);
+            
+            // Record delivery attempt
+            await RecordDeliveryAttemptAsync(notification.Id, NotificationChannel.Email, emailResult.Success, emailResult.ErrorMessage);
+            
+            return emailResult.Success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending email notification: {NotificationId}", notification.Id);
+            await RecordDeliveryAttemptAsync(notification.Id, NotificationChannel.Email, false, ex.Message);
+            return false;
+        }
+    }
+
+    private async Task<bool> SendSmsNotificationAsync(Notification notification)
+    {
+        try
+        {
+            var smsRequest = new SmsRequest
+            {
+                To = notification.User.PhoneNumber,
+                Message = notification.Message
+            };
+
+            var smsResult = await _smsService.SendSmsAsync(smsRequest);
+            
+            // Record delivery attempt
+            await RecordDeliveryAttemptAsync(notification.Id, NotificationChannel.SMS, smsResult.Success, smsResult.ErrorMessage);
+            
+            return smsResult.Success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending SMS notification: {NotificationId}", notification.Id);
+            await RecordDeliveryAttemptAsync(notification.Id, NotificationChannel.SMS, false, ex.Message);
+            return false;
+        }
+    }
+
+    private async Task RecordDeliveryAttemptAsync(int notificationId, NotificationChannel channel, bool success, string? errorMessage)
+    {
+        try
+        {
+            var history = new NotificationHistory
+            {
+                NotificationId = notificationId,
+                Channel = channel,
+                Status = success ? NotificationDeliveryStatus.Sent : NotificationDeliveryStatus.Failed,
+                AttemptedAt = DateTime.UtcNow,
+                DeliveredAt = success ? DateTime.UtcNow : null,
+                ErrorMessage = errorMessage
+            };
+
+            await _historyRepository.AddAsync(history);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error recording delivery attempt for notification {NotificationId}", notificationId);
+        }
+    }
+
+    private NotificationDto MapToDto(Notification notification)
+    {
+        return new NotificationDto
+        {
+            Id = notification.Id,
+            Title = notification.Title,
+            Message = notification.Message,
+            Type = notification.Type,
+            Priority = notification.Priority,
+            Status = notification.Status,
+            UserId = notification.UserId,
+            EntityType = notification.EntityType,
+            EntityId = notification.EntityId,
+            ScheduledAt = notification.ScheduledAt,
+            SentAt = notification.SentAt,
+            ReadAt = notification.ReadAt,
+            CreatedAt = notification.CreatedAt,
+            MetadataJson = notification.MetadataJson
+        };
+    }
+}

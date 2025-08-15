@@ -3,8 +3,8 @@
 
 param(
     [string]$ServerInstance = "(localdb)\mssqllocaldb",
-    [string]$SchemaFile = "..\\.github\\requirements\\schema.sql",
-    [string]$DataFile = "..\\.github\\requirements\\data.sql"
+    [string]$SchemaFile = "..\\.cursor\\requirements\\schema.sql",
+    [string]$DataFile = "..\\.cursor\\requirements\\data.sql"
 )
 
 # Color output functions

@@ -14,7 +14,7 @@ public interface IMediaFileRepository : IRepository<MediaFile>
     /// <param name="categoryId">Category identifier</param>
     /// <param name="includeSubcategories">Whether to include files from subcategories</param>
     /// <returns>Collection of media files in the category</returns>
-    Task<IEnumerable<MediaFile>> GetByCategoryAsync(Guid categoryId, bool includeSubcategories = false);
+    Task<IEnumerable<MediaFile>> GetByCategoryAsync(int categoryId, bool includeSubcategories = false);
 
     /// <summary>
     /// Gets media files by type with pagination
@@ -40,7 +40,7 @@ public interface IMediaFileRepository : IRepository<MediaFile>
     /// <param name="offset">Number of records to skip</param>
     /// <param name="limit">Maximum number of records to return</param>
     /// <returns>Collection of media files uploaded by the user</returns>
-    Task<IEnumerable<MediaFile>> GetByUserAsync(Guid userId, int offset = 0, int limit = 50);
+    Task<IEnumerable<MediaFile>> GetByUserAsync(int userId, int offset = 0, int limit = 50);
 
     /// <summary>
     /// Searches media files by filename, title, or description
@@ -51,7 +51,7 @@ public interface IMediaFileRepository : IRepository<MediaFile>
     /// <param name="offset">Number of records to skip</param>
     /// <param name="limit">Maximum number of records to return</param>
     /// <returns>Collection of media files matching the search criteria</returns>
-    Task<IEnumerable<MediaFile>> SearchAsync(string searchTerm, MediaType? mediaType = null, Guid? categoryId = null, int offset = 0, int limit = 50);
+    Task<IEnumerable<MediaFile>> SearchAsync(string searchTerm, MediaType? mediaType = null, int? categoryId = null, int offset = 0, int limit = 50);
 
     /// <summary>
     /// Gets media files by file hash (for duplicate detection)
@@ -106,14 +106,14 @@ public interface IMediaFileRepository : IRepository<MediaFile>
     /// Gets storage statistics grouped by category
     /// </summary>
     /// <returns>Dictionary with category ID and total storage used</returns>
-    Task<Dictionary<Guid, long>> GetStorageStatsByCategoryAsync();
+    Task<Dictionary<int, long>> GetStorageStatsByCategoryAsync();
 
     /// <summary>
     /// Updates the access count and last accessed time
     /// </summary>
     /// <param name="mediaFileId">Media file identifier</param>
     /// <returns>True if updated successfully</returns>
-    Task<bool> UpdateAccessInfoAsync(Guid mediaFileId);
+    Task<bool> UpdateAccessInfoAsync(int mediaFileId);
 
     /// <summary>
     /// Updates the media file status
@@ -121,7 +121,7 @@ public interface IMediaFileRepository : IRepository<MediaFile>
     /// <param name="mediaFileId">Media file identifier</param>
     /// <param name="status">New status</param>
     /// <returns>True if updated successfully</returns>
-    Task<bool> UpdateStatusAsync(Guid mediaFileId, MediaStatus status);
+    Task<bool> UpdateStatusAsync(int mediaFileId, MediaStatus status);
 
     /// <summary>
     /// Bulk updates media file status
@@ -129,7 +129,7 @@ public interface IMediaFileRepository : IRepository<MediaFile>
     /// <param name="mediaFileIds">Collection of media file identifiers</param>
     /// <param name="status">New status</param>
     /// <returns>Number of files updated</returns>
-    Task<int> BulkUpdateStatusAsync(IEnumerable<Guid> mediaFileIds, MediaStatus status);
+    Task<int> BulkUpdateStatusAsync(IEnumerable<int> mediaFileIds, MediaStatus status);
 
     /// <summary>
     /// Gets media files that haven't been accessed recently (for cleanup)
@@ -145,5 +145,5 @@ public interface IMediaFileRepository : IRepository<MediaFile>
     /// <param name="fileHash">File hash to check</param>
     /// <param name="excludeId">Optional file ID to exclude from the check</param>
     /// <returns>True if a duplicate exists</returns>
-    Task<bool> IsDuplicateAsync(string fileHash, Guid? excludeId = null);
+    Task<bool> IsDuplicateAsync(string fileHash, int? excludeId = null);
 }

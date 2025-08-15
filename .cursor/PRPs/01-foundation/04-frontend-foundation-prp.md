@@ -14,8 +14,8 @@ Establish the React.js frontend base: project structure, global state management
 - Project: `frontend/src`
 - Folder-per-feature under `modules/` and shared components under `shared/`
 - Existing examples:
-  - `.github/copilot/examples/frontend/components/UserCard.tsx`
-  - `.github/copilot/examples/frontend/hooks/useUsers.ts`
+  - `.cursor/copilot/examples/frontend/components/UserCard.tsx`
+  - `.cursor/copilot/examples/frontend/hooks/useUsers.ts`
 - Use Tailwind CSS as configured in `tailwind.config.js`
 
 ### 🔧 Implementation Tasks
@@ -60,7 +60,7 @@ Establish the React.js frontend base: project structure, global state management
    - Use React Testing Library and Jest
 
 10. **Code Samples & Examples**
-    - Reference `.github/copilot/examples/frontend/components/UserCard.tsx` and `useUsers.ts`
+    - Reference `.cursor/copilot/examples/frontend/components/UserCard.tsx` and `useUsers.ts`
 
 ### 🔄 Integration Points
 ```yaml

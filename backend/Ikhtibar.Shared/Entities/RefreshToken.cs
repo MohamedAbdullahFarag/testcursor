@@ -1,99 +1,83 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-
 namespace Ikhtibar.Shared.Entities;
 
 /// <summary>
-/// Refresh token entity for authentication
-/// Note: Does not inherit from BaseEntity due to different schema structure
+/// Refresh token entity for secure token rotation
+/// Stores hashed refresh tokens with expiration and user association
 /// </summary>
 [Table("RefreshTokens")]
-public class RefreshToken
+public class RefreshToken : BaseEntity
 {
     /// <summary>
-    /// Primary key
+    /// Unique identifier for the refresh token
     /// </summary>
-    [Key]
-    public int RefreshTokenId { get; set; }
+    public new int Id { get; set; }
 
     /// <summary>
-    /// Hashed refresh token value
+    /// Hashed refresh token value (never store plain text)
     /// </summary>
     [Required]
-    [StringLength(256)]
+    [MaxLength(255)]
     public string TokenHash { get; set; } = string.Empty;
 
     /// <summary>
-    /// Foreign key to Users
+    /// User ID associated with this refresh token
     /// </summary>
     [Required]
     public int UserId { get; set; }
 
     /// <summary>
-    /// When token was issued
+    /// When the token was issued
     /// </summary>
     [Required]
-    public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
+    public DateTime IssuedAt { get; set; }
 
     /// <summary>
-    /// When token expires
+    /// When the token expires
     /// </summary>
     [Required]
     public DateTime ExpiresAt { get; set; }
 
     /// <summary>
-    /// When token was revoked
+    /// When the token was revoked (if applicable)
     /// </summary>
     public DateTime? RevokedAt { get; set; }
 
     /// <summary>
-    /// Hash of token that replaced this one
+    /// Reason for revocation (if applicable)
     /// </summary>
-    [StringLength(256)]
-    public string? ReplacedByToken { get; set; }
+    [MaxLength(200)]
+    public string? RevocationReason { get; set; }
 
     /// <summary>
-    /// Why was token revoked
+    /// Client IP address that requested the token
     /// </summary>
-    [StringLength(500)]
-    public string? ReasonRevoked { get; set; }
+    [MaxLength(45)] // IPv6 max length
+    public string? ClientIpAddress { get; set; }
 
     /// <summary>
-    /// Creation timestamp
+    /// User agent that requested the token
     /// </summary>
-    [Required]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    [MaxLength(500)]
+    public string? UserAgent { get; set; }
 
     /// <summary>
-    /// User ID who created the record
+    /// Whether the token is currently active
     /// </summary>
-    public int? CreatedBy { get; set; }
+    public bool IsActive => RevokedAt == null && DateTime.UtcNow < ExpiresAt;
 
     /// <summary>
-    /// Last modification timestamp
+    /// Whether the token has expired
     /// </summary>
-    public DateTime? ModifiedAt { get; set; }
+    public bool IsExpired => DateTime.UtcNow >= ExpiresAt;
 
     /// <summary>
-    /// User ID who last modified the record
+    /// Whether the token has been revoked
     /// </summary>
-    public int? ModifiedBy { get; set; }
+    public bool IsRevoked => RevokedAt != null;
 
-    /// <summary>
-    /// Soft delete flag
-    /// </summary>
-    [Required]
-    public bool IsDeleted { get; set; } = false;
-
-    /// <summary>
-    /// Optimistic concurrency token (for Dapper row versioning)
-    /// </summary>
-    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
-
-    /// <summary>
-    /// Navigation property to User
-    /// </summary>
-    [ForeignKey("UserId")]
-    public virtual User User { get; set; } = null!;
+    // Navigation property
+    public User User { get; set; } = null!;
 }

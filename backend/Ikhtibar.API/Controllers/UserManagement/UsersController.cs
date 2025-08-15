@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Ikhtibar.API.Controllers.Base;
-using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Core.DTOs;
 using Ikhtibar.Core.Services.Interfaces;
 
 namespace Ikhtibar.API.Controllers.UserManagement;

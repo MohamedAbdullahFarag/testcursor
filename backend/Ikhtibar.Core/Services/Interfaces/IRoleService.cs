@@ -1,89 +1,85 @@
-using Ikhtibar.Shared.DTOs;
-using Ikhtibar.Shared.Models;
+using Ikhtibar.Core.DTOs;
 
 namespace Ikhtibar.Core.Services.Interfaces;
 
 /// <summary>
-/// Service interface for Role management operations
-/// Following SRP: ONLY role business logic operations
+/// Service interface for role management operations
+/// Following SRP: ONLY role business logic
 /// </summary>
 public interface IRoleService
 {
     /// <summary>
-    /// Creates a new role
+    /// Create a new role
     /// </summary>
     /// <param name="createRoleDto">Role creation data</param>
-    /// <returns>Created role data</returns>
+    /// <returns>Created role DTO</returns>
     Task<RoleDto> CreateRoleAsync(CreateRoleDto createRoleDto);
 
     /// <summary>
-    /// Gets a role by ID
+    /// Get role by ID
     /// </summary>
-    /// <param name="id">Role identifier</param>
-    /// <returns>Role data if found, null otherwise</returns>
-    Task<RoleDto?> GetRoleAsync(int id);
+    /// <param name="roleId">Role ID</param>
+    /// <returns>Role DTO if found, null otherwise</returns>
+    Task<RoleDto?> GetRoleAsync(int roleId);
 
     /// <summary>
-    /// Updates an existing role
-    /// </summary>
-    /// <param name="id">Role identifier</param>
-    /// <param name="updateRoleDto">Role update data</param>
-    /// <returns>Updated role data if successful, null if role not found</returns>
-    Task<RoleDto?> UpdateRoleAsync(int id, UpdateRoleDto updateRoleDto);
-
-    /// <summary>
-    /// Deletes a role (soft delete)
-    /// </summary>
-    /// <param name="id">Role identifier</param>
-    /// <returns>True if role was deleted, false if not found</returns>
-    Task<bool> DeleteRoleAsync(int id);
-
-    /// <summary>
-    /// Gets all roles with pagination
-    /// </summary>
-    /// <param name="page">Page number (1-based)</param>
-    /// <param name="pageSize">Number of items per page</param>
-    /// <param name="includeSystemRoles">Whether to include system roles</param>
-    /// <returns>Paginated list of roles</returns>
-    Task<PaginatedResult<RoleDto>> GetAllRolesAsync(int page = 1, int pageSize = 10, bool includeSystemRoles = true);
-
-    /// <summary>
-    /// Gets a role by its code
+    /// Get role by code
     /// </summary>
     /// <param name="code">Role code</param>
-    /// <returns>Role data if found, null otherwise</returns>
+    /// <returns>Role DTO if found, null otherwise</returns>
     Task<RoleDto?> GetRoleByCodeAsync(string code);
 
     /// <summary>
-    /// Gets all system roles
+    /// Update an existing role
     /// </summary>
-    /// <returns>List of system roles</returns>
-    Task<IEnumerable<RoleDto>> GetSystemRolesAsync();
+    /// <param name="roleId">Role ID</param>
+    /// <param name="updateRoleDto">Role update data</param>
+    /// <returns>Updated role DTO</returns>
+    Task<RoleDto> UpdateRoleAsync(int roleId, UpdateRoleDto updateRoleDto);
 
     /// <summary>
-    /// Gets all custom (non-system) roles
+    /// Delete a role
     /// </summary>
-    /// <returns>List of custom roles</returns>
-    Task<IEnumerable<RoleDto>> GetCustomRolesAsync();
+    /// <param name="roleId">Role ID</param>
+    /// <returns>True if deleted, false if not found</returns>
+    Task<bool> DeleteRoleAsync(int roleId);
 
     /// <summary>
-    /// Checks if a role exists by ID
+    /// Get all roles
     /// </summary>
-    /// <param name="id">Role identifier</param>
+    /// <returns>Collection of role DTOs</returns>
+    Task<IEnumerable<RoleDto>> GetAllRolesAsync();
+
+    /// <summary>
+    /// Get active roles only
+    /// </summary>
+    /// <returns>Collection of active role DTOs</returns>
+    Task<IEnumerable<RoleDto>> GetActiveRolesAsync();
+
+    /// <summary>
+    /// Seed default system roles
+    /// </summary>
+    /// <returns>Task</returns>
+    Task SeedDefaultRolesAsync();
+
+    /// <summary>
+    /// Check if role exists
+    /// </summary>
+    /// <param name="roleId">Role ID</param>
     /// <returns>True if role exists, false otherwise</returns>
-    Task<bool> RoleExistsAsync(int id);
+    Task<bool> RoleExistsAsync(int roleId);
 
     /// <summary>
-    /// Checks if a role code is already in use
+    /// Check if role code exists
     /// </summary>
     /// <param name="code">Role code to check</param>
-    /// <param name="excludeRoleId">Role ID to exclude from check (for updates)</param>
-    /// <returns>True if code is in use, false otherwise</returns>
-    Task<bool> IsRoleCodeInUseAsync(string code, int? excludeRoleId = null);
+    /// <param name="excludeRoleId">Role ID to exclude from check</param>
+    /// <returns>True if role code exists, false otherwise</returns>
+    Task<bool> CodeExistsAsync(string code, int? excludeRoleId = null);
 
     /// <summary>
-    /// Seeds default system roles if they don't exist
+    /// Get system roles
     /// </summary>
-    /// <returns>Number of roles created</returns>
-    Task<int> SeedDefaultRolesAsync();
+    /// <returns>Collection of system role DTOs</returns>
+    Task<IEnumerable<RoleDto>> GetSystemRolesAsync();
 }

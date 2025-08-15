@@ -1,0 +1,16 @@
+using Ikhtibar.Core.Entities;
+
+namespace Ikhtibar.Core.Services.Interfaces;
+
+/// <summary>
+/// Notification preference service interface for user preference management
+/// Handles user notification preferences and channel settings
+/// </summary>
+public interface INotificationPreferenceService
+{
+    Task<IEnumerable<NotificationPreference>> GetUserPreferencesAsync(int userId);
+    Task<NotificationPreference> GetUserPreferenceAsync(int userId, NotificationType type);
+    Task<NotificationPreference> UpdateUserPreferenceAsync(NotificationPreference preference);
+    Task<IEnumerable<NotificationPreference>> SetDefaultPreferencesAsync(int userId);
+    Task<bool> DeleteUserPreferencesAsync(int userId);
+}

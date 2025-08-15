@@ -8,7 +8,7 @@ Define and implement a generic repository pattern to centralize data access logi
 
 ### 📦 Dependencies
 - Core Entities Setup PRP (`01-core-entities-setup-prp.md`) must be completed.
-- Database schema available in `.github/copilot/requirements/schema.sql`.
+- Database schema available in `.cursor/copilot/requirements/schema.sql`.
 
 ### 📝 Context
 - Implement `IRepository<T>` interface in the `Ikhtibar.Core` project under `Repositories/Interfaces`.
@@ -55,7 +55,7 @@ Define and implement a generic repository pattern to centralize data access logi
    - Test CRUD operations and filter behavior. Follow AAA pattern.
 
 6. **Code Samples & Examples**
-   - Reference `.github/copilot/examples/backend/repositories/BaseRepository.cs` and `IRepository.cs` for patterns.
+   - Reference `.cursor/copilot/examples/backend/repositories/BaseRepository.cs` and `IRepository.cs` for patterns.
 
 ### 🔄 Integration Points
 ```yaml

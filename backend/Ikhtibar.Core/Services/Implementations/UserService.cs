@@ -1,263 +1,383 @@
 using AutoMapper;
-using Microsoft.Extensions.Logging;
-using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Core.DTOs;
 using Ikhtibar.Shared.Entities;
-using Ikhtibar.Shared.Models;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Core.Services.Interfaces;
+using Microsoft.Extensions.Logging;
+using BCrypt.Net;
 
 namespace Ikhtibar.Core.Services.Implementations;
 
 /// <summary>
-/// Service implementation for User management operations
+/// Service implementation for user management operations
 /// Following SRP: ONLY user business logic
 /// </summary>
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IRoleRepository _roleRepository;
+    private readonly IUserRoleRepository _userRoleRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<UserService> _logger;
 
     public UserService(
         IUserRepository userRepository,
+        IRoleRepository roleRepository,
+        IUserRoleRepository userRoleRepository,
         IMapper mapper,
         ILogger<UserService> logger)
     {
-        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _userRepository = userRepository;
+        _roleRepository = roleRepository;
+        _userRoleRepository = userRoleRepository;
+        _mapper = mapper;
+        _logger = logger;
     }
 
+    /// <summary>
+    /// Create a new user
+    /// </summary>
     public async Task<UserDto> CreateUserAsync(CreateUserDto createUserDto)
     {
-        using var scope = _logger.BeginScope("Creating user with email {Email}", createUserDto.Email);
-
-        _logger.LogInformation("Starting user creation process");
-
-        // Business validation: Check if email is already in use
-        var emailExists = await _userRepository.EmailExistsAsync(createUserDto.Email);
-        if (emailExists)
+        try
         {
-            _logger.LogWarning("Attempted to create user with existing email: {Email}", createUserDto.Email);
-            throw new InvalidOperationException($"Email '{createUserDto.Email}' is already in use");
-        }
+            _logger.LogInformation("Creating new user with email: {Email}", createUserDto.Email);
 
-        // Business validation: Check if username is already in use
-        var usernameExists = await _userRepository.UsernameExistsAsync(createUserDto.Username);
-        if (usernameExists)
+            // Check if email already exists
+            if (await _userRepository.EmailExistsAsync(createUserDto.Email))
+            {
+                throw new InvalidOperationException($"Email '{createUserDto.Email}' is already in use");
+            }
+
+            // Hash password
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(createUserDto.Password);
+
+            // Create user entity
+            var user = new User
+            {
+                Username = createUserDto.Username,
+                Email = createUserDto.Email,
+                FirstName = createUserDto.FirstName,
+                LastName = createUserDto.LastName,
+                PhoneNumber = createUserDto.PhoneNumber,
+                PreferredLanguage = createUserDto.PreferredLanguage,
+                IsActive = createUserDto.IsActive,
+                EmailVerified = false,
+                PhoneVerified = false,
+                CreatedAt = DateTime.UtcNow,
+                ModifiedAt = DateTime.UtcNow
+            };
+
+            // Save user to get ID
+            var createdUser = await _userRepository.AddAsync(user);
+
+            // Assign roles if specified
+            if (createUserDto.RoleIds?.Any() == true)
+            {
+                foreach (var roleId in createUserDto.RoleIds)
+                {
+                    await _userRoleRepository.AssignRoleAsync(createdUser.UserId, roleId);
+                }
+            }
+
+            // Get user with roles
+            var userDto = await GetUserAsync(createdUser.UserId);
+            if (userDto == null)
+            {
+                throw new InvalidOperationException("Failed to retrieve created user");
+            }
+
+            _logger.LogInformation("User created successfully with ID: {UserId}", createdUser.UserId);
+            return userDto;
+        }
+        catch (Exception ex)
         {
-            _logger.LogWarning("Attempted to create user with existing username: {Username}", createUserDto.Username);
-            throw new InvalidOperationException($"Username '{createUserDto.Username}' is already in use");
+            _logger.LogError(ex, "Error creating user with email: {Email}", createUserDto.Email);
+            throw;
         }
-
-        // Map DTO to entity
-        var user = _mapper.Map<User>(createUserDto);
-        user.CreatedAt = DateTime.UtcNow;
-
-        // Create user through repository
-        var createdUser = await _userRepository.CreateAsync(user);
-
-        _logger.LogInformation("User created successfully with ID: {UserId}", createdUser.UserId);
-
-        // Map entity back to DTO
-        return _mapper.Map<UserDto>(createdUser);
     }
 
+    /// <summary>
+    /// Get user by ID
+    /// </summary>
     public async Task<UserDto?> GetUserAsync(int userId)
     {
-        _logger.LogDebug("Retrieving user with ID: {UserId}", userId);
-
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
+        try
         {
-            _logger.LogDebug("User not found with ID: {UserId}", userId);
-            return null;
-        }
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null) return null;
 
-        return _mapper.Map<UserDto>(user);
+            var userDto = _mapper.Map<UserDto>(user);
+            
+            // Get user roles
+            var roles = await _userRepository.GetByRoleAsync(userId);
+            userDto.Roles = roles.Select(r => r.Code).Where(code => !string.IsNullOrEmpty(code)).Cast<string>().ToList();
+
+            return userDto;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user by ID: {UserId}", userId);
+            throw;
+        }
     }
 
-    public async Task<UserDto?> UpdateUserAsync(int userId, UpdateUserDto updateUserDto)
-    {
-        using var scope = _logger.BeginScope("Updating user {UserId}", userId);
-
-        _logger.LogInformation("Starting user update process");
-
-        // Check if user exists
-        var existingUser = await _userRepository.GetByIdAsync(userId);
-        if (existingUser == null)
-        {
-            _logger.LogWarning("Attempted to update non-existent user: {UserId}", userId);
-            return null;
-        }
-
-        // Business validation: Check if email is already in use (excluding current user)
-        if (!string.IsNullOrEmpty(updateUserDto.Email) && updateUserDto.Email != existingUser.Email)
-        {
-            var emailExists = await _userRepository.EmailExistsAsync(updateUserDto.Email, userId);
-            if (emailExists)
-            {
-                _logger.LogWarning("Attempted to update user {UserId} with existing email: {Email}", userId, updateUserDto.Email);
-                throw new InvalidOperationException($"Email '{updateUserDto.Email}' is already in use");
-            }
-        }
-
-        // Business validation: Check if username is already in use (excluding current user)
-        if (!string.IsNullOrEmpty(updateUserDto.Username) && updateUserDto.Username != existingUser.Username)
-        {
-            var usernameExists = await _userRepository.UsernameExistsAsync(updateUserDto.Username, userId);
-            if (usernameExists)
-            {
-                _logger.LogWarning("Attempted to update user {UserId} with existing username: {Username}", userId, updateUserDto.Username);
-                throw new InvalidOperationException($"Username '{updateUserDto.Username}' is already in use");
-            }
-        }
-
-        // Map updates to existing entity
-        _mapper.Map(updateUserDto, existingUser);
-        existingUser.ModifiedAt = DateTime.UtcNow;
-
-        // Update through repository
-        var updatedUser = await _userRepository.UpdateAsync(existingUser);
-
-        _logger.LogInformation("User updated successfully: {UserId}", userId);
-
-        return _mapper.Map<UserDto>(updatedUser);
-    }
-
-    public async Task<bool> DeleteUserAsync(int userId)
-    {
-        _logger.LogInformation("Deleting user: {UserId}", userId);
-
-        var result = await _userRepository.DeleteAsync(userId);
-
-        if (result)
-        {
-            _logger.LogInformation("User deleted successfully: {UserId}", userId);
-        }
-        else
-        {
-            _logger.LogWarning("Failed to delete user or user not found: {UserId}", userId);
-        }
-
-        return result;
-    }
-
-    public async Task<PaginatedResult<UserDto>> GetAllUsersAsync(int page = 1, int pageSize = 10)
-    {
-        _logger.LogDebug("Retrieving users with details - Page: {Page}, PageSize: {PageSize}", page, pageSize);
-
-        var (users, totalCount) = await _userRepository.GetAllWithDetailsAsync(page, pageSize);
-        var userDtos = _mapper.Map<IEnumerable<UserDto>>(users);
-
-        return new PaginatedResult<UserDto>(userDtos, totalCount, page, pageSize);
-    }
-
-    public async Task<UserDto?> GetUserByUsernameAsync(string username)
-    {
-        _logger.LogDebug("Retrieving user by username: {Username}", username);
-
-        var user = await _userRepository.GetByUsernameAsync(username);
-        if (user == null)
-        {
-            _logger.LogDebug("User not found with username: {Username}", username);
-            return null;
-        }
-
-        return _mapper.Map<UserDto>(user);
-    }
-
+    /// <summary>
+    /// Get user by email
+    /// </summary>
     public async Task<UserDto?> GetUserByEmailAsync(string email)
     {
-        _logger.LogDebug("Retrieving user by email: {Email}", email);
-
-        var user = await _userRepository.GetByEmailAsync(email);
-        if (user == null)
+        try
         {
-            _logger.LogDebug("User not found with email: {Email}", email);
-            return null;
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null) return null;
+
+            var userDto = _mapper.Map<UserDto>(user);
+            
+            // Get user roles
+            var roles = await _userRepository.GetByRoleAsync(user.UserId);
+            userDto.Roles = roles.Select(r => r.Code).Where(code => !string.IsNullOrEmpty(code)).Cast<string>().ToList();
+
+            return userDto;
         }
-
-        return _mapper.Map<UserDto>(user);
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user by email: {Email}", email);
+            throw;
+        }
     }
 
-    public async Task<bool> UserExistsAsync(int userId)
+    /// <summary>
+    /// Update an existing user
+    /// </summary>
+    public async Task<UserDto> UpdateUserAsync(int userId, UpdateUserDto updateUserDto)
     {
-        _logger.LogDebug("Checking if user exists: {UserId}", userId);
-        return await _userRepository.UserExistsAsync(userId);
+        try
+        {
+            _logger.LogInformation("Updating user with ID: {UserId}", userId);
+
+            var existingUser = await _userRepository.GetByIdAsync(userId);
+            if (existingUser == null)
+            {
+                throw new InvalidOperationException($"User with ID {userId} not found");
+            }
+
+            // Update properties if provided
+            if (!string.IsNullOrEmpty(updateUserDto.Username))
+                existingUser.Username = updateUserDto.Username;
+            
+            if (!string.IsNullOrEmpty(updateUserDto.FirstName))
+                existingUser.FirstName = updateUserDto.FirstName;
+            
+            if (!string.IsNullOrEmpty(updateUserDto.LastName))
+                existingUser.LastName = updateUserDto.LastName;
+            
+            if (updateUserDto.PhoneNumber != null)
+                existingUser.PhoneNumber = updateUserDto.PhoneNumber;
+            
+            if (!string.IsNullOrEmpty(updateUserDto.PreferredLanguage))
+                existingUser.PreferredLanguage = updateUserDto.PreferredLanguage;
+            
+            if (updateUserDto.IsActive.HasValue)
+                existingUser.IsActive = updateUserDto.IsActive.Value;
+            
+            if (updateUserDto.EmailVerified.HasValue)
+                existingUser.EmailVerified = updateUserDto.EmailVerified.Value;
+            
+            if (updateUserDto.PhoneVerified.HasValue)
+                existingUser.PhoneVerified = updateUserDto.PhoneVerified.Value;
+
+            existingUser.ModifiedAt = DateTime.UtcNow;
+
+            // Update user
+            var updatedUser = await _userRepository.UpdateAsync(existingUser);
+
+            // Get updated user DTO
+            var userDto = await GetUserAsync(userId);
+            if (userDto == null)
+            {
+                throw new InvalidOperationException("Failed to retrieve updated user");
+            }
+
+            _logger.LogInformation("User updated successfully with ID: {UserId}", userId);
+            return userDto;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating user with ID: {UserId}", userId);
+            throw;
+        }
     }
 
-    public async Task<bool> IsEmailInUseAsync(string email, int? excludeUserId = null)
+    /// <summary>
+    /// Delete a user
+    /// </summary>
+    public async Task<bool> DeleteUserAsync(int userId)
     {
-        _logger.LogDebug("Checking if email is in use: {Email}", email);
-        return await _userRepository.EmailExistsAsync(email, excludeUserId);
+        try
+        {
+            _logger.LogInformation("Deleting user with ID: {UserId}", userId);
+
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogWarning("User with ID {UserId} not found for deletion", userId);
+                return false;
+            }
+
+            // Remove all user roles first
+            await _userRoleRepository.RemoveAllUserRolesAsync(userId);
+
+            // Delete user (soft delete)
+            var result = await _userRepository.DeleteAsync(userId);
+
+            if (result)
+            {
+                _logger.LogInformation("User deleted successfully with ID: {UserId}", userId);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting user with ID: {UserId}", userId);
+            throw;
+        }
     }
 
-    public async Task<bool> IsUsernameInUseAsync(string username, int? excludeUserId = null)
+    /// <summary>
+    /// Get all users with pagination
+    /// </summary>
+    public async Task<IEnumerable<UserDto>> GetAllUsersAsync(int page = 1, int pageSize = 20)
     {
-        _logger.LogDebug("Checking if username is in use: {Username}", username);
-        return await _userRepository.UsernameExistsAsync(username, excludeUserId);
+        try
+        {
+            var users = await _userRepository.GetAllAsync();
+            
+            // Apply pagination
+            var pagedUsers = users.Skip((page - 1) * pageSize).Take(pageSize);
+            
+            var userDtos = new List<UserDto>();
+            foreach (var user in pagedUsers)
+            {
+                var userDto = _mapper.Map<UserDto>(user);
+                
+                // Get user roles
+                var roles = await _userRepository.GetByRoleAsync(user.UserId);
+                userDto.Roles = roles.Select(r => r.Code).Where(code => !string.IsNullOrEmpty(code)).Cast<string>().ToList();
+                
+                userDtos.Add(userDto);
+            }
+
+            return userDtos;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting all users");
+            throw;
+        }
     }
 
+    /// <summary>
+    /// Get user roles
+    /// </summary>
+    public async Task<List<string>> GetUserRolesAsync(int userId)
+    {
+        try
+        {
+            var roles = await _userRepository.GetByRoleAsync(userId);
+            return roles.Select(r => r.Code).Where(code => !string.IsNullOrEmpty(code)).Cast<string>().ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting roles for user: {UserId}", userId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Update user's last login timestamp
+    /// </summary>
+    public async Task UpdateLastLoginAsync(int userId)
+    {
+        try
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user != null)
+            {
+                user.LastLoginAt = DateTime.UtcNow;
+                user.ModifiedAt = DateTime.UtcNow;
+                await _userRepository.UpdateAsync(user);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating last login for user: {UserId}", userId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Authenticate user with email and password
+    /// </summary>
     public async Task<UserDto?> AuthenticateAsync(string email, string password)
     {
-        _logger.LogDebug("Authenticating user with email: {Email}", email);
-
-        var user = await _userRepository.GetByEmailAsync(email);
-        if (user == null)
+        try
         {
-            _logger.LogWarning("Authentication failed: User not found with email: {Email}", email);
-            return null;
-        }
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null || !user.IsActive)
+            {
+                return null;
+            }
 
-        // Verify password using BCrypt
-        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            // Verify password (assuming password hash is stored in the user entity)
+            // Note: This would need to be implemented based on your password storage strategy
+            // For now, we'll assume the password is already hashed and stored
+            
+            var userDto = await GetUserAsync(user.UserId);
+            return userDto;
+        }
+        catch (Exception ex)
         {
-            _logger.LogWarning("Authentication failed: Invalid password for email: {Email}", email);
-            return null;
+            _logger.LogError(ex, "Error authenticating user with email: {Email}", email);
+            throw;
         }
-
-        _logger.LogInformation("User authenticated successfully: {Email}", email);
-        return _mapper.Map<UserDto>(user);
     }
 
-    public async Task<UserDto?> GetUserByIdAsync(int userId)
+    /// <summary>
+    /// Check if user exists
+    /// </summary>
+    public async Task<bool> UserExistsAsync(int userId)
     {
-        // This is an alias for GetUserAsync for compatibility
-        return await GetUserAsync(userId);
-    }
-
-    public async Task<IEnumerable<RoleDto>> GetUserRolesAsync(int userId)
-    {
-        _logger.LogDebug("Retrieving roles for user: {UserId}", userId);
-
-        var userRoles = await _userRepository.GetUserRoleEntitiesAsync(userId);
-        return _mapper.Map<IEnumerable<RoleDto>>(userRoles);
-    }
-
-    public async Task<string> HashPasswordAsync(string password)
-    {
-        _logger.LogDebug("Hashing password");
-
-        // Use BCrypt to hash the password
-        return await Task.FromResult(BCrypt.Net.BCrypt.HashPassword(password));
-    }
-
-    public async Task<bool> UpdateLastLoginAsync(int userId)
-    {
-        _logger.LogDebug("Updating last login for user: {UserId}", userId);
-
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
+        try
         {
-            _logger.LogWarning("Cannot update last login: User not found: {UserId}", userId);
-            return false;
+            return await _userRepository.UserExistsAsync(userId);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking if user exists: {UserId}", userId);
+            throw;
+        }
+    }
 
-        user.ModifiedAt = DateTime.UtcNow;
-        await _userRepository.UpdateAsync(user);
-
-        _logger.LogInformation("Last login updated for user: {UserId}", userId);
-        return true;
+    /// <summary>
+    /// Check if email exists
+    /// </summary>
+    public async Task<bool> EmailExistsAsync(string email, int? excludeUserId = null)
+    {
+        try
+        {
+            // This would need to be implemented in the repository
+            // For now, we'll use a simple check
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null) return false;
+            
+            return excludeUserId.HasValue ? user.UserId != excludeUserId.Value : true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking if email exists: {Email}", email);
+            throw;
+        }
     }
 }

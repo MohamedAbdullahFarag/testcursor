@@ -1,0 +1,23 @@
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+using Ikhtibar.API.Controllers.Base;
+
+namespace Ikhtibar.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AnalyticsDashboardController : ApiControllerBase
+    {
+        [HttpGet]
+        public async Task<IActionResult> Get()
+        {
+            return Ok("AnalyticsDashboardController - Get method not implemented");
+        }
+        
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] object request)
+        {
+            return Ok("AnalyticsDashboardController - Post method not implemented");
+        }
+    }
+}

@@ -1,6 +1,7 @@
 using Dapper;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Infrastructure.Data;
+using Microsoft.Extensions.Logging;
 using QuestionTypeEntity = Ikhtibar.Shared.Entities.QuestionType;
 
 namespace Ikhtibar.Infrastructure.Repositories;
@@ -10,8 +11,8 @@ namespace Ikhtibar.Infrastructure.Repositories;
 /// </summary>
 public class QuestionTypeRepository : BaseRepository<QuestionTypeEntity>, IQuestionTypeRepository
 {
-    public QuestionTypeRepository(IDbConnectionFactory connectionFactory) 
-        : base(connectionFactory)
+    public QuestionTypeRepository(IDbConnectionFactory connectionFactory, ILogger<QuestionTypeRepository> logger) 
+        : base(connectionFactory, logger, "QuestionTypes", "QuestionTypeId")
     {
     }
 

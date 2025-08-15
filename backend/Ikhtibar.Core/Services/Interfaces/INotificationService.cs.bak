@@ -1,0 +1,34 @@
+using Ikhtibar.Core.DTOs;
+
+namespace Ikhtibar.Core.Services.Interfaces;
+
+/// <summary>
+/// Core notification service interface
+/// Handles all notification operations including creation, sending, and management
+/// </summary>
+public interface INotificationService
+{
+    // Core notification operations
+    Task<NotificationDto> CreateNotificationAsync(CreateNotificationDto dto);
+    Task<bool> SendNotificationAsync(int notificationId);
+    Task<bool> SendImmediateNotificationAsync(CreateNotificationDto dto);
+    Task<PagedResult<NotificationDto>> GetUserNotificationsAsync(int userId, NotificationFilterDto filter);
+    Task<bool> MarkAsReadAsync(int notificationId, int userId);
+    Task<bool> MarkAllAsReadAsync(int userId);
+    Task<int> GetUnreadCountAsync(int userId);
+    
+    // Bulk operations
+    Task<bool> SendBulkNotificationAsync(List<CreateNotificationDto> notifications);
+    Task<bool> ScheduleNotificationAsync(CreateNotificationDto dto, DateTime scheduleTime);
+    Task<bool> CancelNotificationAsync(int notificationId);
+    
+    // Event-driven notifications
+    Task SendExamReminderAsync(int examId, int reminderMinutes);
+    Task SendExamStartNotificationAsync(int examId);
+    Task SendExamEndNotificationAsync(int examId);
+    Task SendGradingCompleteNotificationAsync(int examId, int studentId);
+    Task SendDeadlineReminderAsync(string entityType, int entityId, DateTime deadline);
+    Task SendWelcomeNotificationAsync(int userId);
+    Task SendPasswordResetNotificationAsync(int userId, string resetToken);
+    Task SendRoleAssignmentNotificationAsync(int userId, string roleName);
+}

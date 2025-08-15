@@ -1,15 +1,14 @@
 using AutoMapper;
-using Microsoft.Extensions.Logging;
-using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Core.DTOs;
 using Ikhtibar.Shared.Entities;
-using Ikhtibar.Shared.Models;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Core.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Ikhtibar.Core.Services.Implementations;
 
 /// <summary>
-/// Service implementation for Role management operations
+/// Service implementation for role management operations
 /// Following SRP: ONLY role business logic
 /// </summary>
 public class RoleService : IRoleService
@@ -23,268 +22,333 @@ public class RoleService : IRoleService
         IMapper mapper,
         ILogger<RoleService> logger)
     {
-        _roleRepository = roleRepository ?? throw new ArgumentNullException(nameof(roleRepository));
-        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _roleRepository = roleRepository;
+        _mapper = mapper;
+        _logger = logger;
     }
 
+    /// <summary>
+    /// Create a new role
+    /// </summary>
     public async Task<RoleDto> CreateRoleAsync(CreateRoleDto createRoleDto)
     {
-        using var scope = _logger.BeginScope("Creating role with code {Code}", createRoleDto.Code);
-
-        _logger.LogInformation("Starting role creation process");
-
-        // Business validation: Check if role code is already in use
-        var codeExists = await _roleRepository.IsRoleCodeInUseAsync(createRoleDto.Code);
-        if (codeExists)
-        {
-            _logger.LogWarning("Attempted to create role with existing code: {Code}", createRoleDto.Code);
-            throw new InvalidOperationException($"Role code '{createRoleDto.Code}' is already in use");
-        }
-
         try
         {
-            // Map DTO to entity
-            var role = _mapper.Map<Role>(createRoleDto);
-            role.CreatedAt = DateTime.UtcNow;
-            role.ModifiedAt = DateTime.UtcNow;
+            _logger.LogInformation("Creating new role with code: {Code}", createRoleDto.Code);
 
-            // Create role through repository
-            var createdRole = await _roleRepository.CreateAsync(role);
+            // Check if role code already exists
+            if (await _roleRepository.CodeExistsAsync(createRoleDto.Code))
+            {
+                throw new InvalidOperationException($"Role code '{createRoleDto.Code}' is already in use");
+            }
 
-            _logger.LogInformation("Successfully created role with ID {RoleId} and code {Code}",
-                createdRole.RoleId, createdRole.Code);
+            // Create role entity
+            var role = new Role
+            {
+                Code = createRoleDto.Code,
+                Name = createRoleDto.Name,
+                Description = createRoleDto.Description,
+                IsActive = createRoleDto.IsActive,
+                IsSystemRole = createRoleDto.IsSystemRole,
+                CreatedAt = DateTime.UtcNow,
+                ModifiedAt = DateTime.UtcNow
+            };
 
+            // Save role
+            var createdRole = await _roleRepository.AddAsync(role);
+
+            _logger.LogInformation("Role created successfully with ID: {RoleId}", createdRole.RoleId);
             return _mapper.Map<RoleDto>(createdRole);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating role with code {Code}", createRoleDto.Code);
+            _logger.LogError(ex, "Error creating role with code: {Code}", createRoleDto.Code);
             throw;
         }
     }
 
-    public async Task<RoleDto?> GetRoleAsync(int id)
+    /// <summary>
+    /// Get role by ID
+    /// </summary>
+    public async Task<RoleDto?> GetRoleAsync(int roleId)
     {
-        _logger.LogDebug("Retrieving role with ID {RoleId}", id);
-
         try
         {
-            var role = await _roleRepository.GetByIdAsync(id);
-            if (role == null)
-            {
-                _logger.LogWarning("Role with ID {RoleId} not found", id);
-                return null;
-            }
+            var role = await _roleRepository.GetByIdAsync(roleId);
+            if (role == null) return null;
 
             return _mapper.Map<RoleDto>(role);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving role with ID {RoleId}", id);
+            _logger.LogError(ex, "Error getting role by ID: {RoleId}", roleId);
             throw;
         }
     }
 
-    public async Task<RoleDto?> UpdateRoleAsync(int id, UpdateRoleDto updateRoleDto)
+    /// <summary>
+    /// Get role by code
+    /// </summary>
+    public async Task<RoleDto?> GetRoleByCodeAsync(string code)
     {
-        using var scope = _logger.BeginScope("Updating role {RoleId}", id);
-
-        _logger.LogInformation("Starting role update process");
-
         try
         {
-            // Check if role exists
-            var existingRole = await _roleRepository.GetByIdAsync(id);
+            var role = await _roleRepository.GetByCodeAsync(code);
+            if (role == null) return null;
+
+            return _mapper.Map<RoleDto>(role);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting role by code: {Code}", code);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Update an existing role
+    /// </summary>
+    public async Task<RoleDto> UpdateRoleAsync(int roleId, UpdateRoleDto updateRoleDto)
+    {
+        try
+        {
+            _logger.LogInformation("Updating role with ID: {RoleId}", roleId);
+
+            var existingRole = await _roleRepository.GetByIdAsync(roleId);
             if (existingRole == null)
             {
-                _logger.LogWarning("Role with ID {RoleId} not found for update", id);
-                return null;
+                throw new InvalidOperationException($"Role with ID {roleId} not found");
             }
 
-            // Business validation: Check if role name is being updated
-            if (!string.IsNullOrEmpty(updateRoleDto.Name) && updateRoleDto.Name != existingRole.Name)
+            // Prevent updating system roles
+            if (existingRole.IsSystemRole)
             {
-                // For now, we only validate the name change, not the code since UpdateRoleDto doesn't have Code
-                _logger.LogDebug("Updating role name from {OldName} to {NewName}", existingRole.Name, updateRoleDto.Name);
+                throw new InvalidOperationException($"Cannot update system role '{existingRole.Code}'");
             }
 
-            // Map updates to existing entity
-            _mapper.Map(updateRoleDto, existingRole);
+            // Update properties (only if provided)
+            if (!string.IsNullOrEmpty(updateRoleDto.Name))
+            {
+                existingRole.Name = updateRoleDto.Name;
+            }
+            
+            if (updateRoleDto.Description != null)
+            {
+                existingRole.Description = updateRoleDto.Description;
+            }
+            
+            if (updateRoleDto.IsActive.HasValue)
+            {
+                existingRole.IsActive = updateRoleDto.IsActive.Value;
+            }
+
             existingRole.ModifiedAt = DateTime.UtcNow;
 
-            // Update role through repository
+            // Update role
             var updatedRole = await _roleRepository.UpdateAsync(existingRole);
 
-            _logger.LogInformation("Successfully updated role with ID {RoleId}", id);
-
+            _logger.LogInformation("Role updated successfully with ID: {RoleId}", roleId);
             return _mapper.Map<RoleDto>(updatedRole);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating role with ID {RoleId}", id);
+            _logger.LogError(ex, "Error updating role with ID: {RoleId}", roleId);
             throw;
         }
     }
 
-    public async Task<bool> DeleteRoleAsync(int id)
+    /// <summary>
+    /// Delete a role
+    /// </summary>
+    public async Task<bool> DeleteRoleAsync(int roleId)
     {
-        using var scope = _logger.BeginScope("Deleting role {RoleId}", id);
-
-        _logger.LogInformation("Starting role deletion process");
-
         try
         {
-            // Check if role exists
-            var roleExists = await _roleRepository.RoleExistsAsync(id);
-            if (!roleExists)
+            _logger.LogInformation("Deleting role with ID: {RoleId}", roleId);
+
+            var role = await _roleRepository.GetByIdAsync(roleId);
+            if (role == null)
             {
-                _logger.LogWarning("Role with ID {RoleId} not found for deletion", id);
+                _logger.LogWarning("Role with ID {RoleId} not found for deletion", roleId);
                 return false;
             }
 
-            // Business validation: Check if it's a system role
-            var role = await _roleRepository.GetByIdAsync(id);
-            if (role?.IsSystemRole == true)
+            // Prevent deletion of system roles
+            if (role.IsSystemRole)
             {
-                _logger.LogWarning("Attempted to delete system role with ID {RoleId}", id);
-                throw new InvalidOperationException("Cannot delete system roles");
+                throw new InvalidOperationException($"Cannot delete system role '{role.Code}'");
             }
 
-            // Delete role through repository (soft delete)
-            var deleted = await _roleRepository.DeleteAsync(id);
+            // Delete role (soft delete)
+            var result = await _roleRepository.DeleteAsync(roleId);
 
-            if (deleted)
+            if (result)
             {
-                _logger.LogInformation("Successfully deleted role with ID {RoleId}", id);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to delete role with ID {RoleId}", id);
+                _logger.LogInformation("Role deleted successfully with ID: {RoleId}", roleId);
             }
 
-            return deleted;
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting role with ID {RoleId}", id);
+            _logger.LogError(ex, "Error deleting role with ID: {RoleId}", roleId);
             throw;
         }
     }
 
-    public async Task<PaginatedResult<RoleDto>> GetAllRolesAsync(int page = 1, int pageSize = 10, bool includeSystemRoles = true)
+    /// <summary>
+    /// Get all roles
+    /// </summary>
+    public async Task<IEnumerable<RoleDto>> GetAllRolesAsync()
     {
-        _logger.LogDebug("Retrieving paginated roles - Page: {Page}, PageSize: {PageSize}, IncludeSystem: {IncludeSystem}",
-            page, pageSize, includeSystemRoles);
-
         try
         {
-            var result = await _roleRepository.GetAllAsync(page, pageSize, includeSystemRoles);
+            var roles = await _roleRepository.GetAllAsync();
+            return _mapper.Map<IEnumerable<RoleDto>>(roles);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting all roles");
+            throw;
+        }
+    }
 
-            var rolesDtos = _mapper.Map<IEnumerable<RoleDto>>(result.Roles);
+    /// <summary>
+    /// Get active roles only
+    /// </summary>
+    public async Task<IEnumerable<RoleDto>> GetActiveRolesAsync()
+    {
+        try
+        {
+            var roles = await _roleRepository.GetActiveRolesAsync();
+            return _mapper.Map<IEnumerable<RoleDto>>(roles);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting active roles");
+            throw;
+        }
+    }
 
-            // Calculate pagination metadata
-            var totalPages = (int)Math.Ceiling((double)result.TotalCount / pageSize);
-            var hasNextPage = page < totalPages;
-            var hasPreviousPage = page > 1;
+    /// <summary>
+    /// Seed default system roles
+    /// </summary>
+    public async Task SeedDefaultRolesAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Seeding default system roles");
 
-            return new PaginatedResult<RoleDto>
+            var defaultRoles = new[]
             {
-                Items = rolesDtos,
-                TotalCount = result.TotalCount,
-                Page = page,
-                PageSize = pageSize,
-                TotalPages = totalPages,
+                new Role
+                {
+                    Code = "ADMIN",
+                    Name = "Administrator",
+                    Description = "System administrator with full access",
+                    IsActive = true,
+                    IsSystemRole = true,
+                    CreatedAt = DateTime.UtcNow,
+                    ModifiedAt = DateTime.UtcNow
+                },
+                new Role
+                {
+                    Code = "TEACHER",
+                    Name = "Teacher",
+                    Description = "Teacher with exam management access",
+                    IsActive = true,
+                    IsSystemRole = true,
+                    CreatedAt = DateTime.UtcNow,
+                    ModifiedAt = DateTime.UtcNow
+                },
+                new Role
+                {
+                    Code = "STUDENT",
+                    Name = "Student",
+                    Description = "Student with exam access",
+                    IsActive = true,
+                    IsSystemRole = true,
+                    CreatedAt = DateTime.UtcNow,
+                    ModifiedAt = DateTime.UtcNow
+                },
+                new Role
+                {
+                    Code = "USER",
+                    Name = "User",
+                    Description = "Regular system user",
+                    IsActive = true,
+                    IsSystemRole = true,
+                    CreatedAt = DateTime.UtcNow,
+                    ModifiedAt = DateTime.UtcNow
+                }
             };
+
+            foreach (var role in defaultRoles)
+            {
+                // Check if role already exists
+                var existingRole = await _roleRepository.GetByCodeAsync(role.Code);
+                if (existingRole == null)
+                {
+                    await _roleRepository.AddAsync(role);
+                    _logger.LogInformation("Created default role: {Code}", role.Code);
+                }
+                else
+                {
+                    _logger.LogDebug("Default role already exists: {Code}", role.Code);
+                }
+            }
+
+            _logger.LogInformation("Default system roles seeding completed");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving paginated roles");
+            _logger.LogError(ex, "Error seeding default system roles");
             throw;
         }
     }
 
-    public async Task<RoleDto?> GetRoleByCodeAsync(string code)
+    /// <summary>
+    /// Check if role exists
+    /// </summary>
+    public async Task<bool> RoleExistsAsync(int roleId)
     {
-        _logger.LogDebug("Retrieving role by code {Code}", code);
-
         try
         {
-            var role = await _roleRepository.GetByCodeAsync(code);
-            if (role == null)
-            {
-                _logger.LogWarning("Role with code {Code} not found", code);
-                return null;
-            }
-
-            return _mapper.Map<RoleDto>(role);
+            return await _roleRepository.GetByIdAsync(roleId) != null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving role with code {Code}", code);
+            _logger.LogError(ex, "Error checking if role exists: {RoleId}", roleId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Check if role code exists
+    /// </summary>
+    public async Task<bool> CodeExistsAsync(string code, int? excludeRoleId = null)
+    {
+        try
+        {
+            return await _roleRepository.CodeExistsAsync(code, excludeRoleId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking if role code exists: {Code}", code);
             throw;
         }
     }
 
     public async Task<IEnumerable<RoleDto>> GetSystemRolesAsync()
     {
-        _logger.LogDebug("Retrieving system roles");
-
         try
         {
-            var systemRoles = await _roleRepository.GetSystemRolesAsync();
+            var systemRoles = await _roleRepository.GetAllAsync("IsSystemRole = 1");
             return _mapper.Map<IEnumerable<RoleDto>>(systemRoles);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving system roles");
-            throw;
-        }
-    }
-
-    public async Task<IEnumerable<RoleDto>> GetCustomRolesAsync()
-    {
-        _logger.LogDebug("Retrieving custom roles");
-
-        try
-        {
-            var customRoles = await _roleRepository.GetCustomRolesAsync();
-            return _mapper.Map<IEnumerable<RoleDto>>(customRoles);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving custom roles");
-            throw;
-        }
-    }
-
-    public async Task<bool> RoleExistsAsync(int id)
-    {
-        _logger.LogDebug("Checking if role exists: {RoleId}", id);
-        return await _roleRepository.RoleExistsAsync(id);
-    }
-
-    public async Task<bool> IsRoleCodeInUseAsync(string code, int? excludeRoleId = null)
-    {
-        _logger.LogDebug("Checking if role code is in use: {Code}", code);
-        return await _roleRepository.IsRoleCodeInUseAsync(code, excludeRoleId);
-    }
-
-    public async Task<int> SeedDefaultRolesAsync()
-    {
-        _logger.LogInformation("Starting default roles seeding process");
-
-        try
-        {
-            await _roleRepository.SeedDefaultRolesAsync();
-
-            _logger.LogInformation("Successfully completed default roles seeding");
-
-            return 0; // Since the repository method doesn't return a count, we return 0
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error seeding default roles");
+            _logger.LogError(ex, "Error getting system roles");
             throw;
         }
     }

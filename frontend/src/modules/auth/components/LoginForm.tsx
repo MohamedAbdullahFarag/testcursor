@@ -2,242 +2,188 @@
 // Following Single Responsibility Principle - only login form UI and validation
 // NOTE: Pre-filled with test credentials in development mode only for easier testing
 
-import React, { useState, useCallback, memo } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, memo } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import type { LoginFormData, LoginFormErrors } from '../models/auth.types';
+import { LoginCredentials } from '../models/auth.types';
+import { useTranslation } from 'react-i18next';
 
-// Form validation helper
-const validateForm = (data: LoginFormData): LoginFormErrors => {
-  const errors: LoginFormErrors = {};
-
-  if (!data.email.trim()) {
-    errors.email = 'email is required';
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-    errors.email = 'Please enter a valid email address';
-  }
-
-  if (!data.password.trim()) {
-    errors.password = 'password is required';
-  } else if (data.password.length < 6) {
-    errors.password = 'Password must be at least 6 characters';
-  }
-
-  return errors;
-};
-
-interface LoginFormProps {
-  onSuccess?: () => void;
-  className?: string;
-}
-
-export const LoginForm: React.FC<LoginFormProps> = memo(({ onSuccess, className = '' }) => {
-  const { t } = useTranslation();
-  const { login, isLoading, error } = useAuth();
+export const LoginForm: React.FC = memo(() => {
+  const { login, isLoading, error, clearError } = useAuth();
+  const { t } = useTranslation('auth');
   
-  const [formData, setFormData] = useState<LoginFormData>({
-    email: import.meta.env.DEV ? 'sysadmin@example.com' : '', // Default test user for easier development
-    password: import.meta.env.DEV ? 'P@ssw0rdHash!' : '',   // Default test password for easier development
+  const [formData, setFormData] = useState<LoginCredentials>({
+    email: '',
+    password: '',
   });
   
-  const [formErrors, setFormErrors] = useState<LoginFormErrors>({});
-  const [touched, setTouched] = useState<Record<keyof LoginFormData, boolean>>({
-    email: false,
-    password: false,
-  });
+  const [validationErrors, setValidationErrors] = useState<Partial<LoginCredentials>>({});
 
-  /**
-   * Handle input field changes
-   */
-  const handleChange = useCallback((field: keyof LoginFormData) => (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const value = event.target.value;
-    setFormData(prev => ({ ...prev, [field]: value }));
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Clear field error when user starts typing
-    if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: undefined }));
+    // Clear validation error when user starts typing
+    if (validationErrors[name as keyof LoginCredentials]) {
+      setValidationErrors(prev => ({ ...prev, [name]: undefined }));
     }
-  }, [formErrors]);
-
-  /**
-   * Handle input field blur
-   */
-  const handleBlur = useCallback((field: keyof LoginFormData) => () => {
-    setTouched(prev => ({ ...prev, [field]: true }));
     
-    // Validate field on blur
-    const fieldErrors = validateForm(formData);
-    if (fieldErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: fieldErrors[field] }));
+    // Clear general error when user makes changes
+    if (error) {
+      clearError();
     }
-  }, [formData]);
+  };
 
-  /**
-   * Handle form submission
-   */
-  const handleSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  // Validate form data
+  const validateForm = (): boolean => {
+    const errors: Partial<LoginCredentials> = {};
     
-    // Mark all fields as touched and validate
-    const newTouched = { email: true, password: true };
-    const errors = validateForm(formData);
+    if (!formData.email.trim()) {
+      errors.email = t('validation.emailRequired');
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = t('validation.emailInvalid');
+    }
     
-    // Update both states together
-    setTouched(newTouched);
-    setFormErrors(errors);
+    if (!formData.password) {
+      errors.password = t('validation.passwordRequired');
+    } else if (formData.password.length < 6) {
+      errors.password = t('validation.passwordMinLength');
+    }
     
-    // Use a small delay to ensure state updates have processed
-    await new Promise(resolve => setTimeout(resolve, 0));
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    // Stop if validation errors
-    if (Object.keys(errors).length > 0) {
+    if (!validateForm()) {
       return;
     }
-
+    
     try {
-      await login({
-        email: formData.email.trim(),
-        password: formData.password,
-      });
-      
-      // Clear form on success
-      setFormData({ email: '', password: '' });
-      setFormErrors({});
-      setTouched({ email: false, password: false });
-      
-      // Call success callback
-      onSuccess?.();
-    } catch (error) {
-      // Error is handled by the auth hook and displayed via error state
-      console.error('Login failed:', error);
+      await login(formData);
+      // Login successful - redirect will be handled by router
+    } catch (err) {
+      // Error is already set in the auth context
+      console.error('Login failed:', err);
     }
-  }, [formData, login, onSuccess]);
+  };
 
   return (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${className}`.trim()}>
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-gray-900 text-center">
-          {t('auth.loginTitle')}
-        </h2>
-        <p className="text-gray-600 text-center">
-          {t('auth.loginDescription')}
-        </p>
-      </div>
-
-      {/* Global error message */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="flex">
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">
-                {t('auth.loginError')}
-              </h3>
-              <div className="mt-2 text-sm text-red-700">
-                {error}
-              </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            {t('login.title')}
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            {t('login.subtitle')}
+          </p>
+        </div>
+        
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="email" className="sr-only">
+                {t('login.emailLabel')}
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
+                  validationErrors.email ? 'border-red-300' : 'border-gray-300'
+                } placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
+                placeholder={t('login.emailPlaceholder')}
+                value={formData.email}
+                onChange={handleInputChange}
+                disabled={isLoading}
+              />
+              {validationErrors.email && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+              )}
+            </div>
+            
+            <div>
+              <label htmlFor="password" className="sr-only">
+                {t('login.passwordLabel')}
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
+                  validationErrors.password ? 'border-red-300' : 'border-gray-300'
+                } placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
+                placeholder={t('login.passwordPlaceholder')}
+                value={formData.password}
+                onChange={handleInputChange}
+                disabled={isLoading}
+              />
+              {validationErrors.password && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
+              )}
             </div>
           </div>
-        </div>
-      )}
 
-      <div className="space-y-4">
-        {/* Email field */}
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            {t('auth.email')}
-          </label>
-          <div className="mt-1">
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={formData.email}
-              onChange={handleChange('email')}
-              onBlur={handleBlur('email')}
-              className={`
-                appearance-none block w-full px-3 py-2 border rounded-md shadow-sm 
-                placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm
-                ${touched.email && formErrors.email ? 'border-red-300' : 'border-gray-300'}
-              `.trim()}
-              placeholder={t('auth.emailPlaceholder')}
-              disabled={isLoading}
-            />
-            {touched.email && formErrors.email && (
-              <p className="mt-2 text-sm text-red-600">{formErrors.email}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Password field */}
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-            {t('auth.password')}
-          </label>
-          <div className="mt-1">
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={formData.password}
-              onChange={handleChange('password')}
-              onBlur={handleBlur('password')}
-              className={`
-                appearance-none block w-full px-3 py-2 border rounded-md shadow-sm 
-                placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm
-                ${touched.password && formErrors.password ? 'border-red-300' : 'border-gray-300'}
-              `.trim()}
-              placeholder={t('auth.passwordPlaceholder')}
-              disabled={isLoading}
-            />
-            {touched.password && formErrors.password && (
-              <p className="mt-2 text-sm text-red-600">{formErrors.password}</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Submit button */}
-      <div>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className={`
-            group relative w-full flex justify-center py-2 px-4 border border-transparent 
-            text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 
-            focus:ring-offset-2 focus:ring-blue-500
-            ${isLoading 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700'
-            }
-          `.trim()}
-        >
-          {isLoading ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              {t('auth.loggingIn')}
-            </>
-          ) : (
-            t('auth.login')
+          {/* Error display */}
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-800">{error}</p>
+                </div>
+              </div>
+            </div>
           )}
-        </button>
+
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <div className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {t('login.signingIn')}
+                </div>
+              ) : (
+                t('login.signIn')
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+                {t('login.forgotPassword')}
+              </a>
+            </div>
+            <div className="text-sm">
+              <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+                {t('login.needHelp')}
+              </a>
+            </div>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 });
 
 LoginForm.displayName = 'LoginForm';
-
-// ❌ DON'T: Handle routing in form component
-// ❌ DON'T: Store auth state in component state
-// ❌ DON'T: Mix business logic with UI logic
-// ❌ DON'T: Skip form validation
-// ❌ DON'T: Forget to handle loading states

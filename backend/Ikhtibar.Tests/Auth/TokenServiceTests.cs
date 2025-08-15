@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Ikhtibar.Infrastructure.Services;
-using Ikhtibar.Shared.Entities;
+using Ikhtibar.Core.DTOs;
 using Ikhtibar.Shared.Models;
 
 namespace Ikhtibar.Tests.Auth;
@@ -51,14 +51,15 @@ public class TokenServiceTests
     public async Task GenerateJwtAsync_WithValidUser_ReturnsValidToken()
     {
         // Arrange
-        var user = new User
+        var user = new UserDto
         {
             UserId = 1,
             Username = "testuser",
             Email = "test@example.com",
             FirstName = "Test",
             LastName = "User",
-            IsActive = true
+            IsActive = true,
+            Roles = new List<string> { "User" }
         };
 
         // Act
@@ -110,12 +111,13 @@ public class TokenServiceTests
     public async Task ValidateTokenAsync_WithValidToken_ReturnsTrue()
     {
         // Arrange
-        var user = new User
+        var user = new UserDto
         {
             UserId = 1,
             Username = "testuser",
             Email = "test@example.com",
-            IsActive = true
+            IsActive = true,
+            Roles = new List<string> { "User" }
         };
 
         var token = await _service.GenerateJwtAsync(user);
@@ -144,12 +146,13 @@ public class TokenServiceTests
     public async Task GetUserIdFromTokenAsync_WithValidToken_ReturnsUserId()
     {
         // Arrange
-        var user = new User
+        var user = new UserDto
         {
             UserId = 42,
             Username = "testuser",
             Email = "test@example.com",
-            IsActive = true
+            IsActive = true,
+            Roles = new List<string> { "User" }
         };
 
         var token = await _service.GenerateJwtAsync(user);
@@ -165,12 +168,13 @@ public class TokenServiceTests
     public async Task IsTokenExpiredAsync_WithNonExpiredToken_ReturnsFalse()
     {
         // Arrange
-        var user = new User
+        var user = new UserDto
         {
             UserId = 1,
             Username = "testuser",
             Email = "test@example.com",
-            IsActive = true
+            IsActive = true,
+            Roles = new List<string> { "User" }
         };
 
         var token = await _service.GenerateJwtAsync(user);
@@ -188,12 +192,13 @@ public class TokenServiceTests
         // This test creates an expired token manually since we can't easily wait for a token to expire
         
         // Arrange
-        var user = new User
+        var user = new UserDto
         {
             UserId = 1,
             Username = "testuser",
             Email = "test@example.com",
-            IsActive = true
+            IsActive = true,
+            Roles = new List<string> { "User" }
         };
 
         // Create custom expired token

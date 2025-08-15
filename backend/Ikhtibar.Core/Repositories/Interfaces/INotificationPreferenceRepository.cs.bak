@@ -1,0 +1,13 @@
+using Ikhtibar.Core.Entities;
+
+namespace Ikhtibar.Core.Repositories.Interfaces;
+
+/// <summary>
+/// Notification preference repository interface for data access operations
+/// </summary>
+public interface INotificationPreferenceRepository : IBaseRepository<NotificationPreference>
+{
+    Task<IEnumerable<NotificationPreference>> GetByUserIdAsync(int userId);
+    Task<NotificationPreference?> GetByUserIdAndTypeAsync(int userId, NotificationType type);
+    Task<bool> DeleteByUserIdAsync(int userId);
+}

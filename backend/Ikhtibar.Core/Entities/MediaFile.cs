@@ -84,13 +84,13 @@ public class MediaFile : BaseEntity
     /// <summary>
     /// Category this media file belongs to
     /// </summary>
-    public Guid? CategoryId { get; set; }
+    public int? CategoryId { get; set; }
 
     /// <summary>
     /// User who uploaded this file
     /// </summary>
     [Required]
-    public Guid UploadedByUserId { get; set; }
+    public int UploadedBy { get; set; }
 
     /// <summary>
     /// Whether this file is publicly accessible
@@ -180,48 +180,48 @@ public enum MediaType
     Archive = 5,
 
     /// <summary>
-    /// Other/unknown file types
+    /// Other file types
     /// </summary>
-    Other = 6
+    Other = 99
 }
 
 /// <summary>
-/// Media processing and availability status
+/// Media file processing and availability status
 /// </summary>
 public enum MediaStatus
 {
     /// <summary>
-    /// File is currently being uploaded
+    /// File is being uploaded
     /// </summary>
-    Uploading = 1,
-
+    Uploading = 0,
+    
     /// <summary>
-    /// Upload completed, file is being processed
+    /// File is being processed (thumbnails, metadata extraction, etc.)
     /// </summary>
-    Processing = 2,
-
+    Processing = 1,
+    
     /// <summary>
-    /// File is ready and available for use
+    /// File is available and ready for use
     /// </summary>
-    Available = 3,
-
+    Available = 2,
+    
     /// <summary>
-    /// Processing failed, file may not be usable
+    /// File processing failed
     /// </summary>
-    Failed = 4,
-
+    Failed = 3,
+    
     /// <summary>
-    /// File is temporarily unavailable
+    /// File is quarantined (security scan, virus detected, etc.)
     /// </summary>
-    Unavailable = 5,
-
+    Quarantined = 4,
+    
     /// <summary>
-    /// File is under security review/quarantine
+    /// File is archived (moved to cold storage)
     /// </summary>
-    Quarantined = 6,
-
+    Archived = 5,
+    
     /// <summary>
-    /// File has been archived (cold storage)
+    /// File is deleted (soft delete)
     /// </summary>
-    Archived = 7
+    Deleted = 6
 }

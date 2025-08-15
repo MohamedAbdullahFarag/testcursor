@@ -1,6 +1,7 @@
 using Dapper;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Infrastructure.Data;
+using Microsoft.Extensions.Logging;
 using Ikhtibar.Shared.Entities;
 
 namespace Ikhtibar.Infrastructure.Repositories;
@@ -10,8 +11,8 @@ namespace Ikhtibar.Infrastructure.Repositories;
 /// </summary>
 public class MediaTypeRepository : BaseRepository<MediaType>, IMediaTypeRepository
 {
-    public MediaTypeRepository(IDbConnectionFactory connectionFactory) 
-        : base(connectionFactory)
+    public MediaTypeRepository(IDbConnectionFactory connectionFactory, ILogger<MediaTypeRepository> logger) 
+        : base(connectionFactory, logger, "MediaTypes", "MediaTypeId")
     {
     }
 

@@ -33,15 +33,15 @@ Build a robust authentication module on the frontend with login form, auth conte
 
 ## All Needed Context
 ```yaml
-- file: .github/copilot/requirements/ikhtibar-features.txt
+- file: .cursor/copilot/requirements/ikhtibar-features.txt
   why: Defines authentication requirements
 - file: frontend/src/modules/auth/models/auth.types.ts
   why: Data types for login and auth result
-- file: .github/copilot/examples/frontend/components/LoginForm.tsx
+- file: .cursor/copilot/examples/frontend/components/LoginForm.tsx
   why: Login component pattern
-- file: .github/copilot/examples/frontend/hooks/useUsers.ts
+- file: .cursor/copilot/examples/frontend/hooks/useUsers.ts
   why: Hook pattern for login flow
-- file: .github/copilot/frontend-guidelines.md
+- file: .cursor/copilot/frontend-guidelines.md
   why: Naming and folder-per-feature rules
 ``` 
 

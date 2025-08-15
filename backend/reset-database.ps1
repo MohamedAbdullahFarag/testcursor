@@ -35,7 +35,7 @@ try {
     
     # Apply database schema to original database
     Write-Host "Applying schema from schema.sql..." -ForegroundColor Yellow
-    $schemaFile = Join-Path $PSScriptRoot "..\.github\requirements\schema.sql"
+    $schemaFile = Join-Path $PSScriptRoot "..\.cursor\requirements\schema.sql"
     
     if (-not (Test-Path $schemaFile)) {
         throw "Schema file not found: $schemaFile"
@@ -49,7 +49,7 @@ try {
     
     # Seed initial data
     Write-Host "Seeding data from data.sql..." -ForegroundColor Yellow
-    $dataFile = Join-Path $PSScriptRoot "..\.github\requirements\data.sql"
+    $dataFile = Join-Path $PSScriptRoot "..\.cursor\requirements\data.sql"
     
     if (-not (Test-Path $dataFile)) {
         throw "Data file not found: $dataFile"

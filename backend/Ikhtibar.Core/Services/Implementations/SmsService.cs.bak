@@ -1,0 +1,129 @@
+using Ikhtibar.Core.DTOs;
+using Ikhtibar.Core.Services.Interfaces;
+using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
+
+namespace Ikhtibar.Core.Services.Implementations;
+
+/// <summary>
+/// SMS service implementation
+/// Handles SMS sending, validation, and delivery tracking
+/// </summary>
+public class SmsService : ISmsService
+{
+    private readonly ISmsProvider _smsProvider;
+    private readonly ILogger<SmsService> _logger;
+
+    public SmsService(
+        ISmsProvider smsProvider,
+        ILogger<SmsService> logger)
+    {
+        _smsProvider = smsProvider;
+        _logger = logger;
+    }
+
+    public async Task<SmsResult> SendSmsAsync(SmsRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Sending SMS to: {Recipient}", request.To);
+
+            // Validate SMS request
+            if (!ValidateSmsRequest(request))
+            {
+                return new SmsResult { Success = false, ErrorMessage = "Invalid SMS request" };
+            }
+
+            // Send SMS through provider
+            var result = await _smsProvider.SendSmsAsync(request);
+            
+            _logger.LogInformation("SMS send result for {Recipient}: Success={Success}", 
+                request.To, result.Success);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending SMS to: {Recipient}", request.To);
+            return new SmsResult { Success = false, ErrorMessage = ex.Message };
+        }
+    }
+
+    public async Task<SmsResult> SendTemplatedSmsAsync(TemplatedSmsRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Sending templated SMS to: {Recipient}, Template: {TemplateName}", 
+                request.To, request.TemplateName);
+
+            // Validate SMS request
+            if (!ValidateSmsRequest(request))
+            {
+                return new SmsResult { Success = false, ErrorMessage = "Invalid SMS request" };
+            }
+
+            // Process template variables
+            var processedMessage = ProcessTemplate(request.Message, request.TemplateVariables);
+
+            // Create processed SMS request
+            var processedRequest = new SmsRequest
+            {
+                To = request.To,
+                Message = processedMessage,
+                From = request.From
+            };
+
+            // Send processed SMS
+            var result = await SendSmsAsync(processedRequest);
+            
+            _logger.LogInformation("Templated SMS send result for {Recipient}: Success={Success}", 
+                request.To, result.Success);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending templated SMS to: {Recipient}", request.To);
+            return new SmsResult { Success = false, ErrorMessage = ex.Message };
+        }
+    }
+
+    public async Task<bool> ValidatePhoneNumberAsync(string phoneNumber)
+    {
+        try
+        {
+            // Basic phone number validation - can be enhanced based on country requirements
+            var phoneRegex = new Regex(@"^\+?[1-9]\d{1,14}$");
+            return phoneRegex.IsMatch(phoneNumber);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private bool ValidateSmsRequest(SmsRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.To) || 
+            string.IsNullOrWhiteSpace(request.Message))
+        {
+            return false;
+        }
+
+        return ValidatePhoneNumberAsync(request.To).Result;
+    }
+
+    private string ProcessTemplate(string template, Dictionary<string, object> variables)
+    {
+        var processedTemplate = template;
+        
+        foreach (var variable in variables)
+        {
+            var placeholder = $"{{{variable.Key}}}";
+            var value = variable.Value?.ToString() ?? string.Empty;
+            processedTemplate = processedTemplate.Replace(placeholder, value);
+        }
+        
+        return processedTemplate;
+    }
+}

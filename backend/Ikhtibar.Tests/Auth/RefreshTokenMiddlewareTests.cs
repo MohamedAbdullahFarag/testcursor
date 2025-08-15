@@ -7,7 +7,7 @@ using Xunit;
 using Ikhtibar.API.Middleware;
 using Ikhtibar.Core.Services.Interfaces;
 using Ikhtibar.Core.Repositories.Interfaces;
-using Ikhtibar.Shared.Entities;
+using Ikhtibar.Core.DTOs;
 
 namespace Ikhtibar.Tests.Auth;
 
@@ -105,17 +105,18 @@ public class RefreshTokenMiddlewareTests
         _mockRefreshTokenRepo.Setup(x => x.GetLatestByUserIdAsync(1))
             .ReturnsAsync(refreshToken);
         
-        var user = new User
+        var user = new UserDto
         {
             UserId = 1,
             Email = "test@example.com",
-            Username = "testuser"
+            Username = "testuser",
+            Roles = new List<string> { "User" }
         };
         
         _mockRefreshTokenRepo.Setup(x => x.GetUserByIdAsync(1))
             .ReturnsAsync(user);
         
-        _mockTokenService.Setup(x => x.GenerateJwtAsync(It.IsAny<User>()))
+        _mockTokenService.Setup(x => x.GenerateJwtAsync(It.IsAny<UserDto>()))
             .ReturnsAsync("new-token");
         _mockTokenService.Setup(x => x.GenerateRefreshTokenAsync())
             .ReturnsAsync("new-refresh-token");

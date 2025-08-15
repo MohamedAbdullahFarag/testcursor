@@ -1,6 +1,6 @@
 # GitHub Integration Guide for Cursor
 
-This guide explains how to best utilize your existing `.github/` content (instructions, PRPs, and prompts) within Cursor's enhanced AI capabilities.
+This guide explains how to best utilize your existing `.cursor/` content (instructions, PRPs, and prompts) within Cursor's enhanced AI capabilities.
 
 ## **Strategy 1: Convert to Cursor Custom Modes (Recommended)**
 
@@ -20,29 +20,29 @@ The most effective approach is to convert your specialized workflows into Cursor
 
 ## **Strategy 2: Direct Reference Integration**
 
-For immediate use without conversion, you can reference your existing `.github/` content directly:
+For immediate use without conversion, you can reference your existing `.cursor/` content directly:
 
 ### **Using Instructions**
 ```markdown
 # Reference existing instructions
-@.github/instructions/backend-guidelines.instructions.md
-@.github/instructions/frontend-guidelines.instructions.md
-@.github/instructions/general-rules.instructions.md
+@.cursor/instructions/backend-guidelines.instructions.md
+@.cursor/instructions/frontend-guidelines.instructions.md
+@.cursor/instructions/general-rules.instructions.md
 ```
 
 ### **Using PRPs**
 ```markdown
 # Reference existing PRPs
-@.github/PRPs/ikhtibar-implementation-strategy.md
-@.github/PRPs/prp-execute.md
+@.cursor/PRPs/ikhtibar-implementation-strategy.md
+@.cursor/PRPs/prp-execute.md
 ```
 
 ### **Using Prompts**
 ```markdown
 # Reference existing prompts
-@.github/prompts/01-quick-start-prps.prompt.md
-@.github/prompts/02-codebase-analysis.prompt.md
-@.github/prompts/35-test.prompt.md
+@.cursor/prompts/01-quick-start-prps.prompt.md
+@.cursor/prompts/02-codebase-analysis.prompt.md
+@.cursor/prompts/35-test.prompt.md
 ```
 
 ## **Strategy 3: Hybrid Approach**
@@ -51,22 +51,22 @@ Combine custom modes with direct references for maximum effectiveness:
 
 ### **Phase 1: Strategic Planning**
 1. Use **PRP Specialist** custom mode
-2. Reference `@.github/PRPs/ikhtibar-implementation-strategy.md`
+2. Reference `@.cursor/PRPs/ikhtibar-implementation-strategy.md`
 3. Apply 6-phase methodology
 
 ### **Phase 2: Requirements & Guidelines**
 1. Use **Instruction Specialist** custom mode
 2. Reference relevant instruction files:
-   - `@.github/instructions/general-rules.instructions.md`
-   - `@.github/instructions/backend-guidelines.instructions.md`
-   - `@.github/instructions/frontend-guidelines.instructions.md`
+   - `@.cursor/instructions/general-rules.instructions.md`
+   - `@.cursor/instructions/backend-guidelines.instructions.md`
+   - `@.cursor/instructions/frontend-guidelines.instructions.md`
 
 ### **Phase 3: AI Interaction Optimization**
 1. Use **Prompt Specialist** custom mode
 2. Reference existing prompts:
-   - `@.github/prompts/02-codebase-analysis.prompt.md`
-   - `@.github/prompts/35-test.prompt.md`
-   - `@.github/prompts/37-security-analysis.prompt.md`
+   - `@.cursor/prompts/02-codebase-analysis.prompt.md`
+   - `@.cursor/prompts/35-test.prompt.md`
+   - `@.cursor/prompts/37-security-analysis.prompt.md`
 
 ## **Content Mapping Guide**
 
@@ -100,42 +100,42 @@ Combine custom modes with direct references for maximum effectiveness:
 ### **1. Project Initiation**
 ```bash
 # Use PRP Specialist custom mode
-# Reference: @.github/PRPs/ikhtibar-implementation-strategy.md
+# Reference: @.cursor/PRPs/ikhtibar-implementation-strategy.md
 # Apply: 6-phase methodology
 ```
 
 ### **2. Requirements Analysis**
 ```bash
 # Use Instruction Specialist custom mode
-# Reference: @.github/instructions/general-rules.instructions.md
+# Reference: @.cursor/instructions/general-rules.instructions.md
 # Apply: Development standards and principles
 ```
 
 ### **3. Architecture Design**
 ```bash
 # Use Feature Architect custom mode
-# Reference: @.github/instructions/feature-specifications.instructions.md
+# Reference: @.cursor/instructions/feature-specifications.instructions.md
 # Apply: Feature planning and system design
 ```
 
 ### **4. Development Implementation**
 ```bash
 # Use Implementation Agent custom mode
-# Reference: @.github/instructions/backend-guidelines.instructions.md
+# Reference: @.cursor/instructions/backend-guidelines.instructions.md
 # Apply: Clean Architecture and coding standards
 ```
 
 ### **5. Quality Assurance**
 ```bash
 # Use Test Engineer custom mode
-# Reference: @.github/prompts/35-test.prompt.md
+# Reference: @.cursor/prompts/35-test.prompt.md
 # Apply: Comprehensive testing strategy
 ```
 
 ### **6. Code Review**
 ```bash
 # Use Code Reviewer custom mode
-# Reference: @.github/prompts/37-security-analysis.prompt.md
+# Reference: @.cursor/prompts/37-security-analysis.prompt.md
 # Apply: Security and quality review
 ```
 
@@ -154,7 +154,7 @@ Combine custom modes with direct references for maximum effectiveness:
 4. **Team Adoption**: Train team on new custom modes
 
 ### **Content Maintenance**
-1. **Version Control**: Keep `.github/` content in sync with custom modes
+1. **Version Control**: Keep `.cursor/` content in sync with custom modes
 2. **Regular Updates**: Update both systems with new patterns
 3. **Feedback Loop**: Use AI interactions to improve content
 4. **Documentation**: Maintain clear mapping between systems

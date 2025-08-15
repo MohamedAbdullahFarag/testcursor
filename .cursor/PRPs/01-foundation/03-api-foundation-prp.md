@@ -15,7 +15,7 @@ Establish the ASP.NET Core Web API base structure: configure middleware pipeline
 - Project: `backend/Ikhtibar.API`
 - Use folder-per-feature for controllers under `Controllers/`
 - Configure global settings in `Program.cs` and `appsettings.json`
-- Follow `.github/copilot/examples/backend/controllers/UsersController.cs` and API guidelines
+- Follow `.cursor/copilot/examples/backend/controllers/UsersController.cs` and API guidelines
 
 ### 🔧 Implementation Tasks
 1. **Configure Middleware & Services** (`Program.cs`)

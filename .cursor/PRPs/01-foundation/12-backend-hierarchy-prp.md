@@ -35,15 +35,15 @@ Design and implement a robust hierarchical tree structure backend system for Ikh
 ## All Needed Context
 
 ```yaml
-- file: .github/copilot/requirements/schema.sql
+- file: .cursor/copilot/requirements/schema.sql
   why: Contains TreeNodes and TreeNodeTypes table definitions
-- file: .github/copilot/examples/backend/repositories/BaseRepository.cs
+- file: .cursor/copilot/examples/backend/repositories/BaseRepository.cs
   why: Repository pattern to follow
-- file: .github/copilot/examples/backend/controllers/UsersController.cs
+- file: .cursor/copilot/examples/backend/controllers/UsersController.cs
   why: API controller pattern
 - file: Ikhtibar.Core/Entities/BaseEntity.cs
   why: Base entity implementation
-- file: .github/copilot/examples/backend/services/UserService.cs
+- file: .cursor/copilot/examples/backend/services/UserService.cs
   why: Service layer pattern
 ```
 

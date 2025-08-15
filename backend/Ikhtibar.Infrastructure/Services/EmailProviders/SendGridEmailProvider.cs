@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using Ikhtibar.Core.Integrations.EmailProviders;
+using Ikhtibar.Core.DTOs;
 using Ikhtibar.Shared.Enums;
 using System.Text.Json;
 using EmailDeliveryStatusType = Ikhtibar.Core.Services.Providers.EmailDeliveryStatus;

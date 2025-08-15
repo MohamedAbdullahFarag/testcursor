@@ -27,6 +27,10 @@ public static class AuditServiceExtensions
         // Register audit service
         services.AddScoped<IAuditService, AuditService>();
         
+        // Register new audit services
+        services.AddScoped<ILogIntegrityService, LogIntegrityService>();
+        services.AddScoped<IAuditRetentionService, AuditRetentionService>();
+        
         return services;
     }
     

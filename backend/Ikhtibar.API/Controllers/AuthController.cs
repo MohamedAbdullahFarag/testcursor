@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Cryptography;
-using Ikhtibar.Shared.DTOs;
+using System.Linq;
+using Ikhtibar.Core.DTOs;
 using Ikhtibar.Shared.Entities;
 using Ikhtibar.Core.Services.Interfaces;
 using Ikhtibar.Core.Repositories.Interfaces;
@@ -72,19 +73,7 @@ public class AuthController : ControllerBase
                 });
             }
 
-            // Generate JWT token - convert UserDto to User entity
-            var userEntity = new User
-            {
-                UserId = user.UserId,
-                Username = user.Username,
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                IsActive = user.IsActive,
-                CreatedAt = user.CreatedAt,
-                ModifiedAt = user.UpdatedAt
-            };
-            var accessToken = await _tokenService.GenerateJwtAsync(userEntity);
+            var accessToken = await _tokenService.GenerateJwtAsync(user);
             var refreshToken = await _tokenService.GenerateRefreshTokenAsync();
 
             // Hash and store refresh token
@@ -124,7 +113,7 @@ public class AuthController : ControllerBase
                     IsActive = user.IsActive,
                     EmailVerified = user.EmailVerified,
                     PhoneVerified = user.PhoneVerified,
-                    Roles = userRoles.ToList(),
+                    Roles = userRoles,
                     CreatedAt = user.CreatedAt,
                     UpdatedAt = user.UpdatedAt
                 }
@@ -170,7 +159,7 @@ public class AuthController : ControllerBase
             var refreshTokenHash = HashToken(refreshTokenDto.RefreshToken);
 
             // Validate refresh token
-            var storedToken = await _refreshTokenRepository.GetByTokenAsync(refreshTokenHash);
+            var storedToken = await _refreshTokenRepository.GetByTokenHashAsync(refreshTokenHash);
             if (storedToken == null || storedToken.ExpiresAt < DateTime.UtcNow)
             {
                 _logger.LogWarning("Invalid or expired refresh token");
@@ -183,7 +172,7 @@ public class AuthController : ControllerBase
             }
 
             // Get user
-            var user = await _userService.GetUserByIdAsync(storedToken.UserId);
+            var user = await _userService.GetUserAsync(storedToken.UserId);
             if (user == null || !user.IsActive)
             {
                 _logger.LogWarning("User not found or inactive for token refresh: {UserId}", storedToken.UserId);
@@ -196,24 +185,9 @@ public class AuthController : ControllerBase
             }
 
             // Revoke old token and generate new ones
-            await _refreshTokenRepository.RevokeTokenAsync(storedToken.TokenHash);
+            await _refreshTokenRepository.RevokeByTokenHashAsync(storedToken.TokenHash, "Token refreshed");
 
-            // Create User entity for token service
-            var userEntity = new User
-            {
-                UserId = user.UserId,
-                Email = user.Email,
-                Username = user.Username,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                PhoneNumber = user.PhoneNumber,
-                IsActive = user.IsActive,
-                EmailVerified = user.EmailVerified,
-                PhoneVerified = user.PhoneVerified,
-                CreatedAt = user.CreatedAt
-            };
-
-            var newAccessToken = await _tokenService.GenerateJwtAsync(userEntity);
+            var newAccessToken = await _tokenService.GenerateJwtAsync(user);
             var newRefreshToken = await _tokenService.GenerateRefreshTokenAsync();
 
             // Store new refresh token
@@ -225,7 +199,7 @@ public class AuthController : ControllerBase
                 IssuedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(7),
                 CreatedAt = DateTime.UtcNow,
-                ReplacedByToken = newRefreshTokenHash
+                // ReplacedByToken property not available in current RefreshToken entity
             };
 
             await _refreshTokenRepository.AddAsync(newRefreshTokenEntity);
@@ -254,7 +228,7 @@ public class AuthController : ControllerBase
                     IsActive = user.IsActive,
                     EmailVerified = user.EmailVerified,
                     PhoneVerified = user.PhoneVerified,
-                    Roles = userRoles.ToList(),
+                    Roles = userRoles,
                     CreatedAt = user.CreatedAt,
                     UpdatedAt = user.UpdatedAt
                 }
@@ -358,22 +332,7 @@ public class AuthController : ControllerBase
                 _logger.LogInformation("New user created from SSO: {UserId}", user.UserId);
             }
 
-            // Generate local JWT token - create User entity for token service
-            var userEntity = new User
-            {
-                UserId = user.UserId,
-                Email = user.Email,
-                Username = user.Username,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                PhoneNumber = user.PhoneNumber,
-                IsActive = user.IsActive,
-                EmailVerified = user.EmailVerified,
-                PhoneVerified = user.PhoneVerified,
-                CreatedAt = user.CreatedAt
-            };
-
-            var accessToken = await _tokenService.GenerateJwtAsync(userEntity);
+            var accessToken = await _tokenService.GenerateJwtAsync(user);
             var refreshToken = await _tokenService.GenerateRefreshTokenAsync();
 
             // Store refresh token
@@ -416,7 +375,7 @@ public class AuthController : ControllerBase
                     IsActive = user.IsActive,
                     EmailVerified = user.EmailVerified,
                     PhoneVerified = user.PhoneVerified,
-                    Roles = userRoles.ToList(),
+                    Roles = userRoles,
                     CreatedAt = user.CreatedAt,
                     UpdatedAt = user.UpdatedAt
                 }
@@ -453,7 +412,7 @@ public class AuthController : ControllerBase
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
             if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId))
             {
-                await _refreshTokenRepository.RevokeAllUserTokensAsync(userId);
+                await _refreshTokenRepository.RevokeAllByUserIdAsync(userId, "User logout");
                 _logger.LogInformation("User logged out successfully: {UserId}", userId);
             }
 

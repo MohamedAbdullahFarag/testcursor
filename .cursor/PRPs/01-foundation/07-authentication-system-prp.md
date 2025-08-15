@@ -18,7 +18,7 @@ Design and implement a robust authentication system supporting JWT and OIDC-base
   - `Ikhtibar.Infrastructure` (Repositories & External integrations)
 - Existing configuration models:
   - `JwtSettings`, `OidcSettings`, `AuthSettings` in `DTOs` and `Models`
-- Example in `.github/copilot/examples/backend/services/UserService.cs` and `.github/copilot/examples/backend/controllers/UsersController.cs`
+- Example in `.cursor/copilot/examples/backend/services/UserService.cs` and `.cursor/copilot/examples/backend/controllers/UsersController.cs`
 
 ### 🔧 Implementation Tasks
 1. **Configure Authentication Schemes** (`Program.cs`)
@@ -71,7 +71,7 @@ Design and implement a robust authentication system supporting JWT and OIDC-base
    - Validate correct HTTP status codes and response payloads.
 
 10. **Code Samples & Examples**
-    - Reference `.github/copilot/examples/backend/services/AuthService.cs` and `AuthController.cs` for patterns.
+    - Reference `.cursor/copilot/examples/backend/services/AuthService.cs` and `AuthController.cs` for patterns.
 
 ### 🔄 Integration Points
 ```yaml

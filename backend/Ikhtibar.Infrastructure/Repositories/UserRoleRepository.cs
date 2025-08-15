@@ -1,124 +1,251 @@
 using Dapper;
-using Ikhtibar.Shared.Entities;
+using Ikhtibar.Core.Entities;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Infrastructure.Data;
+using Microsoft.Extensions.Logging;
 
 namespace Ikhtibar.Infrastructure.Repositories;
 
 /// <summary>
-/// Repository implementation for UserRole junction entity operations using Dapper
-/// Following SRP: ONLY user-role relationship operations
+/// Repository implementation for UserRole entity operations
+/// Following SRP: ONLY UserRole data operations
 /// </summary>
-public class UserRoleRepository : IUserRoleRepository
+public class UserRoleRepository : BaseRepository<UserRole>, IUserRoleRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly ILogger<UserRoleRepository> _logger;
 
-    public UserRoleRepository(IDbConnectionFactory connectionFactory)
+    public UserRoleRepository(IDbConnectionFactory connectionFactory, ILogger<UserRoleRepository> logger)
+        : base(connectionFactory, logger, "UserRoles", "UserId")
     {
-        _connectionFactory = connectionFactory;
+        _logger = logger;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Assign a role to a user
+    /// </summary>
     public async Task AssignRoleAsync(int userId, int roleId)
     {
-        const string sql = @"
-            INSERT INTO UserRoles (UserId, RoleId, AssignedAt)
-            VALUES (@userId, @roleId, @assignedAt)
-            ON CONFLICT(UserId, RoleId) DO NOTHING";
-
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(sql, new { userId, roleId, assignedAt = DateTime.UtcNow });
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            // Check if assignment already exists
+            const string checkSql = @"
+                SELECT COUNT(1) FROM UserRoles 
+                WHERE UserId = @UserId AND RoleId = @RoleId";
+            
+            var exists = await connection.ExecuteScalarAsync<int>(checkSql, new { UserId = userId, RoleId = roleId });
+            
+            if (exists == 0)
+            {
+                const string insertSql = @"
+                    INSERT INTO UserRoles (UserId, RoleId, AssignedAt, AssignedBy)
+                    VALUES (@UserId, @RoleId, @AssignedAt, @AssignedBy)";
+                
+                await connection.ExecuteAsync(insertSql, new 
+                { 
+                    UserId = userId, 
+                    RoleId = roleId, 
+                    AssignedAt = DateTime.UtcNow,
+                    AssignedBy = 1 // TODO: Get from current user context
+                });
+                _logger.LogInformation("Role {RoleId} assigned to user {UserId}", roleId, userId);
+            }
+            else
+            {
+                _logger.LogInformation("Role {RoleId} already assigned to user {UserId}", roleId, userId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error assigning role {RoleId} to user {UserId}", roleId, userId);
+            throw;
+        }
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Remove a role from a user
+    /// </summary>
     public async Task RemoveRoleAsync(int userId, int roleId)
     {
-        const string sql = @"
-            DELETE FROM UserRoles 
-            WHERE UserId = @userId AND RoleId = @roleId";
-
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(sql, new { userId, roleId });
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                DELETE FROM UserRoles 
+                WHERE UserId = @UserId AND RoleId = @RoleId";
+            
+            var rowsAffected = await connection.ExecuteAsync(sql, new 
+            { 
+                UserId = userId, 
+                RoleId = roleId
+            });
+            
+            if (rowsAffected > 0)
+            {
+                _logger.LogInformation("Role {RoleId} removed from user {UserId}", roleId, userId);
+            }
+            else
+            {
+                _logger.LogWarning("Role {RoleId} not found for user {UserId}", roleId, userId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing role {RoleId} from user {UserId}", roleId, userId);
+            throw;
+        }
     }
 
-    /// <inheritdoc />
-    public async Task<IEnumerable<Role>> GetUserRolesAsync(int userId)
+    /// <summary>
+    /// Get all roles for a specific user
+    /// </summary>
+    public async Task<IEnumerable<UserRole>> GetUserRolesAsync(int userId)
     {
-        const string sql = @"
-            SELECT r.RoleId, r.Code, r.Name, r.Description, r.IsSystemRole, r.CreatedAt, r.ModifiedAt, r.IsDeleted
-            FROM Roles r
-            INNER JOIN UserRoles ur ON r.RoleId = ur.RoleId
-            WHERE ur.UserId = @userId AND r.IsDeleted = 0
-            ORDER BY r.Name";
-
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<Role>(sql, new { userId });
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                SELECT UserId, RoleId, AssignedAt, AssignedBy
+                FROM UserRoles 
+                WHERE UserId = @UserId
+                ORDER BY AssignedAt";
+            
+            var userRoles = await connection.QueryAsync<UserRole>(sql, new { UserId = userId });
+            return userRoles;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting roles for user {UserId}", userId);
+            throw;
+        }
     }
 
-    /// <inheritdoc />
-    public async Task<IEnumerable<User>> GetRoleUsersAsync(int roleId)
+    /// <summary>
+    /// Get all users for a specific role
+    /// </summary>
+    public async Task<IEnumerable<UserRole>> GetRoleUsersAsync(int roleId)
     {
-        const string sql = @"
-            SELECT u.UserId, u.Username, u.Email, u.FirstName, u.LastName, u.PhoneNumber, 
-                   u.PreferredLanguage, u.IsActive, u.EmailVerified, u.PhoneVerified, 
-                   u.CreatedAt, u.ModifiedAt, u.IsDeleted
-            FROM Users u
-            INNER JOIN UserRoles ur ON u.UserId = ur.UserId
-            WHERE ur.RoleId = @roleId AND u.IsDeleted = 0 AND u.IsActive = 1
-            ORDER BY u.FirstName, u.LastName";
-
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<User>(sql, new { roleId });
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                SELECT UserId, RoleId, AssignedAt, AssignedBy
+                FROM UserRoles 
+                WHERE RoleId = @RoleId
+                ORDER BY AssignedAt";
+            
+            var userRoles = await connection.QueryAsync<UserRole>(sql, new { RoleId = roleId });
+            return userRoles;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting users for role {RoleId}", roleId);
+            throw;
+        }
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Check if a user has a specific role
+    /// </summary>
     public async Task<bool> UserHasRoleAsync(int userId, int roleId)
     {
-        const string sql = @"
-            SELECT COUNT(1) 
-            FROM UserRoles ur
-            INNER JOIN Roles r ON ur.RoleId = r.RoleId
-            WHERE ur.UserId = @userId AND ur.RoleId = @roleId AND r.IsDeleted = 0";
-
-        using var connection = _connectionFactory.CreateConnection();
-        var count = await connection.QueryFirstOrDefaultAsync<int>(sql, new { userId, roleId });
-        return count > 0;
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                SELECT COUNT(1) FROM UserRoles 
+                WHERE UserId = @UserId AND RoleId = @RoleId";
+            
+            var count = await connection.ExecuteScalarAsync<int>(sql, new { UserId = userId, RoleId = roleId });
+            return count > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking if user {UserId} has role {RoleId}", userId, roleId);
+            throw;
+        }
     }
 
-    /// <inheritdoc />
-    public async Task<bool> UserHasRoleAsync(int userId, string roleCode)
-    {
-        const string sql = @"
-            SELECT COUNT(1) 
-            FROM UserRoles ur
-            INNER JOIN Roles r ON ur.RoleId = r.RoleId
-            WHERE ur.UserId = @userId AND r.Code = @roleCode AND r.IsDeleted = 0";
-
-        using var connection = _connectionFactory.CreateConnection();
-        var count = await connection.QueryFirstOrDefaultAsync<int>(sql, new { userId, roleCode });
-        return count > 0;
-    }
-
-    /// <inheritdoc />
+    /// <summary>
+    /// Remove all roles from a user
+    /// </summary>
     public async Task RemoveAllUserRolesAsync(int userId)
     {
-        const string sql = @"
-            DELETE FROM UserRoles 
-            WHERE UserId = @userId";
-
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(sql, new { userId });
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                DELETE FROM UserRoles 
+                WHERE UserId = @UserId";
+            
+            var rowsAffected = await connection.ExecuteAsync(sql, new { UserId = userId });
+            
+            _logger.LogInformation("Removed {Count} roles from user {UserId}", rowsAffected, userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing all roles from user {UserId}", userId);
+            throw;
+        }
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Get user role by user ID and role ID
+    /// </summary>
     public async Task<UserRole?> GetUserRoleAsync(int userId, int roleId)
     {
-        const string sql = @"
-            SELECT UserId, RoleId, AssignedAt
-            FROM UserRoles 
-            WHERE UserId = @userId AND RoleId = @roleId";
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                SELECT UserId, RoleId, AssignedAt, AssignedBy
+                FROM UserRoles 
+                WHERE UserId = @UserId AND RoleId = @RoleId";
+            
+            var userRole = await connection.QueryFirstOrDefaultAsync<UserRole>(sql, new { UserId = userId, RoleId = roleId });
+            return userRole;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user role for user {UserId} and role {RoleId}", userId, roleId);
+            throw;
+        }
+    }
 
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<UserRole>(sql, new { userId, roleId });
+    /// <summary>
+    /// Get user role by user ID and role ID
+    /// Note: UserRole is a junction table, so GetByIdAsync is not applicable
+    /// </summary>
+    public override async Task<UserRole?> GetByIdAsync(int id)
+    {
+        throw new NotSupportedException("GetByIdAsync is not supported for UserRole entity. Use GetUserRoleAsync(userId, roleId) instead.");
+    }
+
+    /// <summary>
+    /// Get all user roles
+    /// </summary>
+    public override async Task<IEnumerable<UserRole>> GetAllAsync(string? where = null, object? parameters = null)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            // Build base SQL
+            var sql = "SELECT UserId, RoleId, AssignedAt, AssignedBy FROM UserRoles";
+            if (!string.IsNullOrEmpty(where))
+            {
+                sql += $" WHERE {where}";
+            }
+            sql += " ORDER BY UserId, RoleId";
+            
+            var userRoles = await connection.QueryAsync<UserRole>(sql, parameters);
+            return userRoles;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting all user roles");
+            throw;
+        }
     }
 }

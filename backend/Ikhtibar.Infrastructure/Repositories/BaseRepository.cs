@@ -1,437 +1,367 @@
 using System.Data;
-using System.Reflection;
 using Dapper;
-using Ikhtibar.Shared.Entities;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Infrastructure.Data;
+using Microsoft.Extensions.Logging;
 
 namespace Ikhtibar.Infrastructure.Repositories;
 
 /// <summary>
-/// GUID type handler for SQLite compatibility
+/// Generic base repository implementation using Dapper
+/// Provides CRUD operations and query capabilities for all entities
 /// </summary>
-public class GuidTypeHandler : SqlMapper.TypeHandler<Guid>
-{
-    public override void SetValue(IDbDataParameter parameter, Guid value)
-    {
-        parameter.Value = value.ToString();
-        parameter.DbType = DbType.String;
-    }
-
-    public override Guid Parse(object value)
-    {
-        if (value == null || value is DBNull)
-            return Guid.Empty;
-
-        if (value is Guid guid)
-            return guid;
-
-        if (value is string str && !string.IsNullOrEmpty(str))
-        {
-            if (Guid.TryParse(str, out var result))
-                return result;
-        }
-
-        if (value is byte[] bytes && bytes.Length == 16)
-        {
-            return new Guid(bytes);
-        }
-
-        throw new InvalidOperationException($"Cannot parse '{value}' (type: {value?.GetType()}) as Guid");
-    }
-}
-
-/// <summary>
-/// Nullable GUID type handler for SQLite compatibility
-/// </summary>
-public class NullableGuidTypeHandler : SqlMapper.TypeHandler<Guid?>
-{
-    public override void SetValue(IDbDataParameter parameter, Guid? value)
-    {
-        parameter.Value = value?.ToString() ?? (object)DBNull.Value;
-        parameter.DbType = DbType.String;
-    }
-
-    public override Guid? Parse(object value)
-    {
-        if (value == null || value is DBNull)
-            return null;
-
-        if (value is Guid guid)
-            return guid;
-
-        if (value is string str && !string.IsNullOrEmpty(str))
-        {
-            if (Guid.TryParse(str, out var result))
-                return result;
-        }
-
-        if (value is byte[] bytes && bytes.Length == 16)
-        {
-            return new Guid(bytes);
-        }
-
-        throw new InvalidOperationException($"Cannot parse '{value}' (type: {value?.GetType()}) as Guid?");
-    }
-}
-
-/// <summary>
-/// Base repository implementation using Dapper for data access
-/// Provides common CRUD operations for all entities
-/// </summary>
-/// <typeparam name="T">Entity type that inherits from BaseEntity</typeparam>
-public class BaseRepository<T> : IRepository<T> where T : BaseEntity
+/// <typeparam name="T">Entity type</typeparam>
+public abstract class BaseRepository<T> : IRepository<T> where T : class
 {
     protected readonly IDbConnectionFactory _connectionFactory;
-    private readonly string _tableName;
+    protected readonly ILogger<BaseRepository<T>> _logger;
+    protected readonly string _tableName;
+    protected readonly string _idColumnName;
 
-    /// <summary>
-    /// Static constructor to register type handlers for SQLite compatibility
-    /// </summary>
-    static BaseRepository()
+    protected BaseRepository(
+        IDbConnectionFactory connectionFactory,
+        ILogger<BaseRepository<T>> logger,
+        string tableName,
+        string idColumnName = "Id")
     {
-        // Remove the custom type handlers and let SQLite handle conversion
-        SqlMapper.RemoveTypeMap(typeof(Guid));
-        SqlMapper.RemoveTypeMap(typeof(Guid?));
-
-        // Configure SQLite to store GUIDs as TEXT instead of BLOB
-        SqlMapper.AddTypeHandler(new GuidTypeHandler());
-        SqlMapper.AddTypeHandler(new NullableGuidTypeHandler());
+        _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _tableName = tableName ?? throw new ArgumentNullException(nameof(tableName));
+        _idColumnName = idColumnName;
     }
 
-    /// <summary>
-    /// Initializes a new instance of the BaseRepository
-    /// </summary>
-    /// <param name="connectionFactory">Factory for creating database connections</param>
-    public BaseRepository(IDbConnectionFactory connectionFactory)
+    public virtual async Task<T?> GetByIdAsync(int id)
     {
-        _connectionFactory = connectionFactory;
-        _tableName = GetTableName();
-    }
-    
-    /// <summary>
-    /// Checks if the entity type has a property with the given name
-    /// </summary>
-    private bool EntityHasProperty(string propertyName)
-    {
-        return typeof(T).GetProperty(propertyName) != null;
-    }
-
-    /// <summary>
-    /// Gets the primary key column name for the entity
-    /// Based on entity name convention: User -> UserId, Role -> RoleId, etc.
-    /// </summary>
-    private string GetPrimaryKeyColumnName()
-    {
-        var entityName = typeof(T).Name;
-        
-        // Remove "Entity" suffix if present
-        if (entityName.EndsWith("Entity"))
+        try
         {
-            entityName = entityName.Substring(0, entityName.Length - 6);
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            var sql = $"SELECT * FROM {_tableName} WHERE {_idColumnName} = @Id AND IsDeleted = 0";
+            var entity = await connection.QueryFirstOrDefaultAsync<T>(sql, new { Id = id });
+            
+            _logger.LogDebug("GetByIdAsync for {EntityType} with ID {Id}: {Result}", 
+                typeof(T).Name, id, entity != null ? "Found" : "Not found");
+            
+            return entity;
         }
-
-        return $"{entityName}Id";
-    }
-
-    /// <summary>
-    /// Gets an entity by its unique identifier
-    /// </summary>
-    /// <param name="id">The unique identifier of the entity</param>
-    /// <returns>The entity if found, null otherwise</returns>
-    public async Task<T?> GetByIdAsync(int id)
-    {
-        // Get the primary key column name for the entity
-        var primaryKeyColumn = GetPrimaryKeyColumnName();
-        
-        var sql = $"SELECT * FROM {_tableName} WHERE {primaryKeyColumn} = @Id AND IsDeleted = 0";
-
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<T>(sql, new { Id = id });
-    }
-
-    /// <summary>
-    /// Gets all entities with optional filtering
-    /// </summary>
-    /// <param name="where">Optional WHERE clause for filtering</param>
-    /// <param name="parameters">Parameters for the WHERE clause</param>
-    /// <returns>Collection of entities matching the criteria</returns>
-    public async Task<IEnumerable<T>> GetAllAsync(string? where = null, object? parameters = null)
-    {
-        var sql = $"SELECT * FROM {_tableName} WHERE IsDeleted = 0";
-
-        if (!string.IsNullOrEmpty(where))
+        catch (Exception ex)
         {
-            sql += $" AND ({where})";
-        }
-
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<T>(sql, parameters);
-    }
-
-    /// <summary>
-    /// Gets entities with pagination support
-    /// </summary>
-    /// <param name="offset">Number of records to skip</param>
-    /// <param name="limit">Maximum number of records to return</param>
-    /// <param name="where">Optional WHERE clause for filtering</param>
-    /// <param name="orderBy">Optional ORDER BY clause</param>
-    /// <param name="parameters">Parameters for the WHERE clause</param>
-    /// <returns>Collection of entities matching the criteria</returns>
-    public async Task<IEnumerable<T>> GetPagedAsync(int offset, int limit, string? where = null, string? orderBy = null, object? parameters = null)
-    {
-        var sql = $"SELECT * FROM {_tableName} WHERE IsDeleted = 0";
-
-        if (!string.IsNullOrEmpty(where))
-        {
-            sql += $" AND ({where})";
-        }
-
-        if (!string.IsNullOrEmpty(orderBy))
-        {
-            sql += $" ORDER BY {orderBy}";
-        }
-        else
-        {
-            sql += " ORDER BY CreatedAt DESC";
-        }
-
-        // Use SQLite-compatible LIMIT and OFFSET syntax
-        sql += $" LIMIT {limit} OFFSET {offset}";
-
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<T>(sql, parameters);
-    }
-
-    /// <summary>
-    /// Gets the total count of entities with optional filtering
-    /// </summary>
-    /// <param name="where">Optional WHERE clause for filtering</param>
-    /// <param name="parameters">Parameters for the WHERE clause</param>
-    /// <returns>Total count of entities</returns>
-    public async Task<int> CountAsync(string? where = null, object? parameters = null)
-    {
-        var sql = $"SELECT COUNT(*) FROM {_tableName} WHERE IsDeleted = 0";
-
-        if (!string.IsNullOrEmpty(where))
-        {
-            sql += $" AND ({where})";
-        }
-
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QuerySingleAsync<int>(sql, parameters);
-    }
-
-    /// <summary>
-    /// Creates a new entity
-    /// </summary>
-    /// <param name="entity">The entity to create</param>
-    /// <returns>The created entity with generated ID</returns>
-    public async Task<T> AddAsync(T entity)
-    {
-        // Set base entity properties (ID is auto-generated by SQL Server IDENTITY)
-        entity.CreatedAt = DateTime.UtcNow;
-        entity.ModifiedAt = DateTime.UtcNow;
-        entity.IsDeleted = false;
-
-        var properties = GetEntityProperties(excludeId: true);
-        var columns = string.Join(", ", properties.Select(p => p.Name));
-        var values = string.Join(", ", properties.Select(p => "@" + p.Name));
-        
-        var primaryKeyColumn = GetPrimaryKeyColumnName();
-        var sql = $@"
-            INSERT INTO {_tableName} ({columns}) 
-            VALUES ({values});
-            SELECT * FROM {_tableName} WHERE {primaryKeyColumn} = SCOPE_IDENTITY();";
-
-        using var connection = _connectionFactory.CreateConnection();
-        var createdEntity = await connection.QuerySingleAsync<T>(sql, entity);
-        
-        return createdEntity;
-    }
-
-    /// <summary>
-    /// Updates an existing entity
-    /// </summary>
-    /// <param name="entity">The entity to update</param>
-    /// <returns>The updated entity</returns>
-    public async Task<T> UpdateAsync(T entity)
-    {
-        // Update the ModifiedAt timestamp
-        entity.ModifiedAt = DateTime.UtcNow;
-
-        // Build SET clause from entity properties, excluding primary key and CreatedAt
-        var properties = GetEntityProperties(excludeId: true, excludeCreatedAt: true);
-        var setClause = string.Join(", ", properties.Select(p => $"{p.Name} = @{p.Name}"));
-        
-        var primaryKeyColumn = GetPrimaryKeyColumnName();
-        var sql = $"UPDATE {_tableName} SET {setClause} WHERE {primaryKeyColumn} = @{primaryKeyColumn.Replace("Id", "Id")}";
-
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(sql, entity);
-
-        return entity;
-    }
-
-    /// <summary>
-    /// Performs a soft delete on the entity (sets IsDeleted = true)
-    /// </summary>
-    /// <param name="id">The unique identifier of the entity to delete</param>
-    /// <returns>True if the entity was deleted, false if not found</returns>
-    public async Task<bool> DeleteAsync(int id)
-    {
-        var primaryKeyColumn = GetPrimaryKeyColumnName();
-        var sql = $@"
-            UPDATE {_tableName} 
-            SET IsDeleted = 1, DeletedAt = @DeletedAt 
-            WHERE {primaryKeyColumn} = @Id AND IsDeleted = 0";
-
-        using var connection = _connectionFactory.CreateConnection();
-        var rowsAffected = await connection.ExecuteAsync(sql,
-            new { Id = id, DeletedAt = DateTime.UtcNow });
-
-        return rowsAffected > 0;
-    }
-
-    /// <summary>
-    /// Permanently removes an entity from the database
-    /// Use with caution - this is irreversible
-    /// </summary>
-    /// <param name="id">The unique identifier of the entity to permanently delete</param>
-    /// <returns>True if the entity was deleted, false if not found</returns>
-    public async Task<bool> HardDeleteAsync(int id)
-    {
-        var primaryKeyColumn = GetPrimaryKeyColumnName();
-        var sql = $"DELETE FROM {_tableName} WHERE {primaryKeyColumn} = @Id";
-
-        using var connection = _connectionFactory.CreateConnection();
-        var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
-
-        return rowsAffected > 0;
-    }
-
-    /// <summary>
-    /// Checks if an entity exists with the given ID
-    /// </summary>
-    /// <param name="id">The unique identifier to check</param>
-    /// <returns>True if the entity exists, false otherwise</returns>
-    public async Task<bool> ExistsAsync(int id)
-    {
-        var primaryKeyColumn = GetPrimaryKeyColumnName();
-        var sql = $@"
-            SELECT COUNT(1) FROM {_tableName} 
-            WHERE {primaryKeyColumn} = @Id AND IsDeleted = 0";
-
-        using var connection = _connectionFactory.CreateConnection();
-        var count = await connection.QuerySingleAsync<int>(sql, new { Id = id });
-
-        return count > 0;
-    }
-
-    /// <summary>
-    /// Executes a custom SQL query and returns entities
-    /// </summary>
-    /// <param name="sql">The SQL query to execute</param>
-    /// <param name="parameters">Parameters for the SQL query</param>
-    /// <returns>Collection of entities matching the query</returns>
-    public async Task<IEnumerable<T>> QueryAsync(string sql, object? parameters = null)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<T>(sql, parameters);
-    }
-
-    /// <summary>
-    /// Executes a custom SQL command (INSERT, UPDATE, DELETE)
-    /// </summary>
-    /// <param name="sql">The SQL command to execute</param>
-    /// <param name="parameters">Parameters for the SQL command</param>
-    /// <returns>Number of affected rows</returns>
-    public async Task<int> ExecuteAsync(string sql, object? parameters = null)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync(sql, parameters);
-    }
-
-    /// <summary>
-    /// Gets the table name for the entity type
-    /// </summary>
-    /// <returns>The table name</returns>
-    private string GetTableName()
-    {
-        var type = typeof(T);
-        var name = type.Name;
-
-        // Remove "Entity" suffix if present and properly pluralize
-        if (name.EndsWith("Entity"))
-        {
-            name = name[..^6]; // Remove "Entity"
-        }
-
-        // For TestEntity -> Test -> Tests
-        // Simple pluralization rules
-        if (name.EndsWith("y"))
-        {
-            return name[..^1] + "ies";
-        }
-        else if (name.EndsWith("s") || name.EndsWith("x") || name.EndsWith("z") ||
-                 name.EndsWith("ch") || name.EndsWith("sh"))
-        {
-            return name + "es";
-        }
-        else
-        {
-            return name + "s";
+            _logger.LogError(ex, "Error getting {EntityType} by ID {Id}", typeof(T).Name, id);
+            throw;
         }
     }
 
-    /// <summary>
-    /// Gets the properties of the entity for database operations
-    /// </summary>
-    /// <param name="excludeId">Whether to exclude the Id property</param>
-    /// <param name="excludeCreatedAt">Whether to exclude the CreatedAt property</param>
-    /// <returns>Array of PropertyInfo objects</returns>
-    private PropertyInfo[] GetEntityProperties(bool excludeId = false, bool excludeCreatedAt = false)
+    public virtual async Task<IEnumerable<T>> GetAllAsync(string? where = null, object? parameters = null)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            var sql = $"SELECT * FROM {_tableName} WHERE IsDeleted = 0";
+            
+            if (!string.IsNullOrEmpty(where))
+            {
+                sql += $" AND {where}";
+            }
+            
+            var entities = await connection.QueryAsync<T>(sql, parameters);
+            
+            _logger.LogDebug("GetAllAsync for {EntityType}: {Count} entities returned", 
+                typeof(T).Name, entities.Count());
+            
+            return entities;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting all {EntityType}", typeof(T).Name);
+            throw;
+        }
+    }
+
+    public virtual async Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(
+        int pageNumber, 
+        int pageSize, 
+        string? where = null, 
+        object? parameters = null, 
+        string? orderBy = null)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            // Build base SQL
+            var baseWhere = "IsDeleted = 0";
+            if (!string.IsNullOrEmpty(where))
+            {
+                baseWhere += $" AND {where}";
+            }
+            
+            // Count query
+            var countSql = $"SELECT COUNT(*) FROM {_tableName} WHERE {baseWhere}";
+            var totalCount = await connection.ExecuteScalarAsync<int>(countSql, parameters);
+            
+            // Data query with pagination
+            var offset = (pageNumber - 1) * pageSize;
+            var dataSql = $"SELECT * FROM {_tableName} WHERE {baseWhere}";
+            
+            if (!string.IsNullOrEmpty(orderBy))
+            {
+                dataSql += $" ORDER BY {orderBy}";
+            }
+            else
+            {
+                dataSql += $" ORDER BY {_idColumnName}";
+            }
+            
+            dataSql += $" OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY";
+            
+            var items = await connection.QueryAsync<T>(dataSql, parameters);
+            
+            _logger.LogDebug("GetPagedAsync for {EntityType}: Page {Page}, Size {Size}, Total {Total}, Returned {Count}", 
+                typeof(T).Name, pageNumber, pageSize, totalCount, items.Count());
+            
+            return (items, totalCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting paged {EntityType}", typeof(T).Name);
+            throw;
+        }
+    }
+
+    public virtual async Task<T> AddAsync(T entity)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            // Generate INSERT SQL dynamically based on entity properties
+            var insertSql = GenerateInsertSql(entity);
+            var id = await connection.ExecuteScalarAsync<int>(insertSql, entity);
+            
+            // Set the generated ID back to the entity
+            var idProperty = typeof(T).GetProperty(_idColumnName);
+            if (idProperty != null && idProperty.CanWrite)
+            {
+                idProperty.SetValue(entity, id);
+            }
+            
+            _logger.LogDebug("AddAsync for {EntityType}: Entity added with ID {Id}", typeof(T).Name, id);
+            
+            return entity;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding {EntityType}", typeof(T).Name);
+            throw;
+        }
+    }
+
+    public virtual async Task<T> UpdateAsync(T entity)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            // Generate UPDATE SQL dynamically
+            var updateSql = GenerateUpdateSql(entity);
+            var rowsAffected = await connection.ExecuteAsync(updateSql, entity);
+            
+            if (rowsAffected == 0)
+            {
+                throw new InvalidOperationException($"No rows were updated for {typeof(T).Name}");
+            }
+            
+            _logger.LogDebug("UpdateAsync for {EntityType}: {RowsAffected} rows updated", 
+                typeof(T).Name, rowsAffected);
+            
+            return entity;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating {EntityType}", typeof(T).Name);
+            throw;
+        }
+    }
+
+    public virtual async Task<bool> DeleteAsync(int id)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            // Soft delete by setting IsDeleted = 1
+            var sql = $"UPDATE {_tableName} SET IsDeleted = 1, DeletedAt = @DeletedAt WHERE {_idColumnName} = @Id";
+            var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id, DeletedAt = DateTime.UtcNow });
+            
+            _logger.LogDebug("DeleteAsync for {EntityType} with ID {Id}: {RowsAffected} rows affected", 
+                typeof(T).Name, id, rowsAffected);
+            
+            return rowsAffected > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting {EntityType} with ID {Id}", typeof(T).Name, id);
+            throw;
+        }
+    }
+
+    public virtual async Task<bool> ExistsAsync(int id)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            var sql = $"SELECT COUNT(*) FROM {_tableName} WHERE {_idColumnName} = @Id AND IsDeleted = 0";
+            var count = await connection.ExecuteScalarAsync<int>(sql, new { Id = id });
+            
+            return count > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking existence of {EntityType} with ID {Id}", typeof(T).Name, id);
+            throw;
+        }
+    }
+
+    public virtual async Task<IEnumerable<T>> QueryAsync(string sql, object? parameters = null)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            var entities = await connection.QueryAsync<T>(sql, parameters);
+            
+            _logger.LogDebug("QueryAsync for {EntityType}: {Count} entities returned", 
+                typeof(T).Name, entities.Count());
+            
+            return entities;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing query for {EntityType}: {Sql}", typeof(T).Name, sql);
+            throw;
+        }
+    }
+
+    public virtual async Task<T?> QueryFirstOrDefaultAsync(string sql, object? parameters = null)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            var entity = await connection.QueryFirstOrDefaultAsync<T>(sql, parameters);
+            
+            _logger.LogDebug("QueryFirstOrDefaultAsync for {EntityType}: {Result}", 
+                typeof(T).Name, entity != null ? "Found" : "Not found");
+            
+            return entity;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing query for {EntityType}: {Sql}", typeof(T).Name, sql);
+            throw;
+        }
+    }
+
+    public virtual async Task<int> ExecuteAsync(string sql, object? parameters = null)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            var rowsAffected = await connection.ExecuteAsync(sql, parameters);
+            
+            _logger.LogDebug("ExecuteAsync for {EntityType}: {RowsAffected} rows affected", 
+                typeof(T).Name, rowsAffected);
+            
+            return rowsAffected;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing command for {EntityType}: {Sql}", typeof(T).Name, sql);
+            throw;
+        }
+    }
+
+    public virtual async Task<IDisposable> BeginTransactionAsync()
+    {
+        var connection = await _connectionFactory.CreateConnectionAsync();
+        var transaction = connection.BeginTransaction();
+        return new TransactionWrapper(connection, transaction);
+    }
+
+    public virtual async Task<int> GetCountAsync(string? where = null, object? parameters = null)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            var sql = $"SELECT COUNT(*) FROM {_tableName} WHERE IsDeleted = 0";
+            
+            if (!string.IsNullOrEmpty(where))
+            {
+                sql += $" AND {where}";
+            }
+            
+            var count = await connection.ExecuteScalarAsync<int>(sql, parameters);
+            
+            _logger.LogDebug("GetCountAsync for {EntityType}: {Count} entities", typeof(T).Name, count);
+            
+            return count;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting count for {EntityType}", typeof(T).Name);
+            throw;
+        }
+    }
+
+    #region Helper Methods
+
+    protected virtual string GenerateInsertSql(T entity)
     {
         var properties = typeof(T).GetProperties()
-            .Where(p => p.CanRead && p.CanWrite)
-            // Exclude navigation properties and complex types
-            .Where(p => IsPrimitiveOrSimpleType(p.PropertyType))
+            .Where(p => p.CanRead && p.Name != _idColumnName && p.Name != "RowVersion")
             .ToList();
 
-        if (excludeId)
-        {
-            properties = properties.Where(p => p.Name != "Id").ToList();
-        }
+        var columns = string.Join(", ", properties.Select(p => p.Name));
+        var parameters = string.Join(", ", properties.Select(p => $"@{p.Name}"));
 
-        if (excludeCreatedAt)
-        {
-            properties = properties.Where(p => p.Name != "CreatedAt").ToList();
-        }
-
-        return properties.ToArray();
+        return $"INSERT INTO {_tableName} ({columns}) VALUES ({parameters}); SELECT CAST(SCOPE_IDENTITY() as int)";
     }
 
-    /// <summary>
-    /// Determines if a type is a primitive type or simple type that can be mapped by Dapper
-    /// </summary>
-    /// <param name="type">The type to check</param>
-    /// <returns>True if the type can be mapped by Dapper</returns>
-    private static bool IsPrimitiveOrSimpleType(Type type)
+    protected virtual string GenerateUpdateSql(T entity)
     {
-        // Handle nullable types
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+        var properties = typeof(T).GetProperties()
+            .Where(p => p.CanRead && p.Name != _idColumnName && p.Name != "RowVersion" && p.Name != "CreatedAt" && p.Name != "CreatedBy")
+            .ToList();
+
+        var setClause = string.Join(", ", properties.Select(p => $"{p.Name} = @{p.Name}"));
+        setClause += ", ModifiedAt = @ModifiedAt";
+
+        return $"UPDATE {_tableName} SET {setClause} WHERE {_idColumnName} = @{_idColumnName} AND IsDeleted = 0";
+    }
+
+    #endregion
+
+    #region Transaction Wrapper
+
+    private class TransactionWrapper : IDisposable
+    {
+        private readonly IDbConnection _connection;
+        private readonly IDbTransaction _transaction;
+        private bool _disposed;
+
+        public TransactionWrapper(IDbConnection connection, IDbTransaction transaction)
         {
-            type = Nullable.GetUnderlyingType(type)!;
+            _connection = connection;
+            _transaction = transaction;
         }
 
-        // Include primitive types, string, DateTime, DateTimeOffset, TimeSpan, Guid, and enums
-        return type.IsPrimitive ||
-               type == typeof(string) ||
-               type == typeof(DateTime) ||
-               type == typeof(DateTimeOffset) ||
-               type == typeof(TimeSpan) ||
-               type == typeof(Guid) ||
-               type == typeof(decimal) ||
-               type.IsEnum;
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _transaction?.Dispose();
+                _connection?.Dispose();
+                _disposed = true;
+            }
+        }
     }
+
+    #endregion
 }

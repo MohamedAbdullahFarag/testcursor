@@ -1,47 +1,60 @@
 export const authAr = {
-    auth: {
-        // Login form
-        loginTitle: 'مرحبًا بكم في نظام إدارة اختبار',
-        loginDescription: 'إدارة الخدمات بسهولة وكفاءة. سجّل الدخول للمتابعة',
-        login: 'تسجيل الدخول',
-        logout: 'تسجيل الخروج',
-        
-        // Form fields
-        email: 'البريد الإلكتروني',
-        password: 'كلمة المرور',
-        emailPlaceholder: 'أدخل بريدك الإلكتروني',
-        passwordPlaceholder: 'أدخل كلمة المرور',
-        
-        // Loading states
-        loggingIn: 'جارٍ تسجيل الدخول...',
-        loggingOut: 'جارٍ تسجيل الخروج...',
-        
-        // Error messages
-        loginError: 'فشل تسجيل الدخول',
-        invalidCredentials: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
-        networkError: 'حدث خطأ في الشبكة. يرجى المحاولة مرة أخرى.',
-        sessionExpired: 'انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.',
-        tokenRefreshFailed: 'فشل تجديد الجلسة. يرجى تسجيل الدخول مرة أخرى.',
-        
-        // Validation messages
-        emailRequired: 'البريد الإلكتروني مطلوب',
-        emailInvalid: 'يرجى إدخال بريد إلكتروني صحيح',
-        passwordRequired: 'كلمة المرور مطلوبة',
-        passwordMinLength: 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل',
-        
-        // Success messages
-        loginSuccess: 'مرحبًا بعودتك!',
-        logoutSuccess: 'تم تسجيل خروجك بنجاح',
-        
-        // Role-based access
-        accessDenied: 'تم رفض الوصول',
-        insufficientPermissions: 'ليس لديك صلاحيات كافية للوصول إلى هذا المورد',
-        
-        // Misc
-        rememberMe: 'تذكرني',
-        forgotPassword: 'هل نسيت كلمة المرور؟',
-        noAccount: 'ليس لديك حساب؟',
-        signUp: 'إنشاء حساب',
-        backToLogin: 'العودة إلى تسجيل الدخول',
-    },
-} as const
+  login: {
+    title: 'تسجيل الدخول إلى حسابك',
+    subtitle: 'أدخل بيانات الاعتماد الخاصة بك للوصول إلى المنصة',
+    emailLabel: 'عنوان البريد الإلكتروني',
+    emailPlaceholder: 'أدخل بريدك الإلكتروني',
+    passwordLabel: 'كلمة المرور',
+    passwordPlaceholder: 'أدخل كلمة المرور',
+    signIn: 'تسجيل الدخول',
+    signingIn: 'جاري تسجيل الدخول...',
+    forgotPassword: 'نسيت كلمة المرور؟',
+    needHelp: 'تحتاج مساعدة؟',
+  },
+  logout: {
+    title: 'تسجيل الخروج',
+    button: 'تسجيل الخروج',
+    confirmMessage: 'هل أنت متأكد من أنك تريد تسجيل الخروج؟',
+    success: 'تم تسجيل الخروج بنجاح',
+  },
+  validation: {
+    emailRequired: 'البريد الإلكتروني مطلوب',
+    emailInvalid: 'يرجى إدخال عنوان بريد إلكتروني صحيح',
+    passwordRequired: 'كلمة المرور مطلوبة',
+    passwordMinLength: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل',
+    invalidCredentials: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+  },
+  errors: {
+    loginFailed: 'فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد الخاصة بك.',
+    networkError: 'خطأ في الشبكة. يرجى التحقق من الاتصال الخاص بك.',
+    sessionExpired: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.',
+    unauthorized: 'غير مصرح لك بالوصول إلى هذا المورد.',
+    serverError: 'خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.',
+  },
+  success: {
+    loginSuccess: 'تم تسجيل الدخول بنجاح',
+    logoutSuccess: 'تم تسجيل الخروج بنجاح',
+  },
+  common: {
+    loading: 'جاري التحميل...',
+    error: 'خطأ',
+    success: 'نجح',
+    cancel: 'إلغاء',
+    confirm: 'تأكيد',
+    back: 'رجوع',
+    next: 'التالي',
+    submit: 'إرسال',
+    save: 'حفظ',
+    delete: 'حذف',
+    edit: 'تعديل',
+    view: 'عرض',
+    search: 'بحث',
+    filter: 'تصفية',
+    sort: 'ترتيب',
+    refresh: 'تحديث',
+    close: 'إغلاق',
+    open: 'فتح',
+    yes: 'نعم',
+    no: 'لا',
+  },
+};

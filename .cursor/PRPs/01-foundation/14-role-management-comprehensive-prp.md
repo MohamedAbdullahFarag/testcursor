@@ -42,7 +42,7 @@ existing_implementations:
     why: Interface definitions for user-role relationship operations
 
 database_schema:
-  - file: .github/copilot/requirements/data.sql
+  - file: .cursor/copilot/requirements/data.sql
     why: Role definitions, permissions, and default role assignments
     
   - file: backend/Ikhtibar.Core/Entities/Role.cs
@@ -52,10 +52,10 @@ database_schema:
     why: Junction entity for role-permission many-to-many relationships
 
 guidelines:
-  - file: .github/copilot/backend-guidelines.md
+  - file: .cursor/copilot/backend-guidelines.md
     why: SRP enforcement rules and repository separation patterns
     
-  - file: .github/copilot/api-guidelines.md
+  - file: .cursor/copilot/api-guidelines.md
     why: Authorization attributes and API design standards
 ```
 

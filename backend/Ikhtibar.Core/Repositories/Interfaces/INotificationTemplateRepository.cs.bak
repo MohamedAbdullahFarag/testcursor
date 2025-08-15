@@ -1,0 +1,13 @@
+using Ikhtibar.Core.Entities;
+
+namespace Ikhtibar.Core.Repositories.Interfaces;
+
+/// <summary>
+/// Notification template repository interface for data access operations
+/// </summary>
+public interface INotificationTemplateRepository : IBaseRepository<NotificationTemplate>
+{
+    Task<NotificationTemplate?> GetByTypeAndLanguageAsync(NotificationType type, string language);
+    Task<IEnumerable<NotificationTemplate>> GetByTypeAsync(NotificationType type);
+    Task<IEnumerable<NotificationTemplate>> GetActiveTemplatesAsync();
+}

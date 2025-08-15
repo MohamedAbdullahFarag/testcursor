@@ -1,0 +1,13 @@
+using Ikhtibar.Core.Entities;
+
+namespace Ikhtibar.Core.Repositories.Interfaces;
+
+/// <summary>
+/// Notification history repository interface for data access operations
+/// </summary>
+public interface INotificationHistoryRepository : IBaseRepository<NotificationHistory>
+{
+    Task<IEnumerable<NotificationHistory>> GetByNotificationIdAsync(int notificationId);
+    Task<IEnumerable<NotificationHistory>> GetFailedDeliveriesAsync(int batchSize);
+    Task<int> GetDeliverySuccessRateAsync(DateTime fromDate, DateTime toDate);
+}

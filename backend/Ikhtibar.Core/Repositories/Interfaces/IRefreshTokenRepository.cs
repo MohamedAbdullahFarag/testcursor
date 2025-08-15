@@ -1,94 +1,67 @@
 using Ikhtibar.Shared.Entities;
 
-using Ikhtibar.Shared.Models;
 namespace Ikhtibar.Core.Repositories.Interfaces;
 
 /// <summary>
-/// Repository interface for RefreshToken entity operations
-/// Custom interface not inheriting from IRepository due to different schema structure
+/// Repository interface for refresh token operations
+/// Following SRP: ONLY RefreshToken data operations
 /// </summary>
-public interface IRefreshTokenRepository
+public interface IRefreshTokenRepository : IRepository<RefreshToken>
 {
     /// <summary>
-    /// Add a new refresh token
+    /// Get refresh token by its hash
     /// </summary>
-    /// <param name="refreshToken">The refresh token to add</param>
-    /// <returns>The added refresh token</returns>
-    Task<RefreshToken> AddAsync(RefreshToken refreshToken);
-    /// <summary>
-    /// Get refresh token by token hash
-    /// </summary>
-    /// <param name="tokenHash">The hash of the refresh token</param>
-    /// <returns>RefreshToken if found, null otherwise</returns>
+    /// <param name="tokenHash">Hashed token value</param>
+    /// <returns>Refresh token if found, null otherwise</returns>
     Task<RefreshToken?> GetByTokenHashAsync(string tokenHash);
-    
-    /// <summary>
-    /// Get latest active refresh token for a user
-    /// </summary>
-    /// <param name="userId">User ID</param>
-    /// <returns>Latest active refresh token</returns>
-    Task<RefreshToken?> GetLatestByUserIdAsync(int userId);
-    
-    /// <summary>
-    /// Get user by ID
-    /// </summary>
-    /// <param name="userId">User ID</param>
-    /// <returns>User if found, null otherwise</returns>
-    Task<User?> GetUserByIdAsync(int userId);
-    
-    /// <summary>
-    /// Revoke a specific refresh token
-    /// </summary>
-    /// <param name="tokenId">The ID of the token to revoke</param>
-    /// <returns>True if token was revoked, false if not found</returns>
-    Task<bool> RevokeAsync(int tokenId);
-    
-    /// <summary>
-    /// Get refresh token by token value
-    /// </summary>
-    /// <param name="tokenValue">The refresh token value</param>
-    /// <returns>RefreshToken if found and valid, null otherwise</returns>
-    Task<RefreshToken?> GetByTokenAsync(string tokenValue);
 
     /// <summary>
     /// Get all active refresh tokens for a user
     /// </summary>
     /// <param name="userId">User ID</param>
     /// <returns>List of active refresh tokens</returns>
-    Task<List<RefreshToken>> GetActiveTokensByUserIdAsync(int userId);
-
-    /// <summary>
-    /// Revoke a specific refresh token
-    /// </summary>
-    /// <param name="tokenValue">The refresh token value to revoke</param>
-    /// <returns>True if token was revoked, false if not found</returns>
-    Task<bool> RevokeTokenAsync(string tokenValue);
+    Task<IEnumerable<RefreshToken>> GetActiveByUserIdAsync(int userId);
 
     /// <summary>
     /// Revoke all refresh tokens for a user
     /// </summary>
     /// <param name="userId">User ID</param>
-    /// <returns>Number of tokens revoked</returns>
-    Task<int> RevokeAllUserTokensAsync(int userId);
+    /// <param name="reason">Reason for revocation</param>
+    /// <returns>True if successful, false otherwise</returns>
+    Task<bool> RevokeAllByUserIdAsync(int userId, string reason = "User logout");
+
+    /// <summary>
+    /// Revoke a specific refresh token
+    /// </summary>
+    /// <param name="tokenHash">Token hash to revoke</param>
+    /// <param name="reason">Reason for revocation</param>
+    /// <returns>True if successful, false otherwise</returns>
+    Task<bool> RevokeByTokenHashAsync(string tokenHash, string reason = "Token revoked");
 
     /// <summary>
     /// Clean up expired refresh tokens
     /// </summary>
+    /// <param name="batchSize">Maximum number of tokens to clean up</param>
     /// <returns>Number of tokens cleaned up</returns>
-    Task<int> CleanupExpiredTokensAsync();
+    Task<int> CleanupExpiredTokensAsync(int batchSize = 100);
 
     /// <summary>
-    /// Check if user has reached maximum number of active refresh tokens
+    /// Get refresh token statistics for a user
     /// </summary>
     /// <param name="userId">User ID</param>
-    /// <param name="maxTokens">Maximum allowed tokens (default: 5)</param>
-    /// <returns>True if user has reached limit</returns>
-    Task<bool> HasReachedTokenLimitAsync(int userId, int maxTokens = 5);
+    /// <returns>Token statistics</returns>
+    Task<RefreshTokenStats> GetStatsByUserIdAsync(int userId);
+}
 
-    /// <summary>
-    /// Remove oldest refresh token for user when limit is reached
-    /// </summary>
-    /// <param name="userId">User ID</param>
-    /// <returns>True if a token was removed</returns>
-    Task<bool> RemoveOldestTokenAsync(int userId);
+/// <summary>
+/// Refresh token statistics
+/// </summary>
+public class RefreshTokenStats
+{
+    public int TotalTokens { get; set; }
+    public int ActiveTokens { get; set; }
+    public int ExpiredTokens { get; set; }
+    public int RevokedTokens { get; set; }
+    public DateTime? LastIssuedAt { get; set; }
+    public DateTime? LastUsedAt { get; set; }
 }

@@ -1,0 +1,728 @@
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using Moq;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Ikhtibar.Core.Services.Implementations;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Core.DTOs;
+using Ikhtibar.Shared.Entities;
+
+namespace Ikhtibar.Tests.Core.Services;
+
+/// <summary>
+/// Comprehensive test suite for UserService business logic.
+/// Tests all CRUD operations, validation rules, and error scenarios.
+/// Uses AAA pattern (Arrange, Act, Assert) with descriptive test names.
+/// Includes integration with mocked dependencies and database.
+/// </summary>
+[TestFixture]
+public class UserServiceTests
+{
+    private Mock<IUserRepository> _mockUserRepository;
+    private Mock<IRoleRepository> _mockRoleRepository;
+    private Mock<IUserRoleRepository> _mockUserRoleRepository;
+    private Mock<IMapper> _mockMapper;
+    private Mock<ILogger<UserService>> _mockLogger;
+    private UserService _userService;
+
+    [SetUp]
+    public void Setup()
+    {
+        _mockUserRepository = new Mock<IUserRepository>();
+        _mockRoleRepository = new Mock<IRoleRepository>();
+        _mockUserRoleRepository = new Mock<IUserRoleRepository>();
+        _mockMapper = new Mock<IMapper>();
+        _mockLogger = new Mock<ILogger<UserService>>();
+        
+        _userService = new UserService(
+            _mockUserRepository.Object,
+            _mockRoleRepository.Object,
+            _mockUserRoleRepository.Object,
+            _mockMapper.Object,
+            _mockLogger.Object
+        );
+    }
+
+    #region CreateUserAsync Tests
+
+    /// <summary>
+    /// Test: Creating user with valid data should return user DTO with generated ID
+    /// Scenario: Happy path with all required fields provided
+    /// Expected: User created successfully with proper mapping and validation
+    /// </summary>
+    [Test]
+    public async Task CreateUserAsync_Should_CreateUser_When_ValidDataProvided()
+    {
+        // Arrange
+        var createUserDto = new CreateUserDto
+        {
+            Username = "testuser",
+            Email = "test@example.com",
+            FirstName = "Test",
+            LastName = "User",
+            PhoneNumber = "+1234567890",
+            PreferredLanguage = "en",
+            IsActive = true,
+            Password = "password123",
+            RoleIds = new List<int> { 1, 2 }
+        };
+
+        var user = new User
+        {
+            UserId = 1,
+            Username = "testuser",
+            Email = "test@example.com",
+            FirstName = "Test",
+            LastName = "User",
+            PhoneNumber = "+1234567890",
+            PreferredLanguage = "en",
+            IsActive = true,
+            EmailVerified = false,
+            PhoneVerified = false,
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        };
+
+        var userDto = new UserDto
+        {
+            UserId = 1,
+            Username = "testuser",
+            Email = "test@example.com",
+            FirstName = "Test",
+            LastName = "User",
+            PhoneNumber = "+1234567890",
+            PreferredLanguage = "en",
+            IsActive = true,
+            EmailVerified = false,
+            PhoneVerified = false,
+            Roles = new List<string> { "admin", "user" },
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var roles = new List<Role>
+        {
+            new Role { RoleId = 1, Code = "admin", Name = "Administrator" },
+            new Role { RoleId = 2, Code = "user", Name = "User" }
+        };
+
+        _mockUserRepository.Setup(x => x.EmailExistsAsync("test@example.com"))
+                          .ReturnsAsync(false);
+        _mockUserRepository.Setup(x => x.AddAsync(It.IsAny<User>()))
+                          .ReturnsAsync(user);
+        _mockUserRepository.Setup(x => x.GetByRoleAsync(1))
+                          .ReturnsAsync(roles);
+        _mockMapper.Setup(x => x.Map<UserDto>(user))
+                   .Returns(userDto);
+
+        // Act
+        var result = await _userService.CreateUserAsync(createUserDto);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual("testuser", result.Username);
+        Assert.AreEqual("test@example.com", result.Email);
+        Assert.AreEqual("Test", result.FirstName);
+        Assert.AreEqual("User", result.LastName);
+        Assert.IsTrue(result.IsActive);
+        
+        _mockUserRepository.Verify(x => x.EmailExistsAsync("test@example.com"), Times.Once);
+        _mockUserRepository.Verify(x => x.AddAsync(It.IsAny<User>()), Times.Once);
+        _mockUserRoleRepository.Verify(x => x.AssignRoleAsync(1, 1), Times.Once);
+        _mockUserRoleRepository.Verify(x => x.AssignRoleAsync(1, 2), Times.Once);
+    }
+
+    /// <summary>
+    /// Test: Creating user with existing email should throw InvalidOperationException
+    /// Scenario: Email already exists in system
+    /// Expected: Exception thrown with appropriate message
+    /// </summary>
+    [Test]
+    public async Task CreateUserAsync_Should_ThrowException_When_EmailAlreadyExists()
+    {
+        // Arrange
+        var createUserDto = new CreateUserDto
+        {
+            Username = "testuser",
+            Email = "existing@example.com",
+            FirstName = "Test",
+            LastName = "User",
+            Password = "password123"
+        };
+
+        _mockUserRepository.Setup(x => x.EmailExistsAsync("existing@example.com"))
+                          .ReturnsAsync(true);
+
+        // Act & Assert
+        var exception = Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _userService.CreateUserAsync(createUserDto));
+        
+        Assert.AreEqual("Email 'existing@example.com' is already in use", exception.Message);
+        _mockUserRepository.Verify(x => x.AddAsync(It.IsAny<User>()), Times.Never);
+    }
+
+    #endregion
+
+    #region GetUserAsync Tests
+
+    /// <summary>
+    /// Test: Getting user by ID should return user DTO when user exists
+    /// Scenario: Valid user ID provided
+    /// Expected: User DTO returned with all properties populated
+    /// </summary>
+    [Test]
+    public async Task GetUserAsync_Should_ReturnUser_When_UserExists()
+    {
+        // Arrange
+        var userId = 1;
+        var user = new User
+        {
+            UserId = 1,
+            Username = "testuser",
+            Email = "test@example.com",
+            FirstName = "Test",
+            LastName = "User"
+        };
+
+        var roles = new List<Role>
+        {
+            new Role { RoleId = 1, Code = "admin", Name = "Administrator" }
+        };
+
+        var userDto = new UserDto
+        {
+            UserId = 1,
+            Username = "testuser",
+            Email = "test@example.com",
+            FirstName = "Test",
+            LastName = "User",
+            Roles = new List<string> { "admin" }
+        };
+
+        _mockUserRepository.Setup(x => x.GetByIdAsync(userId))
+                          .ReturnsAsync(user);
+        _mockUserRepository.Setup(x => x.GetByRoleAsync(userId))
+                          .ReturnsAsync(roles);
+        _mockMapper.Setup(x => x.Map<UserDto>(user))
+                   .Returns(userDto);
+
+        // Act
+        var result = await _userService.GetUserAsync(userId);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(userId, result.UserId);
+        Assert.AreEqual("testuser", result.Username);
+        Assert.AreEqual("test@example.com", result.Email);
+        Assert.AreEqual(1, result.Roles.Count);
+        Assert.AreEqual("admin", result.Roles[0]);
+    }
+
+    /// <summary>
+    /// Test: Getting user by ID should return null when user doesn't exist
+    /// Scenario: Invalid user ID provided
+    /// Expected: Null returned
+    /// </summary>
+    [Test]
+    public async Task GetUserAsync_Should_ReturnNull_When_UserDoesNotExist()
+    {
+        // Arrange
+        var userId = 999;
+        _mockUserRepository.Setup(x => x.GetByIdAsync(userId))
+                          .ReturnsAsync((User?)null);
+
+        // Act
+        var result = await _userService.GetUserAsync(userId);
+
+        // Assert
+        Assert.IsNull(result);
+    }
+
+    #endregion
+
+    #region UpdateUserAsync Tests
+
+    /// <summary>
+    /// Test: Updating user should return updated user DTO when user exists
+    /// Scenario: Valid user ID and update data provided
+    /// Expected: User updated successfully with new values
+    /// </summary>
+    [Test]
+    public async Task UpdateUserAsync_Should_UpdateUser_When_UserExists()
+    {
+        // Arrange
+        var userId = 1;
+        var updateUserDto = new UpdateUserDto
+        {
+            FirstName = "Updated",
+            LastName = "Name",
+            PhoneNumber = "+9876543210"
+        };
+
+        var existingUser = new User
+        {
+            UserId = 1,
+            Username = "testuser",
+            Email = "test@example.com",
+            FirstName = "Test",
+            LastName = "User"
+        };
+
+        var updatedUserDto = new UserDto
+        {
+            UserId = 1,
+            Username = "testuser",
+            Email = "test@example.com",
+            FirstName = "Updated",
+            LastName = "Name",
+            PhoneNumber = "+9876543210"
+        };
+
+        _mockUserRepository.Setup(x => x.GetByIdAsync(userId))
+                          .ReturnsAsync(existingUser);
+        _mockUserRepository.Setup(x => x.UpdateAsync(It.IsAny<User>()))
+                          .ReturnsAsync(existingUser);
+        _mockUserRepository.Setup(x => x.GetByRoleAsync(userId))
+                          .ReturnsAsync(new List<Role>());
+        _mockMapper.Setup(x => x.Map<UserDto>(existingUser))
+                   .Returns(updatedUserDto);
+
+        // Act
+        var result = await _userService.UpdateUserAsync(userId, updateUserDto);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Updated", result.FirstName);
+        Assert.AreEqual("Name", result.LastName);
+        Assert.AreEqual("+9876543210", result.PhoneNumber);
+        
+        _mockUserRepository.Verify(x => x.UpdateAsync(It.IsAny<User>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Test: Updating user should throw exception when user doesn't exist
+    /// Scenario: Invalid user ID provided
+    /// Expected: InvalidOperationException thrown
+    /// </summary>
+    [Test]
+    public async Task UpdateUserAsync_Should_ThrowException_When_UserDoesNotExist()
+    {
+        // Arrange
+        var userId = 999;
+        var updateUserDto = new UpdateUserDto
+        {
+            FirstName = "Updated"
+        };
+
+        _mockUserRepository.Setup(x => x.GetByIdAsync(userId))
+                          .ReturnsAsync((User?)null);
+
+        // Act & Assert
+        var exception = Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _userService.UpdateUserAsync(userId, updateUserDto));
+        
+        Assert.AreEqual($"User with ID {userId} not found", exception.Message);
+        _mockUserRepository.Verify(x => x.UpdateAsync(It.IsAny<User>()), Times.Never);
+    }
+
+    #endregion
+
+    #region DeleteUserAsync Tests
+
+    /// <summary>
+    /// Test: Deleting user should return true when user exists and is deleted
+    /// Scenario: Valid user ID provided
+    /// Expected: User deleted successfully, true returned
+    /// </summary>
+    [Test]
+    public async Task DeleteUserAsync_Should_ReturnTrue_When_UserExistsAndDeleted()
+    {
+        // Arrange
+        var userId = 1;
+        var user = new User
+        {
+            UserId = 1,
+            Username = "testuser",
+            Email = "test@example.com"
+        };
+
+        _mockUserRepository.Setup(x => x.GetByIdAsync(userId))
+                          .ReturnsAsync(user);
+        _mockUserRoleRepository.Setup(x => x.RemoveAllUserRolesAsync(userId))
+                              .Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(x => x.DeleteAsync(userId))
+                          .ReturnsAsync(true);
+
+        // Act
+        var result = await _userService.DeleteUserAsync(userId);
+
+        // Assert
+        Assert.IsTrue(result);
+        _mockUserRoleRepository.Verify(x => x.RemoveAllUserRolesAsync(userId), Times.Once);
+        _mockUserRepository.Verify(x => x.DeleteAsync(userId), Times.Once);
+    }
+
+    /// <summary>
+    /// Test: Deleting user should return false when user doesn't exist
+    /// Scenario: Invalid user ID provided
+    /// Expected: False returned, no deletion performed
+    /// </summary>
+    [Test]
+    public async Task DeleteUserAsync_Should_ReturnFalse_When_UserDoesNotExist()
+    {
+        // Arrange
+        var userId = 999;
+        _mockUserRepository.Setup(x => x.GetByIdAsync(userId))
+                          .ReturnsAsync((User?)null);
+
+        // Act
+        var result = await _userService.DeleteUserAsync(userId);
+
+        // Assert
+        Assert.IsFalse(result);
+        _mockUserRepository.Verify(x => x.DeleteAsync(userId), Times.Never);
+    }
+
+    #endregion
+
+    #region GetAllUsersAsync Tests
+
+    /// <summary>
+    /// Test: Getting all users should return paginated list of users
+    /// Scenario: Valid pagination parameters provided
+    /// Expected: List of user DTOs returned with proper pagination
+    /// </summary>
+    [Test]
+    public async Task GetAllUsersAsync_Should_ReturnPaginatedUsers()
+    {
+        // Arrange
+        var users = new List<User>
+        {
+            new User { UserId = 1, Username = "user1", Email = "user1@example.com" },
+            new User { UserId = 2, Username = "user2", Email = "user2@example.com" }
+        };
+
+        var roles = new List<Role>
+        {
+            new Role { RoleId = 1, Code = "user", Name = "User" }
+        };
+
+        var userDtos = new List<UserDto>
+        {
+            new UserDto { UserId = 1, Username = "user1", Email = "user1@example.com", Roles = new List<string> { "user" } },
+            new UserDto { UserId = 2, Username = "user2", Email = "user2@example.com", Roles = new List<string> { "user" } }
+        };
+
+        _mockUserRepository.Setup(x => x.GetAllAsync())
+                          .ReturnsAsync(users);
+        _mockUserRepository.Setup(x => x.GetByRoleAsync(1))
+                          .ReturnsAsync(roles);
+        _mockUserRepository.Setup(x => x.GetByRoleAsync(2))
+                          .ReturnsAsync(roles);
+        _mockMapper.Setup(x => x.Map<UserDto>(users[0]))
+                   .Returns(userDtos[0]);
+        _mockMapper.Setup(x => x.Map<UserDto>(users[1]))
+                   .Returns(userDtos[1]);
+
+        // Act
+        var result = await _userService.GetAllUsersAsync(page: 1, pageSize: 10);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Count());
+        Assert.AreEqual("user1", result.First().Username);
+        Assert.AreEqual("user2", result.Last().Username);
+    }
+
+    #endregion
+
+    #region GetUserRolesAsync Tests
+
+    /// <summary>
+    /// Test: Getting user roles should return list of role codes
+    /// Scenario: Valid user ID provided
+    /// Expected: List of role codes returned
+    /// </summary>
+    [Test]
+    public async Task GetUserRolesAsync_Should_ReturnUserRoles()
+    {
+        // Arrange
+        var userId = 1;
+        var roles = new List<Role>
+        {
+            new Role { RoleId = 1, Code = "admin", Name = "Administrator" },
+            new Role { RoleId = 2, Code = "user", Name = "User" }
+        };
+
+        _mockUserRepository.Setup(x => x.GetByRoleAsync(userId))
+                          .ReturnsAsync(roles);
+
+        // Act
+        var result = await _userService.GetUserRolesAsync(userId);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Count);
+        Assert.Contains("admin", result);
+        Assert.Contains("user", result);
+    }
+
+    #endregion
+
+    #region UpdateLastLoginAsync Tests
+
+    /// <summary>
+    /// Test: Updating last login should update user's last login timestamp
+    /// Scenario: Valid user ID provided
+    /// Expected: User's last login timestamp updated
+    /// </summary>
+    [Test]
+    public async Task UpdateLastLoginAsync_Should_UpdateLastLogin_When_UserExists()
+    {
+        // Arrange
+        var userId = 1;
+        var user = new User
+        {
+            UserId = 1,
+            Username = "testuser",
+            Email = "test@example.com"
+        };
+
+        _mockUserRepository.Setup(x => x.GetByIdAsync(userId))
+                          .ReturnsAsync(user);
+        _mockUserRepository.Setup(x => x.UpdateAsync(It.IsAny<User>()))
+                          .ReturnsAsync(user);
+
+        // Act
+        await _userService.UpdateLastLoginAsync(userId);
+
+        // Assert
+        _mockUserRepository.Verify(x => x.UpdateAsync(It.IsAny<User>()), Times.Once);
+    }
+
+    #endregion
+
+    #region AuthenticateAsync Tests
+
+    /// <summary>
+    /// Test: Authenticating user should return user DTO when credentials are valid
+    /// Scenario: Valid email and password provided
+    /// Expected: User DTO returned for authentication
+    /// </summary>
+    [Test]
+    public async Task AuthenticateAsync_Should_ReturnUser_When_CredentialsValid()
+    {
+        // Arrange
+        var email = "test@example.com";
+        var password = "password123";
+        var user = new User
+        {
+            UserId = 1,
+            Username = "testuser",
+            Email = "test@example.com",
+            IsActive = true
+        };
+
+        var userDto = new UserDto
+        {
+            UserId = 1,
+            Username = "testuser",
+            Email = "test@example.com",
+            IsActive = true
+        };
+
+        _mockUserRepository.Setup(x => x.GetByEmailAsync(email))
+                          .ReturnsAsync(user);
+        _mockUserRepository.Setup(x => x.GetByRoleAsync(user.UserId))
+                          .ReturnsAsync(new List<Role>());
+        _mockMapper.Setup(x => x.Map<UserDto>(user))
+                   .Returns(userDto);
+
+        // Act
+        var result = await _userService.AuthenticateAsync(email, password);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(email, result.Email);
+        Assert.IsTrue(result.IsActive);
+    }
+
+    /// <summary>
+    /// Test: Authenticating user should return null when user doesn't exist
+    /// Scenario: Invalid email provided
+    /// Expected: Null returned
+    /// </summary>
+    [Test]
+    public async Task AuthenticateAsync_Should_ReturnNull_When_UserDoesNotExist()
+    {
+        // Arrange
+        var email = "nonexistent@example.com";
+        var password = "password123";
+
+        _mockUserRepository.Setup(x => x.GetByEmailAsync(email))
+                          .ReturnsAsync((User?)null);
+
+        // Act
+        var result = await _userService.AuthenticateAsync(email, password);
+
+        // Assert
+        Assert.IsNull(result);
+    }
+
+    /// <summary>
+    /// Test: Authenticating user should return null when user is inactive
+    /// Scenario: Valid email but inactive user
+    /// Expected: Null returned
+    /// </summary>
+    [Test]
+    public async Task AuthenticateAsync_Should_ReturnNull_When_UserInactive()
+    {
+        // Arrange
+        var email = "inactive@example.com";
+        var password = "password123";
+        var user = new User
+        {
+            UserId = 1,
+            Username = "inactiveuser",
+            Email = "inactive@example.com",
+            IsActive = false
+        };
+
+        _mockUserRepository.Setup(x => x.GetByEmailAsync(email))
+                          .ReturnsAsync(user);
+
+        // Act
+        var result = await _userService.AuthenticateAsync(email, password);
+
+        // Assert
+        Assert.IsNull(result);
+    }
+
+    #endregion
+
+    #region UserExistsAsync Tests
+
+    /// <summary>
+    /// Test: Checking if user exists should return true when user exists
+    /// Scenario: Valid user ID provided
+    /// Expected: True returned
+    /// </summary>
+    [Test]
+    public async Task UserExistsAsync_Should_ReturnTrue_When_UserExists()
+    {
+        // Arrange
+        var userId = 1;
+        _mockUserRepository.Setup(x => x.UserExistsAsync(userId))
+                          .ReturnsAsync(true);
+
+        // Act
+        var result = await _userService.UserExistsAsync(userId);
+
+        // Assert
+        Assert.IsTrue(result);
+    }
+
+    /// <summary>
+    /// Test: Checking if user exists should return false when user doesn't exist
+    /// Scenario: Invalid user ID provided
+    /// Expected: False returned
+    /// </summary>
+    [Test]
+    public async Task UserExistsAsync_Should_ReturnFalse_When_UserDoesNotExist()
+    {
+        // Arrange
+        var userId = 999;
+        _mockUserRepository.Setup(x => x.UserExistsAsync(userId))
+                          .ReturnsAsync(false);
+
+        // Act
+        var result = await _userService.UserExistsAsync(userId);
+
+        // Assert
+        Assert.IsFalse(result);
+    }
+
+    #endregion
+
+    #region EmailExistsAsync Tests
+
+    /// <summary>
+    /// Test: Checking if email exists should return true when email exists
+    /// Scenario: Valid email provided
+    /// Expected: True returned
+    /// </summary>
+    [Test]
+    public async Task EmailExistsAsync_Should_ReturnTrue_When_EmailExists()
+    {
+        // Arrange
+        var email = "existing@example.com";
+        var user = new User
+        {
+            UserId = 1,
+            Email = "existing@example.com"
+        };
+
+        _mockUserRepository.Setup(x => x.GetByEmailAsync(email))
+                          .ReturnsAsync(user);
+
+        // Act
+        var result = await _userService.EmailExistsAsync(email);
+
+        // Assert
+        Assert.IsTrue(result);
+    }
+
+    /// <summary>
+    /// Test: Checking if email exists should return false when email doesn't exist
+    /// Scenario: Invalid email provided
+    /// Expected: False returned
+    /// </summary>
+    [Test]
+    public async Task EmailExistsAsync_Should_ReturnFalse_When_EmailDoesNotExist()
+    {
+        // Arrange
+        var email = "nonexistent@example.com";
+        _mockUserRepository.Setup(x => x.GetByEmailAsync(email))
+                          .ReturnsAsync((User?)null);
+
+        // Act
+        var result = await _userService.EmailExistsAsync(email);
+
+        // Assert
+        Assert.IsFalse(result);
+    }
+
+    /// <summary>
+    /// Test: Checking if email exists should return false when excluding current user
+    /// Scenario: Email exists but belongs to excluded user
+    /// Expected: False returned
+    /// </summary>
+    [Test]
+    public async Task EmailExistsAsync_Should_ReturnFalse_When_EmailBelongsToExcludedUser()
+    {
+        // Arrange
+        var email = "user@example.com";
+        var excludeUserId = 1;
+        var user = new User
+        {
+            UserId = 1,
+            Email = "user@example.com"
+        };
+
+        _mockUserRepository.Setup(x => x.GetByEmailAsync(email))
+                          .ReturnsAsync(user);
+
+        // Act
+        var result = await _userService.EmailExistsAsync(email, excludeUserId);
+
+        // Assert
+        Assert.IsFalse(result);
+    }
+
+    #endregion
+}

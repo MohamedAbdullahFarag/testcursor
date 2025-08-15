@@ -20,7 +20,7 @@ Implement complete backend support for user management: CRUD operations for user
   - `Ikhtibar.API` (Controllers, DTOs)
 - Entities: `User`, `Role`, `UserRole` in `Ikhtibar.Core/Entities`
 - DTOs for user creation, update, and response already partially defined.
-- Example patterns in `.github/copilot/examples/backend/services/UserService.cs` and `UsersController.cs`.
+- Example patterns in `.cursor/copilot/examples/backend/services/UserService.cs` and `UsersController.cs`.
 
 ### 🔧 Implementation Tasks
 1. **Define Repository Interfaces** (`Ikhtibar.Core/Repositories/Interfaces`)
@@ -91,7 +91,7 @@ Implement complete backend support for user management: CRUD operations for user
    - Ensure `data.sql` runs on startup or via migration script to populate roles and permissions.
 
 10. **Examples & References**
-    - Check `.github/copilot/examples/backend/controllers/UsersController.cs` and `.github/copilot/examples/backend/services/UserService.cs` for style.
+    - Check `.cursor/copilot/examples/backend/controllers/UsersController.cs` and `.cursor/copilot/examples/backend/services/UserService.cs` for style.
 
 ### 🔄 Integration Points
 ```yaml

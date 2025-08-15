@@ -36,15 +36,15 @@ Implement frontend components for the User Management feature in Ikhtibar.
 
 ## All Needed Context
 ```yaml
-- file: .github/copilot/requirements/ikhtibar-features.txt
+- file: .cursor/copilot/requirements/ikhtibar-features.txt
   why: Defines user-management feature requirements
 - file: frontend/src/shared/models/user.types.ts
   why: Existing User interface patterns
-- file: .github/copilot/examples/frontend/components/UserCard.tsx
+- file: .cursor/copilot/examples/frontend/components/UserCard.tsx
   why: List component pattern
-- file: .github/copilot/examples/frontend/hooks/useUsers.ts
+- file: .cursor/copilot/examples/frontend/hooks/useUsers.ts
   why: Hook pattern for fetch logic
-- file: .github/copilot/frontend-guidelines.md
+- file: .cursor/copilot/frontend-guidelines.md
   why: Naming and folder-per-feature rules
 ``` 
 

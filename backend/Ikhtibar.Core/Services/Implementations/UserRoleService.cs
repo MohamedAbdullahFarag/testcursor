@@ -1,15 +1,15 @@
 using AutoMapper;
-using Microsoft.Extensions.Logging;
-using Ikhtibar.Shared.DTOs;
-using Ikhtibar.Shared.Models;
+using Ikhtibar.Core.DTOs;
+using Ikhtibar.Shared.Entities;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Core.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Ikhtibar.Core.Services.Implementations;
 
 /// <summary>
-/// Service implementation for User-Role assignment operations
-/// Following SRP: ONLY user-role relationship business logic
+/// Service implementation for user-role relationship operations
+/// Following SRP: ONLY user-role business logic
 /// </summary>
 public class UserRoleService : IUserRoleService
 {
@@ -26,312 +26,304 @@ public class UserRoleService : IUserRoleService
         IMapper mapper,
         ILogger<UserRoleService> logger)
     {
-        _userRoleRepository = userRoleRepository ?? throw new ArgumentNullException(nameof(userRoleRepository));
-        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-        _roleRepository = roleRepository ?? throw new ArgumentNullException(nameof(roleRepository));
-        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _userRoleRepository = userRoleRepository;
+        _userRepository = userRepository;
+        _roleRepository = roleRepository;
+        _mapper = mapper;
+        _logger = logger;
     }
 
-    public async Task<bool> AssignRoleToUserAsync(AssignRoleDto assignRoleDto)
+    /// <summary>
+    /// Assign a role to a user
+    /// </summary>
+    public async Task AssignRoleAsync(int userId, int roleId)
     {
-        using var scope = _logger.BeginScope("Assigning role {RoleId} to user {UserId}", assignRoleDto.RoleId, assignRoleDto.UserId);
-
-        _logger.LogInformation("Starting role assignment process");
-
         try
         {
-            // Business validation: Check if user exists
-            var userExists = await _userRepository.UserExistsAsync(assignRoleDto.UserId);
-            if (!userExists)
+            _logger.LogInformation("Assigning role {RoleId} to user {UserId}", roleId, userId);
+
+            // Validate user exists
+            if (!await _userRepository.UserExistsAsync(userId))
             {
-                _logger.LogWarning("Attempted to assign role to non-existent user: {UserId}", assignRoleDto.UserId);
-                throw new InvalidOperationException($"User with ID '{assignRoleDto.UserId}' does not exist");
+                throw new InvalidOperationException($"User with ID {userId} not found");
             }
 
-            // Business validation: Check if role exists
-            var roleExists = await _roleRepository.RoleExistsAsync(assignRoleDto.RoleId);
-            if (!roleExists)
+            // Validate role exists
+            var role = await _roleRepository.GetByIdAsync(roleId);
+            if (role == null)
             {
-                _logger.LogWarning("Attempted to assign non-existent role: {RoleId}", assignRoleDto.RoleId);
-                throw new InvalidOperationException($"Role with ID '{assignRoleDto.RoleId}' does not exist");
+                throw new InvalidOperationException($"Role with ID {roleId} not found");
             }
 
-            // Business validation: Check if assignment already exists
-            var alreadyAssigned = await _userRoleRepository.UserHasRoleAsync(assignRoleDto.UserId, assignRoleDto.RoleId);
-            if (alreadyAssigned)
+            // Check if user already has this role
+            if (await _userRoleRepository.UserHasRoleAsync(userId, roleId))
             {
-                _logger.LogInformation("User {UserId} already has role {RoleId}", assignRoleDto.UserId, assignRoleDto.RoleId);
-                return true; // Consider this a success (idempotent operation)
+                _logger.LogInformation("User {UserId} already has role {RoleId}", userId, roleId);
+                return;
             }
 
-            // Perform assignment
-            await _userRoleRepository.AssignRoleAsync(assignRoleDto.UserId, assignRoleDto.RoleId);
+            // Assign the role
+            await _userRoleRepository.AssignRoleAsync(userId, roleId);
 
-            _logger.LogInformation("Successfully assigned role {RoleId} to user {UserId}", assignRoleDto.RoleId, assignRoleDto.UserId);
-            return true;
+            _logger.LogInformation("Role {RoleId} assigned to user {UserId} successfully", roleId, userId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to assign role {RoleId} to user {UserId}", assignRoleDto.RoleId, assignRoleDto.UserId);
+            _logger.LogError(ex, "Error assigning role {RoleId} to user {UserId}", roleId, userId);
             throw;
         }
     }
 
-    public async Task<bool> RemoveRoleFromUserAsync(int userId, int roleId)
+    /// <summary>
+    /// Remove a role from a user
+    /// </summary>
+    public async Task RemoveRoleAsync(int userId, int roleId)
     {
-        using var scope = _logger.BeginScope("Removing role {RoleId} from user {UserId}", roleId, userId);
-
-        _logger.LogInformation("Starting role removal process");
-
         try
         {
-            // Business validation: Check if assignment exists
-            var hasRole = await _userRoleRepository.UserHasRoleAsync(userId, roleId);
-            if (!hasRole)
+            _logger.LogInformation("Removing role {RoleId} from user {UserId}", roleId, userId);
+
+            // Validate user exists
+            if (!await _userRepository.UserExistsAsync(userId))
+            {
+                throw new InvalidOperationException($"User with ID {userId} not found");
+            }
+
+            // Validate role exists
+            var role = await _roleRepository.GetByIdAsync(roleId);
+            if (role == null)
+            {
+                throw new InvalidOperationException($"Role with ID {roleId} not found");
+            }
+
+            // Check if user has this role
+            if (!await _userRoleRepository.UserHasRoleAsync(userId, roleId))
             {
                 _logger.LogInformation("User {UserId} does not have role {RoleId}", userId, roleId);
-                return true; // Consider this a success (idempotent operation)
+                return;
             }
 
-            // Perform removal
+            // Remove the role
             await _userRoleRepository.RemoveRoleAsync(userId, roleId);
 
-            _logger.LogInformation("Successfully removed role {RoleId} from user {UserId}", roleId, userId);
-            return true;
+            _logger.LogInformation("Role {RoleId} removed from user {UserId} successfully", roleId, userId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to remove role {RoleId} from user {UserId}", roleId, userId);
+            _logger.LogError(ex, "Error removing role {RoleId} from user {UserId}", roleId, userId);
             throw;
         }
     }
 
+    /// <summary>
+    /// Get all roles for a specific user
+    /// </summary>
     public async Task<IEnumerable<RoleDto>> GetUserRolesAsync(int userId)
     {
-        using var scope = _logger.BeginScope("Getting roles for user {UserId}", userId);
-
-        _logger.LogInformation("Retrieving user roles");
-
         try
         {
-            // Business validation: Check if user exists
-            var userExists = await _userRepository.UserExistsAsync(userId);
-            if (!userExists)
+            // Validate user exists
+            if (!await _userRepository.UserExistsAsync(userId))
             {
-                _logger.LogWarning("Attempted to get roles for non-existent user: {UserId}", userId);
-                throw new InvalidOperationException($"User with ID '{userId}' does not exist");
+                throw new InvalidOperationException($"User with ID {userId} not found");
             }
 
-            // Get user roles
-            var roles = await _userRoleRepository.GetUserRolesAsync(userId);
+            var userRoles = await _userRoleRepository.GetUserRolesAsync(userId);
+            var roleIds = userRoles.Select(ur => ur.RoleId).ToList();
 
-            // Map to DTOs
-            var roleDtos = _mapper.Map<IEnumerable<RoleDto>>(roles);
-
-            _logger.LogInformation("Successfully retrieved {Count} roles for user {UserId}", roleDtos.Count(), userId);
-            return roleDtos;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get roles for user {UserId}", userId);
-            throw;
-        }
-    }
-
-    public async Task<IEnumerable<UserDto>> GetRoleUsersAsync(int roleId)
-    {
-        using var scope = _logger.BeginScope("Getting users for role {RoleId}", roleId);
-
-        _logger.LogInformation("Retrieving role users");
-
-        try
-        {
-            // Business validation: Check if role exists
-            var roleExists = await _roleRepository.RoleExistsAsync(roleId);
-            if (!roleExists)
-            {
-                _logger.LogWarning("Attempted to get users for non-existent role: {RoleId}", roleId);
-                throw new InvalidOperationException($"Role with ID '{roleId}' does not exist");
-            }
-
-            // Get role users
-            var users = await _userRoleRepository.GetRoleUsersAsync(roleId);
-
-            // Map to DTOs
-            var userDtos = _mapper.Map<IEnumerable<UserDto>>(users);
-
-            _logger.LogInformation("Successfully retrieved {Count} users for role {RoleId}", userDtos.Count(), roleId);
-            return userDtos;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get users for role {RoleId}", roleId);
-            throw;
-        }
-    }
-
-    public async Task<bool> UserHasRoleAsync(int userId, int roleId)
-    {
-        using var scope = _logger.BeginScope("Checking if user {UserId} has role {RoleId}", userId, roleId);
-
-        try
-        {
-            var hasRole = await _userRoleRepository.UserHasRoleAsync(userId, roleId);
-
-            _logger.LogInformation("User {UserId} {HasRole} role {RoleId}", userId, hasRole ? "has" : "does not have", roleId);
-            return hasRole;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to check if user {UserId} has role {RoleId}", userId, roleId);
-            throw;
-        }
-    }
-
-    public async Task<bool> UserHasRoleAsync(int userId, string roleCode)
-    {
-        using var scope = _logger.BeginScope("Checking if user {UserId} has role with code {RoleCode}", userId, roleCode);
-
-        try
-        {
-            var hasRole = await _userRoleRepository.UserHasRoleAsync(userId, roleCode);
-
-            _logger.LogInformation("User {UserId} {HasRole} role {RoleCode}", userId, hasRole ? "has" : "does not have", roleCode);
-            return hasRole;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to check if user {UserId} has role {RoleCode}", userId, roleCode);
-            throw;
-        }
-    }
-
-    public async Task<int> RemoveAllUserRolesAsync(int userId)
-    {
-        using var scope = _logger.BeginScope("Removing all roles from user {UserId}", userId);
-
-        _logger.LogInformation("Starting removal of all user roles");
-
-        try
-        {
-            // Business validation: Check if user exists
-            var userExists = await _userRepository.UserExistsAsync(userId);
-            if (!userExists)
-            {
-                _logger.LogWarning("Attempted to remove roles from non-existent user: {UserId}", userId);
-                throw new InvalidOperationException($"User with ID '{userId}' does not exist");
-            }
-
-            // Get current roles count for logging
-            var currentRoles = await _userRoleRepository.GetUserRolesAsync(userId);
-            var roleCount = currentRoles.Count();
-
-            // Remove all roles
-            await _userRoleRepository.RemoveAllUserRolesAsync(userId);
-
-            _logger.LogInformation("Successfully removed {Count} roles from user {UserId}", roleCount, userId);
-            return roleCount;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to remove all roles from user {UserId}", userId);
-            throw;
-        }
-    }
-
-    public async Task<bool> UpdateUserRolesAsync(int userId, IEnumerable<int> roleIds)
-    {
-        using var scope = _logger.BeginScope("Updating roles for user {UserId}", userId);
-
-        _logger.LogInformation("Starting user roles update with {Count} roles", roleIds.Count());
-
-        try
-        {
-            // Business validation: Check if user exists
-            var userExists = await _userRepository.UserExistsAsync(userId);
-            if (!userExists)
-            {
-                _logger.LogWarning("Attempted to update roles for non-existent user: {UserId}", userId);
-                throw new InvalidOperationException($"User with ID '{userId}' does not exist");
-            }
-
-            // Business validation: Check if all roles exist
+            var roles = new List<RoleDto>();
             foreach (var roleId in roleIds)
             {
-                var roleExists = await _roleRepository.RoleExistsAsync(roleId);
-                if (!roleExists)
+                var role = await _roleRepository.GetByIdAsync(roleId);
+                if (role != null)
                 {
-                    _logger.LogWarning("Attempted to assign non-existent role: {RoleId}", roleId);
-                    throw new InvalidOperationException($"Role with ID '{roleId}' does not exist");
+                    roles.Add(_mapper.Map<RoleDto>(role));
                 }
             }
 
-            // Remove all current roles
+            return roles;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting roles for user {UserId}", userId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Get all users for a specific role
+    /// </summary>
+    public async Task<IEnumerable<UserDto>> GetRoleUsersAsync(int roleId)
+    {
+        try
+        {
+            // Validate role exists
+            var role = await _roleRepository.GetByIdAsync(roleId);
+            if (role == null)
+            {
+                throw new InvalidOperationException($"Role with ID {roleId} not found");
+            }
+
+            var userRoles = await _userRoleRepository.GetRoleUsersAsync(roleId);
+            var userIds = userRoles.Select(ur => ur.UserId).ToList();
+
+            var users = new List<UserDto>();
+            foreach (var userId in userIds)
+            {
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user != null)
+                {
+                    var userDto = _mapper.Map<UserDto>(user);
+                    
+                    // Get user roles
+                    var userRoleIds = await _userRoleRepository.GetUserRolesAsync(userId);
+                    var userRoleCodes = new List<string>();
+                    foreach (var userRoleId in userRoleIds)
+                    {
+                        var userRole = await _roleRepository.GetByIdAsync(userRoleId.RoleId);
+                        if (userRole != null)
+                        {
+                            userRoleCodes.Add(userRole.Code);
+                        }
+                    }
+                    userDto.Roles = userRoleCodes;
+                    
+                    users.Add(userDto);
+                }
+            }
+
+            return users;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting users for role {RoleId}", roleId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Check if a user has a specific role
+    /// </summary>
+    public async Task<bool> UserHasRoleAsync(int userId, int roleId)
+    {
+        try
+        {
+            return await _userRoleRepository.UserHasRoleAsync(userId, roleId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking if user {UserId} has role {RoleId}", userId, roleId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Check if a user has a specific role by code
+    /// </summary>
+    public async Task<bool> UserHasRoleAsync(int userId, string roleCode)
+    {
+        try
+        {
+            // Get role by code
+            var role = await _roleRepository.GetByCodeAsync(roleCode);
+            if (role == null)
+            {
+                return false;
+            }
+
+            return await _userRoleRepository.UserHasRoleAsync(userId, role.RoleId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking if user {UserId} has role {RoleCode}", userId, roleCode);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Remove all roles from a user
+    /// </summary>
+    public async Task RemoveAllUserRolesAsync(int userId)
+    {
+        try
+        {
+            _logger.LogInformation("Removing all roles from user {UserId}", userId);
+
+            // Validate user exists
+            if (!await _userRepository.UserExistsAsync(userId))
+            {
+                throw new InvalidOperationException($"User with ID {userId} not found");
+            }
+
+            await _userRoleRepository.RemoveAllUserRolesAsync(userId);
+
+            _logger.LogInformation("All roles removed from user {UserId} successfully", userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing all roles from user {UserId}", userId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Bulk assign roles to a user
+    /// </summary>
+    public async Task AssignRolesAsync(int userId, IEnumerable<int> roleIds)
+    {
+        try
+        {
+            _logger.LogInformation("Assigning {RoleCount} roles to user {UserId}", roleIds.Count(), userId);
+
+            // Validate user exists
+            if (!await _userRepository.UserExistsAsync(userId))
+            {
+                throw new InvalidOperationException($"User with ID {userId} not found");
+            }
+
+            foreach (var roleId in roleIds)
+            {
+                await AssignRoleAsync(userId, roleId);
+            }
+
+            _logger.LogInformation("Successfully assigned {RoleCount} roles to user {UserId}", roleIds.Count(), userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error assigning roles to user {UserId}", userId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Replace all user roles with new ones
+    /// </summary>
+    public async Task ReplaceUserRolesAsync(int userId, IEnumerable<int> roleIds)
+    {
+        try
+        {
+            _logger.LogInformation("Replacing all roles for user {UserId} with {RoleCount} new roles", userId, roleIds.Count());
+
+            // Validate user exists
+            if (!await _userRepository.UserExistsAsync(userId))
+            {
+                throw new InvalidOperationException($"User with ID {userId} not found");
+            }
+
+            // Remove all existing roles
             await _userRoleRepository.RemoveAllUserRolesAsync(userId);
 
             // Assign new roles
             foreach (var roleId in roleIds)
             {
-                await _userRoleRepository.AssignRoleAsync(userId, roleId);
+                await AssignRoleAsync(userId, roleId);
             }
 
-            _logger.LogInformation("Successfully updated user {UserId} with {Count} roles", userId, roleIds.Count());
-            return true;
+            _logger.LogInformation("Successfully replaced all roles for user {UserId}", userId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update roles for user {UserId}", userId);
-            throw;
-        }
-    }
-
-    public async Task<PaginatedResult<UserRoleSummaryDto>> GetUsersWithRolesAsync(int page = 1, int pageSize = 10)
-    {
-        using var scope = _logger.BeginScope("Getting users with roles - page {Page}, size {PageSize}", page, pageSize);
-
-        _logger.LogInformation("Retrieving users with role summary");
-
-        try
-        {
-            // Get paginated users
-            var (users, totalCount) = await _userRepository.GetAllAsync(page, pageSize);
-
-            // Build summary for each user
-            var userSummaries = new List<UserRoleSummaryDto>();
-
-            foreach (var user in users)
-            {
-                var userRoles = await _userRoleRepository.GetUserRolesAsync(user.UserId);
-
-                var summary = new UserRoleSummaryDto
-                {
-                    UserId = user.UserId,
-                    Username = user.Username,
-                    Email = user.Email,
-                    FullName = $"{user.FirstName} {user.LastName}".Trim(),
-                    RoleCount = userRoles.Count(),
-                    RoleNames = userRoles.Select(r => r.Name)
-                };
-
-                userSummaries.Add(summary);
-            }
-
-            var result = new PaginatedResult<UserRoleSummaryDto>
-            {
-                Items = userSummaries,
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
-            };
-
-            _logger.LogInformation("Successfully retrieved {Count} users with role summaries", userSummaries.Count);
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get users with roles summary");
+            _logger.LogError(ex, "Error replacing roles for user {UserId}", userId);
             throw;
         }
     }

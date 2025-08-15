@@ -4,6 +4,7 @@ using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
 using Ikhtibar.Core.Integrations.SmsProviders;
+using Ikhtibar.Core.DTOs;
 using Ikhtibar.Shared.Enums;
 using System.Text.Json;
 
