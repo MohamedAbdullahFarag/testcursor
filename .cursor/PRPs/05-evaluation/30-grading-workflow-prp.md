@@ -51,7 +51,7 @@ A robust grading workflow system is essential because:
 \`\`\`csharp
 public class GradingWorkflowEntity : BaseEntity
 {
-    public Guid ExamSessionId { get; set; }
+    public int ExamSessionId { get; set; }
     public string Status { get; set; } // Created, AutoGrading, ManualGrading, Review, Finalized
     public DateTime StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
@@ -68,7 +68,7 @@ public class GradingWorkflowStep
     public string Status { get; set; }
     public DateTime? StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
-    public Guid? AssignedTo { get; set; }
+    public int? AssignedTo { get; set; }
     public Dictionary<string, object> Metadata { get; set; }
 }
 
@@ -88,13 +88,13 @@ public class WorkflowTransitionEntity : BaseEntity
 \`\`\`csharp
 public interface IGradingWorkflowService
 {
-    Task<GradingWorkflowDto> InitializeWorkflowAsync(Guid examSessionId);
-    Task<GradingWorkflowDto> TransitionStateAsync(Guid workflowId, string newState);
-    Task<GradingWorkflowDto> AssignStepAsync(Guid workflowId, string stepType, Guid assigneeId);
-    Task<GradingWorkflowDto> CompleteStepAsync(Guid workflowId, string stepType);
+    Task<GradingWorkflowDto> InitializeWorkflowAsync(int examSessionId);
+    Task<GradingWorkflowDto> TransitionStateAsync(int workflowId, string newState);
+    Task<GradingWorkflowDto> AssignStepAsync(int workflowId, string stepType, int assigneeId);
+    Task<GradingWorkflowDto> CompleteStepAsync(int workflowId, string stepType);
     Task<List<GradingWorkflowDto>> GetPendingWorkflowsAsync();
-    Task<WorkflowProgressDto> GetWorkflowProgressAsync(Guid workflowId);
-    Task<bool> ValidateTransitionAsync(Guid workflowId, string newState);
+    Task<WorkflowProgressDto> GetWorkflowProgressAsync(int workflowId);
+    Task<bool> ValidateTransitionAsync(int workflowId, string newState);
 }
 
 public class GradingWorkflowService : IGradingWorkflowService
@@ -115,9 +115,9 @@ public class GradingWorkflowService : IGradingWorkflowService
 public interface IGradingWorkflowRepository : IBaseRepository<GradingWorkflowEntity>
 {
     Task<List<GradingWorkflowEntity>> GetPendingWorkflowsAsync();
-    Task<List<GradingWorkflowEntity>> GetByExamSessionIdAsync(Guid sessionId);
+    Task<List<GradingWorkflowEntity>> GetByExamSessionIdAsync(int sessionId);
     Task<WorkflowTransitionEntity> GetTransitionAsync(string fromState, string toState);
-    Task<WorkflowProgressDto> GetWorkflowProgressAsync(Guid workflowId);
+    Task<WorkflowProgressDto> GetWorkflowProgressAsync(int workflowId);
 }
 
 public class GradingWorkflowRepository : BaseRepository<GradingWorkflowEntity>, IGradingWorkflowRepository
@@ -137,14 +137,14 @@ public class GradingWorkflowController : ControllerBase
     private readonly ILogger<GradingWorkflowController> _logger;
 
     [HttpPost("exams/{examSessionId}/workflow")]
-    public async Task<ActionResult<GradingWorkflowDto>> InitializeWorkflow(Guid examSessionId)
+    public async Task<ActionResult<GradingWorkflowDto>> InitializeWorkflow(int examSessionId)
     {
         // Implementation...
     }
 
     [HttpPost("workflows/{workflowId}/transition")]
     public async Task<ActionResult<GradingWorkflowDto>> TransitionState(
-        Guid workflowId, 
+        int workflowId, 
         [FromBody] TransitionStateDto dto)
     {
         // Implementation...
@@ -393,15 +393,15 @@ npm run test src/modules/grading/components/WorkflowProgressComponent.test.ts
 
 \`\`\`bash
 # Initialize workflow
-curl -X POST http://localhost:5000/api/GradingWorkflow/exams/{examSessionId}/workflow
+curl -X POST https://localhost:7001/api/GradingWorkflow/exams/{examSessionId}/workflow
 
 # Transition state
-curl -X POST http://localhost:5000/api/GradingWorkflow/workflows/{workflowId}/transition -d '{
+curl -X POST https://localhost:7001/api/GradingWorkflow/workflows/{workflowId}/transition -d '{
   "newState": "AutoGrading"
 }'
 
 # Get workflow progress
-curl -X GET http://localhost:5000/api/GradingWorkflow/workflows/{workflowId}/progress
+curl -X GET https://localhost:7001/api/GradingWorkflow/workflows/{workflowId}/progress
 \`\`\`
 
 ## 📋 Acceptance Criteria

@@ -1,4 +1,7 @@
-using Ikhtibar.Core.Entities;
+
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Entities;
+using Ikhtibar.Shared.Models;
 
 namespace Ikhtibar.Core.Repositories.Interfaces;
 
@@ -6,7 +9,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// Repository interface for MediaFile entity operations
 /// Provides specialized methods for media file management and querying
 /// </summary>
-public interface IMediaFileRepository : IRepository<MediaFile>
+public interface IMediaFileRepository : IBaseRepository<MediaFile>
 {
     /// <summary>
     /// Gets media files by category
@@ -24,7 +27,7 @@ public interface IMediaFileRepository : IRepository<MediaFile>
     /// <param name="limit">Maximum number of records to return</param>
     /// <param name="orderBy">Optional ordering</param>
     /// <returns>Collection of media files of the specified type</returns>
-    Task<IEnumerable<MediaFile>> GetByTypeAsync(MediaType mediaType, int offset = 0, int limit = 50, string? orderBy = null);
+    Task<IEnumerable<MediaFile>> GetByTypeAsync(Shared.Enums.MediaType mediaType, int offset = 0, int limit = 50, string? orderBy = null);
 
     /// <summary>
     /// Gets media files by status
@@ -51,7 +54,14 @@ public interface IMediaFileRepository : IRepository<MediaFile>
     /// <param name="offset">Number of records to skip</param>
     /// <param name="limit">Maximum number of records to return</param>
     /// <returns>Collection of media files matching the search criteria</returns>
-    Task<IEnumerable<MediaFile>> SearchAsync(string searchTerm, MediaType? mediaType = null, int? categoryId = null, int offset = 0, int limit = 50);
+    Task<IEnumerable<MediaFile>> SearchAsync(string searchTerm, Shared.Enums.MediaType? mediaType = null, int? categoryId = null, int offset = 0, int limit = 50);
+
+    /// <summary>
+    /// Searches media files with advanced criteria and pagination
+    /// </summary>
+    /// <param name="searchDto">Search criteria and pagination parameters</param>
+    /// <returns>Paged result of media files matching the search criteria</returns>
+    Task<PagedResult<MediaFile>> SearchAsync(MediaFileSearchDto searchDto);
 
     /// <summary>
     /// Gets media files by file hash (for duplicate detection)
@@ -100,7 +110,7 @@ public interface IMediaFileRepository : IRepository<MediaFile>
     /// Gets storage statistics grouped by media type
     /// </summary>
     /// <returns>Dictionary with media type and total storage used</returns>
-    Task<Dictionary<MediaType, long>> GetStorageStatsByTypeAsync();
+    Task<Dictionary<Shared.Enums.MediaType, long>> GetStorageStatsByTypeAsync();
 
     /// <summary>
     /// Gets storage statistics grouped by category

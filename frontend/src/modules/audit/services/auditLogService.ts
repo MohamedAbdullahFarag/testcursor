@@ -1,9 +1,6 @@
-import axios from 'axios';
+import { apiClient } from '../../../shared/services/apiClient';
 import { PagedResult } from '../../../modules/notifications/types/notification.types';
 import { AuditLog, AuditLogFilter, AuditLogExportFormat, AuditLogIntegrityResult } from '../types/auditLogs';
-
-// Use axios directly with the API base URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 /**
  * Service for interacting with audit log API
@@ -15,11 +12,15 @@ export const auditLogService = {
    * @returns Paged result of audit logs
    */
   async getAuditLogs(filter: AuditLogFilter): Promise<PagedResult<AuditLog>> {
-    const response = await axios.get<{data: PagedResult<AuditLog>}>(`${API_URL}/api/audit-logs`, { 
-      params: filter,
-      headers: this.getAuthHeaders() 
-    });
-    return response.data.data;
+    try {
+      const response = await apiClient.get<{data: PagedResult<AuditLog>}>(`/api/audit-logs`, { 
+        params: filter
+      });
+      return response.data!.data;
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
+      throw error;
+    }
   },
 
   /**
@@ -33,11 +34,15 @@ export const auditLogService = {
     if (fromDate) params.fromDate = fromDate.toISOString();
     if (toDate) params.toDate = toDate.toISOString();
     
-    const response = await axios.get<{data: AuditLog[]}>(`${API_URL}/api/audit-logs/security-events`, { 
-      params,
-      headers: this.getAuthHeaders() 
-    });
-    return response.data.data;
+    try {
+      const response = await apiClient.get<{data: AuditLog[]}>(`/api/audit-logs/security-events`, { 
+        params
+      });
+      return response.data!.data;
+    } catch (error) {
+      console.error('Error fetching security events:', error);
+      throw error;
+    }
   },
 
   /**
@@ -54,7 +59,7 @@ export const auditLogService = {
     fromDate?: Date,
     toDate?: Date,
     page: number = 1,
-    pageSize: number = 20
+    pageSize: number = 25
   ): Promise<PagedResult<AuditLog>> {
     const params: Record<string, string | number> = {
       page,
@@ -64,11 +69,16 @@ export const auditLogService = {
     if (fromDate) params.fromDate = fromDate.toISOString();
     if (toDate) params.toDate = toDate.toISOString();
     
-    const response = await axios.get<{data: PagedResult<AuditLog>}>(
-      `${API_URL}/api/audit-logs/user/${userId}`, 
-      { params, headers: this.getAuthHeaders() }
-    );
-    return response.data.data;
+    try {
+      const response = await apiClient.get<{data: PagedResult<AuditLog>}>(
+        `/api/audit-logs/user/${userId}`, 
+        { params }
+      );
+      return response.data!.data;
+    } catch (error) {
+      console.error(`Error fetching audit logs for user ${userId}:`, error);
+      throw error;
+    }
   },
 
   /**
@@ -83,14 +93,19 @@ export const auditLogService = {
     entityType: string,
     entityId: string,
     page: number = 1,
-    pageSize: number = 20
+    pageSize: number = 25
   ): Promise<PagedResult<AuditLog>> {
     const params = { page, pageSize };
-    const response = await axios.get<{data: PagedResult<AuditLog>}>(
-      `${API_URL}/api/audit-logs/entity/${encodeURIComponent(entityType)}/${encodeURIComponent(entityId)}`,
-      { params, headers: this.getAuthHeaders() }
-    );
-    return response.data.data;
+    try {
+      const response = await apiClient.get<{data: PagedResult<AuditLog>}>(
+        `/api/audit-logs/entity/${encodeURIComponent(entityType)}/${encodeURIComponent(entityId)}`,
+        { params }
+      );
+      return response.data!.data;
+    } catch (error) {
+      console.error(`Error fetching audit logs for entity ${entityType}/${entityId}:`, error);
+      throw error;
+    }
   },
 
   /**
@@ -100,16 +115,20 @@ export const auditLogService = {
    * @returns File blob for download
    */
   async exportAuditLogs(filter: AuditLogFilter, format: AuditLogExportFormat): Promise<Blob> {
-    const response = await axios.post(
-      `${API_URL}/api/audit-logs/export`, 
-      filter, 
-      {
-        params: { format },
-        responseType: 'blob',
-        headers: this.getAuthHeaders()
-      }
-    );
-    return response.data;
+    try {
+      const response = await apiClient.post<Blob>(
+        `/api/audit-logs/export`, 
+        filter, 
+        {
+          params: { format },
+          responseType: 'blob'
+        }
+      );
+      return response.data!;
+    } catch (error) {
+      console.error('Error exporting audit logs:', error);
+      throw error;
+    }
   },
 
   /**
@@ -118,15 +137,19 @@ export const auditLogService = {
    * @returns Archive result
    */
   async archiveOldLogs(retentionDays: number = 365): Promise<{ archivedCount: number; message: string }> {
-    const response = await axios.post<{data: { archivedCount: number; message: string }}>(
-      `${API_URL}/api/audit-logs/archive`,
-      {},
-      { 
-        params: { retentionDays },
-        headers: this.getAuthHeaders()
-      }
-    );
-    return response.data.data;
+    try {
+      const response = await apiClient.post<{data: { archivedCount: number; message: string }}>(
+        `/api/audit-logs/archive`,
+        {},
+        { 
+          params: { retentionDays }
+        }
+      );
+      return response.data!.data;
+    } catch (error) {
+      console.error('Error archiving old logs:', error);
+      throw error;
+    }
   },
 
   /**
@@ -143,18 +166,15 @@ export const auditLogService = {
     if (fromDate) params.fromDate = fromDate.toISOString();
     if (toDate) params.toDate = toDate.toISOString();
     
-    const response = await axios.get<{data: AuditLogIntegrityResult}>(
-      `${API_URL}/api/audit-logs/verify-integrity`, 
-      { params, headers: this.getAuthHeaders() }
-    );
-    return response.data.data;
-  },
-  
-  /**
-   * Get authentication headers for API requests
-   */
-  getAuthHeaders() {
-    const token = localStorage.getItem('ikhtibar_access_token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+      const response = await apiClient.get<{data: AuditLogIntegrityResult}>(
+        `/api/audit-logs/verify-integrity`, 
+        { params }
+      );
+      return response.data!.data;
+    } catch (error) {
+      console.error('Error verifying logs integrity:', error);
+      throw error;
+    }
   }
 };

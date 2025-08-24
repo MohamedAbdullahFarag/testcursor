@@ -138,7 +138,7 @@ public class TemplatedEmailRequest : EmailRequest
     /// Template ID to use
     /// </summary>
     [Required]
-    public Guid TemplateId { get; set; }
+    public int TemplateId { get; set; }
 
     /// <summary>
     /// Template variables for substitution

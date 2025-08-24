@@ -5,7 +5,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// <summary>
 /// Repository interface for DifficultyLevel lookup operations
 /// </summary>
-public interface IDifficultyLevelRepository : IRepository<DifficultyLevelEntity>
+public interface IDifficultyLevelRepository : IBaseRepository<DifficultyLevelEntity>
 {
     /// <summary>
     /// Gets difficulty level by name

@@ -6,7 +6,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// Repository interface for Role entity operations
 /// Following SRP: ONLY Role data operations
 /// </summary>
-public interface IRoleRepository : IRepository<Role>
+public interface IRoleRepository : IBaseRepository<Role>
 {
     /// <summary>
     /// Get role by code
@@ -42,4 +42,19 @@ public interface IRoleRepository : IRepository<Role>
     /// <param name="excludeRoleId">Role ID to exclude from check (for updates)</param>
     /// <returns>True if role code exists, false otherwise</returns>
     Task<bool> CodeExistsAsync(string code, int? excludeRoleId = null);
+
+    /// <summary>
+    /// Check if role code is in use
+    /// </summary>
+    /// <param name="code">Role code to check</param>
+    /// <param name="excludeRoleId">Role ID to exclude from check (for updates)</param>
+    /// <returns>True if role code is in use, false otherwise</returns>
+    Task<bool> IsRoleCodeInUseAsync(string code, int? excludeRoleId = null);
+
+    /// <summary>
+    /// Create a new role
+    /// </summary>
+    /// <param name="role">Role entity to create</param>
+    /// <returns>Created role entity</returns>
+    Task<Role> CreateAsync(Role role);
 }

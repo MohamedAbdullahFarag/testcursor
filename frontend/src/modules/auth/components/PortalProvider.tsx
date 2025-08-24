@@ -6,7 +6,7 @@ const PortalProvider = () => {
     const isAuthenticated = useAuthStore(state => state?.isAuthenticated)
     
 
-    if (isAuthenticated) return <Navigate to={pathNames.dasbhaord} />
+    if (isAuthenticated) return <Navigate to={pathNames.dashboard} />
 
     return <Outlet />
 }

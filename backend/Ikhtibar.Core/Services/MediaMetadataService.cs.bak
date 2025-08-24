@@ -8,12 +8,12 @@ namespace Ikhtibar.Core.Services;
 
 public interface IMediaMetadataService
 {
-    Task<MediaMetadataDto?> GetMediaMetadataByIdAsync(Guid id);
+    Task<MediaMetadataDto?> GetMediaMetadataByIdAsync(int id);
     Task<MediaMetadataDto> CreateMediaMetadataAsync(CreateMediaMetadataDto createDto);
-    Task<MediaMetadataDto> UpdateMediaMetadataAsync(Guid id, CreateMediaMetadataDto updateDto);
-    Task<bool> DeleteMediaMetadataAsync(Guid id);
-    Task<MediaMetadataDto?> GetMetadataByMediaFileIdAsync(Guid mediaFileId);
-    Task<bool> DeleteMetadataByMediaFileIdAsync(Guid mediaFileId);
+    Task<MediaMetadataDto> UpdateMediaMetadataAsync(int id, CreateMediaMetadataDto updateDto);
+    Task<bool> DeleteMediaMetadataAsync(int id);
+    Task<MediaMetadataDto?> GetMetadataByMediaFileIdAsync(int mediaFileId);
+    Task<bool> DeleteMetadataByMediaFileIdAsync(int mediaFileId);
 }
 
 public class MediaMetadataService : IMediaMetadataService
@@ -32,7 +32,7 @@ public class MediaMetadataService : IMediaMetadataService
         _logger = logger;
     }
 
-    public async Task<MediaMetadataDto?> GetMediaMetadataByIdAsync(Guid id)
+    public async Task<MediaMetadataDto?> GetMediaMetadataByIdAsync(int id)
     {
         using var scope = _logger.BeginScope("Getting media metadata by ID: {MetadataId}", id);
         
@@ -72,8 +72,8 @@ public class MediaMetadataService : IMediaMetadataService
                 throw new InvalidOperationException($"Metadata already exists for media file {createDto.MediaFileId}");
             }
 
-            var metadata = _mapper.Map<Ikhtibar.Core.Entities.MediaMetadata>(createDto);
-            metadata.Id = Guid.NewGuid();
+            var metadata = _mapper.Map<Ikhtibar.Shared.Entities.MediaMetadata>(createDto);
+            metadata.Id = int.Newint();
             metadata.CreatedAt = DateTime.UtcNow;
 
             var createdMetadata = await _repository.AddAsync(metadata);
@@ -92,7 +92,7 @@ public class MediaMetadataService : IMediaMetadataService
         }
     }
 
-    public async Task<MediaMetadataDto> UpdateMediaMetadataAsync(Guid id, CreateMediaMetadataDto updateDto)
+    public async Task<MediaMetadataDto> UpdateMediaMetadataAsync(int id, CreateMediaMetadataDto updateDto)
     {
         using var scope = _logger.BeginScope("Updating media metadata: {MetadataId}", id);
         
@@ -124,7 +124,7 @@ public class MediaMetadataService : IMediaMetadataService
         }
     }
 
-    public async Task<bool> DeleteMediaMetadataAsync(Guid id)
+    public async Task<bool> DeleteMediaMetadataAsync(int id)
     {
         using var scope = _logger.BeginScope("Deleting media metadata: {MetadataId}", id);
         
@@ -157,7 +157,7 @@ public class MediaMetadataService : IMediaMetadataService
         }
     }
 
-    public async Task<MediaMetadataDto?> GetMetadataByMediaFileIdAsync(Guid mediaFileId)
+    public async Task<MediaMetadataDto?> GetMetadataByMediaFileIdAsync(int mediaFileId)
     {
         using var scope = _logger.BeginScope("Getting metadata by media file ID: {MediaFileId}", mediaFileId);
         
@@ -184,7 +184,7 @@ public class MediaMetadataService : IMediaMetadataService
         }
     }
 
-    public async Task<bool> DeleteMetadataByMediaFileIdAsync(Guid mediaFileId)
+    public async Task<bool> DeleteMetadataByMediaFileIdAsync(int mediaFileId)
     {
         using var scope = _logger.BeginScope("Deleting all metadata for media file: {MediaFileId}", mediaFileId);
         

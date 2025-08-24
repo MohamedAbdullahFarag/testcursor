@@ -65,8 +65,8 @@ public enum ExamWorkflowState
 // Define the workflow entity
 public class ExamWorkflow
 {
-    public Guid Id { get; set; }
-    public Guid ExamId { get; set; }
+    public int id { get; set; }
+    public int ExamId { get; set; }
     public ExamWorkflowState CurrentState { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -78,8 +78,8 @@ public class ExamWorkflow
 // Define the transition entity for audit trail
 public class ExamWorkflowTransition
 {
-    public Guid Id { get; set; }
-    public Guid WorkflowId { get; set; }
+    public int id { get; set; }
+    public int WorkflowId { get; set; }
     public ExamWorkflowState FromState { get; set; }
     public ExamWorkflowState ToState { get; set; }
     public string TransitionedBy { get; set; }
@@ -93,10 +93,10 @@ public class ExamWorkflowTransition
 // Service interface
 public interface IExamWorkflowService
 {
-    Task<ExamWorkflowDto> GetExamWorkflowAsync(Guid examId);
-    Task<ExamWorkflowDto> CreateWorkflowAsync(Guid examId);
-    Task<ExamWorkflowDto> TransitionStateAsync(Guid examId, ExamWorkflowTransitionDto transitionDto);
-    Task<IEnumerable<ExamWorkflowTransitionDto>> GetWorkflowHistoryAsync(Guid examId);
+    Task<ExamWorkflowDto> GetExamWorkflowAsync(int examId);
+    Task<ExamWorkflowDto> CreateWorkflowAsync(int examId);
+    Task<ExamWorkflowDto> TransitionStateAsync(int examId, ExamWorkflowTransitionDto transitionDto);
+    Task<IEnumerable<ExamWorkflowTransitionDto>> GetWorkflowHistoryAsync(int examId);
 }
 
 // Controller
@@ -110,17 +110,17 @@ public class ExamWorkflowController : ControllerBase
     // GET: api/exams/{examId}/workflow
     [HttpGet]
     [ProducesResponseType(typeof(ExamWorkflowDto), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ExamWorkflowDto>> GetWorkflow(Guid examId)
+    public async Task<ActionResult<ExamWorkflowDto>> GetWorkflow(int examId)
     
     // POST: api/exams/{examId}/workflow/transitions
     [HttpPost("transitions")]
     [ProducesResponseType(typeof(ExamWorkflowDto), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ExamWorkflowDto>> TransitionState(Guid examId, [FromBody] ExamWorkflowTransitionDto transitionDto)
+    public async Task<ActionResult<ExamWorkflowDto>> TransitionState(int examId, [FromBody] ExamWorkflowTransitionDto transitionDto)
     
     // GET: api/exams/{examId}/workflow/history
     [HttpGet("history")]
     [ProducesResponseType(typeof(IEnumerable<ExamWorkflowTransitionDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ExamWorkflowTransitionDto>>> GetHistory(Guid examId)
+    public async Task<ActionResult<IEnumerable<ExamWorkflowTransitionDto>>> GetHistory(int examId)
 }
 ```
 
@@ -211,13 +211,13 @@ export const ExamWorkflowStatus: React.FC<{
 dotnet test backend/Ikhtibar.Tests/Api/ExamWorkflowControllerTests.cs
 
 # Validate proper state transitions
-curl -X POST http://localhost:5000/api/exams/{examId}/workflow/transitions \
+curl -X POST https://localhost:7001/api/exams/{examId}/workflow/transitions \
   -H "Content-Type: application/json" \
   -d '{"toState": "Review", "comments": "Ready for review"}'
-# Expected: {"id": "guid", "examId": "guid", "currentState": "Review", ...}
+# Expected: {"id": "int", "examId": "int", "currentState": "Review", ...}
 
 # Test invalid state transition
-curl -X POST http://localhost:5000/api/exams/{examId}/workflow/transitions \
+curl -X POST https://localhost:7001/api/exams/{examId}/workflow/transitions \
   -H "Content-Type: application/json" \
   -d '{"toState": "Published", "comments": "Invalid transition from Draft"}'
 # Expected: 400 Bad Request with validation error

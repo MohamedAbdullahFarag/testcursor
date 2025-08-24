@@ -3,22 +3,22 @@ using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Shared.DTOs;
 using Ikhtibar.Shared.Models;
 using Microsoft.Extensions.Logging;
-using CoreProcessingJobStatus = Ikhtibar.Core.Entities.ProcessingJobStatus;
-using CoreProcessingJobType = Ikhtibar.Core.Entities.ProcessingJobType;
+using CoreProcessingJobStatus = Ikhtibar.Shared.Entities.ProcessingJobStatus;
+using CoreProcessingJobType = Ikhtibar.Shared.Entities.ProcessingJobType;
 
 namespace Ikhtibar.Core.Services;
 
 public interface IMediaProcessingJobService
 {
     Task<PagedResult<MediaProcessingJobDto>> GetProcessingJobsAsync(int page = 1, int pageSize = 20);
-    Task<MediaProcessingJobDto?> GetProcessingJobByIdAsync(Guid id);
+    Task<MediaProcessingJobDto?> GetProcessingJobByIdAsync(int id);
     Task<MediaProcessingJobDto> CreateProcessingJobAsync(CreateMediaProcessingJobDto createDto);
-    Task<MediaProcessingJobDto> UpdateProcessingJobAsync(Guid id, UpdateMediaProcessingJobDto updateDto);
-    Task<bool> DeleteProcessingJobAsync(Guid id);
-    Task<IEnumerable<MediaProcessingJobDto>> GetJobsByMediaFileIdAsync(Guid mediaFileId);
+    Task<MediaProcessingJobDto> UpdateProcessingJobAsync(int id, UpdateMediaProcessingJobDto updateDto);
+    Task<bool> DeleteProcessingJobAsync(int id);
+    Task<IEnumerable<MediaProcessingJobDto>> GetJobsByMediaFileIdAsync(int mediaFileId);
     Task<IEnumerable<MediaProcessingJobDto>> GetJobsByStatusAsync(Ikhtibar.Shared.Enums.ProcessingJobStatus status);
     Task<IEnumerable<MediaProcessingJobDto>> GetPendingJobsAsync();
-    Task<bool> DeleteJobsByMediaFileIdAsync(Guid mediaFileId);
+    Task<bool> DeleteJobsByMediaFileIdAsync(int mediaFileId);
 }
 
 public class MediaProcessingJobService : IMediaProcessingJobService
@@ -69,7 +69,7 @@ public class MediaProcessingJobService : IMediaProcessingJobService
         }
     }
 
-    public async Task<MediaProcessingJobDto?> GetProcessingJobByIdAsync(Guid id)
+    public async Task<MediaProcessingJobDto?> GetProcessingJobByIdAsync(int id)
     {
         using var scope = _logger.BeginScope("Getting processing job by ID: {JobId}", id);
         
@@ -102,8 +102,8 @@ public class MediaProcessingJobService : IMediaProcessingJobService
         
         try
         {
-            var job = _mapper.Map<Ikhtibar.Core.Entities.MediaProcessingJob>(createDto);
-            job.Id = Guid.NewGuid();
+            var job = _mapper.Map<Ikhtibar.Shared.Entities.MediaProcessingJob>(createDto);
+            job.Id = int.Newint();
             job.Status = CoreProcessingJobStatus.Queued;
             job.JobType = (CoreProcessingJobType)createDto.JobType;
             job.CreatedAt = DateTime.UtcNow;
@@ -124,7 +124,7 @@ public class MediaProcessingJobService : IMediaProcessingJobService
         }
     }
 
-    public async Task<MediaProcessingJobDto> UpdateProcessingJobAsync(Guid id, UpdateMediaProcessingJobDto updateDto)
+    public async Task<MediaProcessingJobDto> UpdateProcessingJobAsync(int id, UpdateMediaProcessingJobDto updateDto)
     {
         using var scope = _logger.BeginScope("Updating processing job: {JobId}", id);
         
@@ -159,7 +159,7 @@ public class MediaProcessingJobService : IMediaProcessingJobService
         }
     }
 
-    public async Task<bool> DeleteProcessingJobAsync(Guid id)
+    public async Task<bool> DeleteProcessingJobAsync(int id)
     {
         using var scope = _logger.BeginScope("Deleting processing job: {JobId}", id);
         
@@ -192,7 +192,7 @@ public class MediaProcessingJobService : IMediaProcessingJobService
         }
     }
 
-    public async Task<IEnumerable<MediaProcessingJobDto>> GetJobsByMediaFileIdAsync(Guid mediaFileId)
+    public async Task<IEnumerable<MediaProcessingJobDto>> GetJobsByMediaFileIdAsync(int mediaFileId)
     {
         using var scope = _logger.BeginScope("Getting processing jobs for media file: {MediaFileId}", mediaFileId);
         
@@ -255,7 +255,7 @@ public class MediaProcessingJobService : IMediaProcessingJobService
         }
     }
 
-    public async Task<bool> DeleteJobsByMediaFileIdAsync(Guid mediaFileId)
+    public async Task<bool> DeleteJobsByMediaFileIdAsync(int mediaFileId)
     {
         using var scope = _logger.BeginScope("Deleting all processing jobs for media file: {MediaFileId}", mediaFileId);
         

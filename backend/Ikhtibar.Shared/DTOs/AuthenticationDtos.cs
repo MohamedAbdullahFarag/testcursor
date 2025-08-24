@@ -10,7 +10,7 @@ public class LogoutDto
     /// <summary>
     /// Refresh token to invalidate
     /// </summary>
-    public string? RefreshToken { get; set; }
+    public string? RefreshTokens { get; set; }
 
     /// <summary>
     /// Indicates if user should be logged out from all devices

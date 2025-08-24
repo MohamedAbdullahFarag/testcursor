@@ -7,11 +7,14 @@ import { z } from 'zod'
 import { useAuthStore } from '../store/authStore'
 import { authService as apiAuthService } from '../services/authService'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { pathNames } from '@/shared/constants/pathNames'
 
 const Login = () => {
-    const login = useAuthStore(state => state?.login)
+    const login = useAuthStore(state => state.login)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const navigate = useNavigate()
     
     const handleSsoLogin = async () => {
         await authService.signin()
@@ -42,21 +45,38 @@ const Login = () => {
             setIsLoading(true)
             setError(null)
             
+            console.log('Attempting login with:', data.email)
+            
             // Call the real authentication API
             const result = await apiAuthService.login({
                 email: data.email,
                 password: data.password
             })
             
-            if (result.success && result.data) {
+            console.log('Login API response:', result)
+            
+            // apiAuthService.login returns AuthResult directly, not wrapped in response
+            if (result && result.accessToken && result.user) {
+                console.log('Login successful, updating auth store with:', {
+                    user: result.user,
+                    accessToken: result.accessToken,
+                    refreshToken: result.refreshToken,
+                })
+                
                 // Update auth store with real user data and tokens
                 login({
-                    user: result.data.user,
-                    accessToken: result.data.accessToken,
-                    refreshToken: result.data.refreshToken,
+                    user: result.user,
+                    accessToken: result.accessToken,
+                    refreshToken: result.refreshToken,
                 })
+                
+                console.log('Auth store updated successfully')
+                
+                // Redirect to dashboard after successful login
+                navigate(pathNames.dashboard)
             } else {
-                setError(result.error?.message || 'Login failed. Please check your credentials.')
+                console.error('Login failed - invalid response structure:', result)
+                setError('Login failed. Please check your credentials.')
             }
         } catch (err: unknown) {
             console.error('Login error:', err)

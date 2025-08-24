@@ -1,0 +1,498 @@
+﻿using Xunit.Framework;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using Moq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Ikhtibar.Core.Services;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Entities;
+using Ikhtibar.Shared.Enums;
+using Ikhtibar.Shared.Models;
+
+namespace Ikhtibar.Tests.Core.Services;
+
+/// <summary>
+/// Comprehensive test suite for AuditService business logic.
+/// Tests all audit logging operations, validation rules, and error scenarios.
+/// Uses AAA pattern (Arrange, Act, Assert) with descriptive test names.
+/// Includes integration with mocked dependencies and database.
+/// </summary>
+
+[TestFixture]
+public class AuditServiceTests
+{
+    private Mock<IAuditLogRepository> _mockAuditLogRepository;
+    private Mock<IHttpContextAccessor> _mockHttpContextAccessor;
+    private Mock<IMapper> _mockMapper;
+    private Mock<ILogger<AuditService>> _mockLogger;
+    private Mock<HttpContext> _mockHttpContext;
+    private Mock<HttpRequest> _mockHttpRequest;
+    private Mock<HttpResponse> _mockHttpResponse;
+    private AuditService _auditService;
+
+    [SetUp]
+    public void Setup()
+    {
+        _mockAuditLogRepository = new Mock<IAuditLogRepository>();
+        _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
+        _mockMapper = new Mock<IMapper>();
+        _mockLogger = new Mock<ILogger<AuditService>>();
+        _mockHttpContext = new Mock<HttpContext>();
+        _mockHttpRequest = new Mock<HttpRequest>();
+        _mockHttpResponse = new Mock<HttpResponse>();
+
+        // Setup HTTP context
+        _mockHttpContext.Setup(c => c.Request).Returns(_mockHttpRequest.Object);
+        _mockHttpContext.Setup(c => c.Response).Returns(_mockHttpResponse.Object);
+        _mockHttpContextAccessor.Setup(a => a.HttpContext).Returns(_mockHttpContext.Object);
+
+        _auditService = new AuditService(
+            _mockAuditLogRepository.Object,
+            _mockHttpContextAccessor.Object,
+            _mockMapper.Object,
+            _mockLogger.Object
+        );
+    }
+
+    [Test]
+    public async Task LogAsync_ShouldCreateAuditLog_WhenValidEntryProvided()
+    {
+        // Arrange
+        var entry = new AuditLogEntry
+        {
+            UserId = 1,
+            UserIdentifier = "test@example.com",
+            Action = "CREATE_USER",
+            EntityType = "User",
+            EntityId = "123",
+            Details = "User creation test",
+            Severity = AuditSeverity.Medium,
+            Category = AuditCategory.UserManagement,
+            IsSystemAction = false
+        };
+
+        var auditLog = new AuditLog
+        {
+            AuditLogId = 1,
+            UserId = 1,
+            UserIdentifier = "test@example.com",
+            Action = "CREATE_USER",
+            EntityType = "User",
+            EntityId = "123",
+            Details = "User creation test",
+            Severity = AuditSeverity.Medium,
+            Category = AuditCategory.UserManagement,
+            IsSystemAction = false,
+            Timestamp = DateTime.UtcNow
+        };
+
+        _mockAuditLogRepository.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).ReturnsAsync(auditLog);
+
+        // Act
+        var result = await _auditService.LogAsync(entry);
+
+        // Assert
+        Assert.AreEqual(1, result);
+        _mockAuditLogRepository.Verify(r => r.AddAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+
+    [Test]
+    public async Task LogUserActionAsync_ShouldCreateUserActionLog_WhenValidDataProvided()
+    {
+        // Arrange
+        var userId = 1;
+        var action = "UPDATE_PROFILE";
+        var entityType = "User";
+        var entityId = "123";
+        var oldValues = new { Name = "Old Name" };
+        var newValues = new { Name = "New Name" };
+
+        var auditLog = new AuditLog
+        {
+            AuditLogId = 1,
+            UserId = userId,
+            UserIdentifier = userId.ToString(),
+            Action = action,
+            EntityType = entityType,
+            EntityId = entityId,
+            OldValues = "{\"Name\":\"Old Name\"}",
+            NewValues = "{\"Name\":\"New Name\"}",
+            Severity = AuditSeverity.Medium,
+            Category = AuditCategory.UserManagement,
+            IsSystemAction = false
+        };
+
+        _mockAuditLogRepository.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).ReturnsAsync(auditLog);
+
+        // Act
+        var result = await _auditService.LogUserActionAsync(userId, action, entityType, entityId, oldValues, newValues);
+
+        // Assert
+        Assert.AreEqual(1, result);
+        _mockAuditLogRepository.Verify(r => r.AddAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+
+    [Test]
+    public async Task LogSecurityEventAsync_ShouldCreateSecurityEventLog_WhenValidDataProvided()
+    {
+        // Arrange
+        var userIdentifier = "test@example.com";
+        var action = "LOGIN_FAILED";
+        var details = "Invalid password attempt";
+        var severity = AuditSeverity.High;
+
+        var auditLog = new AuditLog
+        {
+            AuditLogId = 1,
+            UserIdentifier = userIdentifier,
+            Action = action,
+            EntityType = "Security",
+            Details = details,
+            Severity = severity,
+            Category = AuditCategory.Security,
+            IsSystemAction = false
+        };
+
+        _mockAuditLogRepository.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).ReturnsAsync(auditLog);
+
+        // Act
+        var result = await _auditService.LogSecurityEventAsync(userIdentifier, action, details, severity);
+
+        // Assert
+        Assert.AreEqual(1, result);
+        _mockAuditLogRepository.Verify(r => r.AddAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+
+    [Test]
+    public async Task LogSystemActionAsync_ShouldCreateSystemActionLog_WhenValidDataProvided()
+    {
+        // Arrange
+        var action = "SYSTEM_MAINTENANCE";
+        var details = "Database cleanup completed";
+        var entityType = "System";
+        var entityId = "DB_CLEANUP";
+
+        var auditLog = new AuditLog
+        {
+            AuditLogId = 1,
+            UserIdentifier = "System",
+            Action = action,
+            EntityType = entityType,
+            EntityId = entityId,
+            Details = details,
+            Severity = AuditSeverity.Medium,
+            Category = AuditCategory.System,
+            IsSystemAction = true
+        };
+
+        _mockAuditLogRepository.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).ReturnsAsync(auditLog);
+
+        // Act
+        var result = await _auditService.LogSystemActionAsync(action, details, entityType, entityId);
+
+        // Assert
+        Assert.AreEqual(1, result);
+        _mockAuditLogRepository.Verify(r => r.AddAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+
+    [Test]
+    public async Task GetAuditLogsAsync_ShouldReturnPaginatedLogs_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var filter = new AuditLogFilter
+        {
+            Page = 1,
+            PageSize = 20,
+            FromDate = DateTime.UtcNow.AddDays(-7),
+            ToDate = DateTime.UtcNow
+        };
+
+        var repositoryResult = new PagedResult<AuditLog>
+        {
+            Items = new List<AuditLog>
+            {
+                new AuditLog { AuditLogId = 1, Action = "CREATE_USER", EntityType = "User" },
+                new AuditLog { AuditLogId = 2, Action = "UPDATE_PROFILE", EntityType = "User" }
+            },
+            TotalCount = 2,
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        var expectedDtos = new List<AuditLogDto>
+        {
+            new AuditLogDto { AuditLogId = 1, Action = "CREATE_USER", EntityType = "User" },
+            new AuditLogDto { AuditLogId = 2, Action = "UPDATE_PROFILE", EntityType = "User" }
+        };
+
+        _mockAuditLogRepository.Setup(r => r.GetAuditLogsAsync(filter)).ReturnsAsync(repositoryResult);
+        _mockMapper.Setup(m => m.Map<List<AuditLogDto>>(repositoryResult.Items)).Returns(expectedDtos);
+
+        // Act
+        var result = await _auditService.GetAuditLogsAsync(filter);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Items.Count());
+        Assert.AreEqual(2, result.TotalCount);
+        _mockAuditLogRepository.Verify(r => r.GetAuditLogsAsync(filter), Times.Once);
+    }
+
+    [Test]
+    public async Task GetUserAuditLogsAsync_ShouldReturnUserSpecificLogs_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var userId = 1;
+        var filter = new AuditLogFilter
+        {
+            Page = 1,
+            PageSize = 20
+        };
+
+        var repositoryResult = new PagedResult<AuditLog>
+        {
+            Items = new List<AuditLog>
+            {
+                new AuditLog { AuditLogId = 1, UserId = userId, Action = "LOGIN" },
+                new AuditLog { AuditLogId = 2, UserId = userId, Action = "UPDATE_PROFILE" }
+            },
+            TotalCount = 2,
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        var expectedDtos = new List<AuditLogDto>
+        {
+            new AuditLogDto { AuditLogId = 1, UserId = userId, Action = "LOGIN" },
+            new AuditLogDto { AuditLogId = 2, UserId = userId, Action = "UPDATE_PROFILE" }
+        };
+
+        _mockAuditLogRepository.Setup(r => r.GetUserAuditLogsAsync(userId, filter)).ReturnsAsync(repositoryResult);
+        _mockMapper.Setup(m => m.Map<List<AuditLogDto>>(repositoryResult.Items)).Returns(expectedDtos);
+
+        // Act
+        var result = await _auditService.GetUserAuditLogsAsync(userId, filter);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Items.Count());
+        Assert.That(result.Items.All(l => l.UserId == userId), Is.True);
+        _mockAuditLogRepository.Verify(r => r.GetUserAuditLogsAsync(userId, filter), Times.Once);
+    }
+
+    [Test]
+    public async Task GetSecurityEventsAsync_ShouldReturnSecurityEvents_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var fromDate = DateTime.UtcNow.AddDays(-7);
+        var toDate = DateTime.UtcNow;
+
+        var securityEvents = new List<AuditLog>
+        {
+            new AuditLog { AuditLogId = 1, Action = "LOGIN_FAILED", Category = AuditCategory.Security },
+            new AuditLog { AuditLogId = 2, Action = "ACCOUNT_LOCKED", Category = AuditCategory.Security }
+        };
+
+        var expectedDtos = new List<AuditLogDto>
+        {
+            new AuditLogDto { AuditLogId = 1, Action = "LOGIN_FAILED", Category = AuditCategory.Security },
+            new AuditLogDto { AuditLogId = 2, Action = "ACCOUNT_LOCKED", Category = AuditCategory.Security }
+        };
+
+        _mockAuditLogRepository.Setup(r => r.GetSecurityEventsAsync(fromDate, toDate)).ReturnsAsync(securityEvents);
+        _mockMapper.Setup(m => m.Map<IEnumerable<AuditLogDto>>(securityEvents)).Returns(expectedDtos);
+
+        // Act
+        var result = await _auditService.GetSecurityEventsAsync(fromDate, toDate);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Count());
+        Assert.That(result.All(e => e.Category == AuditCategory.Security), Is.True);
+        _mockAuditLogRepository.Verify(r => r.GetSecurityEventsAsync(fromDate, toDate), Times.Once);
+    }
+
+    [Test]
+    public async Task ExportAuditLogsAsync_ShouldReturnExportedData_WhenValidFormatProvided()
+    {
+        // Arrange
+        var filter = new AuditLogFilter
+        {
+            FromDate = DateTime.UtcNow.AddDays(-30),
+            ToDate = DateTime.UtcNow
+        };
+        var format = AuditLogExportFormat.CSV;
+
+        var auditLogs = new List<AuditLog>
+        {
+            new AuditLog { AuditLogId = 1, Action = "CREATE_USER", EntityType = "User" },
+            new AuditLog { AuditLogId = 2, Action = "UPDATE_PROFILE", EntityType = "User" }
+        };
+
+        var repositoryResult = new PagedResult<AuditLog>
+        {
+            Items = auditLogs,
+            TotalCount = 2
+        };
+
+        _mockAuditLogRepository.Setup(r => r.GetAuditLogsAsync(filter)).ReturnsAsync(repositoryResult);
+
+        // Act
+        var result = await _auditService.ExportAuditLogsAsync(filter, format);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.That(result.Length, Is.GreaterThan(0));
+        _mockAuditLogRepository.Verify(r => r.GetAuditLogsAsync(filter), Times.Once);
+    }
+
+    [Test]
+    public async Task ArchiveOldLogsAsync_ShouldReturnArchivedCount_WhenValidRetentionPeriodProvided()
+    {
+        // Arrange
+        var retentionPeriod = TimeSpan.FromDays(365);
+        var expectedCount = 5;
+
+        _mockAuditLogRepository.Setup(r => r.ArchiveOldLogsAsync(retentionPeriod)).ReturnsAsync(expectedCount);
+
+        // Act
+        var result = await _auditService.ArchiveOldLogsAsync(retentionPeriod);
+
+        // Assert
+        Assert.AreEqual(expectedCount, result);
+        _mockAuditLogRepository.Verify(r => r.ArchiveOldLogsAsync(retentionPeriod), Times.Once);
+    }
+
+    [Test]
+    public async Task VerifyLogsIntegrityAsync_ShouldReturnIntegrityResults_WhenValidDateRangeProvided()
+    {
+        // Arrange
+        var fromDate = DateTime.UtcNow.AddDays(-7);
+        var toDate = DateTime.UtcNow;
+
+        var integrityResults = new Dictionary<int, bool>
+        {
+            { 1, true },
+            { 2, true },
+            { 3, false }
+        };
+
+        _mockAuditLogRepository.Setup(r => r.VerifyLogsIntegrityAsync(fromDate, toDate)).ReturnsAsync(integrityResults);
+
+        // Act
+        var result = await _auditService.VerifyLogsIntegrityAsync(fromDate, toDate);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(3, result.Count);
+        Assert.That(result[1], Is.True);
+        Assert.That(result[2], Is.True);
+        Assert.That(result[3], Is.False);
+        _mockAuditLogRepository.Verify(r => r.VerifyLogsIntegrityAsync(fromDate, toDate), Times.Once);
+    }
+
+    [Test]
+    public async Task LogAsync_ShouldHandleNullHttpContext_WhenHttpContextIsNull()
+    {
+        // Arrange
+        _mockHttpContextAccessor.Setup(a => a.HttpContext).Returns((HttpContext)null);
+
+        var entry = new AuditLogEntry
+        {
+            UserId = 1,
+            UserIdentifier = "test@example.com",
+            Action = "CREATE_USER",
+            EntityType = "User",
+            EntityId = "123"
+        };
+
+        var auditLog = new AuditLog
+        {
+            AuditLogId = 1,
+            UserId = 1,
+            UserIdentifier = "test@example.com",
+            Action = "CREATE_USER",
+            EntityType = "User",
+            EntityId = "123"
+        };
+
+        _mockAuditLogRepository.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).ReturnsAsync(auditLog);
+
+        // Act
+        var result = await _auditService.LogAsync(entry);
+
+        // Assert
+        Assert.AreEqual(1, result);
+        _mockAuditLogRepository.Verify(r => r.AddAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+
+    [Test]
+    public async Task LogAsync_ShouldExtractClientIpAddress_WhenHttpContextAvailable()
+    {
+        // Arrange
+        var headers = new HeaderDictionary
+        {
+            { "X-Forwarded-For", "192.168.1.100" },
+            { "User-Agent", "Test Browser" }
+        };
+
+        _mockHttpRequest.Setup(r => r.Headers).Returns(headers);
+
+        var entry = new AuditLogEntry
+        {
+            UserId = 1,
+            UserIdentifier = "test@example.com",
+            Action = "CREATE_USER",
+            EntityType = "User",
+            EntityId = "123"
+        };
+
+        var auditLog = new AuditLog
+        {
+            AuditLogId = 1,
+            UserId = 1,
+            UserIdentifier = "test@example.com",
+            Action = "CREATE_USER",
+            EntityType = "User",
+            EntityId = "123",
+            IpAddress = "192.168.1.100",
+            UserAgent = "Test Browser"
+        };
+
+        _mockAuditLogRepository.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).ReturnsAsync(auditLog);
+
+        // Act
+        var result = await _auditService.LogAsync(entry);
+
+        // Assert
+        Assert.AreEqual(1, result);
+        _mockAuditLogRepository.Verify(r => r.AddAsync(It.Is<AuditLog>(l => 
+            l.IpAddress == "192.168.1.100" && l.UserAgent == "Test Browser")), Times.Once);
+    }
+
+    [Test]
+    public async Task LogAsync_ShouldHandleRepositoryException_WhenRepositoryFails()
+    {
+        // Arrange
+        var entry = new AuditLogEntry
+        {
+            UserId = 1,
+            UserIdentifier = "test@example.com",
+            Action = "CREATE_USER",
+            EntityType = "User",
+            EntityId = "123"
+        };
+
+        var exception = new InvalidOperationException("Database connection failed");
+        _mockAuditLogRepository.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).ThrowsAsync(exception);
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _auditService.LogAsync(entry));
+        Assert.AreEqual("Database connection failed", ex.Message);
+        _mockAuditLogRepository.Verify(r => r.AddAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+}

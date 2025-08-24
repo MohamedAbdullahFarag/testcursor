@@ -5,7 +5,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// <summary>
 /// Repository interface for QuestionStatus lookup operations
 /// </summary>
-public interface IQuestionStatusRepository : IRepository<QuestionStatus>
+public interface IQuestionStatusRepository : IBaseRepository<QuestionStatus>
 {
     /// <summary>
     /// Gets question status by name

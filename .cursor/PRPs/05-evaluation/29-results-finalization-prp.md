@@ -51,12 +51,12 @@ A robust results finalization system is essential because:
 \`\`\`csharp
 public class ResultsFinalizationEntity : BaseEntity
 {
-    public Guid ExamSessionId { get; set; }
+    public int ExamSessionId { get; set; }
     public string Status { get; set; } // Draft, UnderReview, Approved, Published
     public DateTime CreatedAt { get; set; }
     public DateTime? ApprovedAt { get; set; }
     public DateTime? PublishedAt { get; set; }
-    public Guid? ApprovedBy { get; set; }
+    public int? ApprovedBy { get; set; }
     public Dictionary<string, double> ScoreWeights { get; set; }
     public bool IsScaled { get; set; }
     public ScalingMethod? ScalingMethod { get; set; }
@@ -66,8 +66,8 @@ public class ResultsFinalizationEntity : BaseEntity
 
 public class FinalGradeEntity : BaseEntity
 {
-    public Guid StudentId { get; set; }
-    public Guid ExamSessionId { get; set; }
+    public int StudentId { get; set; }
+    public int ExamSessionId { get; set; }
     public double RawScore { get; set; }
     public double ScaledScore { get; set; }
     public string Grade { get; set; }
@@ -83,14 +83,14 @@ public class GradeAdjustment
     public string Reason { get; set; }
     public double ScoreChange { get; set; }
     public DateTime AppliedAt { get; set; }
-    public Guid AppliedBy { get; set; }
+    public int AppliedBy { get; set; }
     public string Notes { get; set; }
 }
 
 public class GradeAppealEntity : BaseEntity
 {
-    public Guid StudentId { get; set; }
-    public Guid FinalGradeId { get; set; }
+    public int StudentId { get; set; }
+    public int FinalGradeId { get; set; }
     public string AppealReason { get; set; }
     public string Status { get; set; }
     public DateTime SubmittedAt { get; set; }
@@ -105,15 +105,15 @@ public class GradeAppealEntity : BaseEntity
 \`\`\`csharp
 public interface IResultsFinalizationService
 {
-    Task<ResultsFinalizationDto> InitializeResultsAsync(Guid examSessionId);
-    Task<ResultsFinalizationDto> CalculateFinalGradesAsync(Guid resultsId);
-    Task<ResultsFinalizationDto> ApplyScalingAsync(Guid resultsId, ScalingMethodDto method);
-    Task<ResultsFinalizationDto> SetGradeThresholdsAsync(Guid resultsId, List<GradeThresholdDto> thresholds);
-    Task<ResultsFinalizationDto> ApproveResultsAsync(Guid resultsId);
-    Task<ResultsFinalizationDto> PublishResultsAsync(Guid resultsId);
+    Task<ResultsFinalizationDto> InitializeResultsAsync(int examSessionId);
+    Task<ResultsFinalizationDto> CalculateFinalGradesAsync(int resultsId);
+    Task<ResultsFinalizationDto> ApplyScalingAsync(int resultsId, ScalingMethodDto method);
+    Task<ResultsFinalizationDto> SetGradeThresholdsAsync(int resultsId, List<GradeThresholdDto> thresholds);
+    Task<ResultsFinalizationDto> ApproveResultsAsync(int resultsId);
+    Task<ResultsFinalizationDto> PublishResultsAsync(int resultsId);
     Task<bool> SubmitAppealAsync(SubmitAppealDto dto);
-    Task<bool> ProcessAppealAsync(Guid appealId, ProcessAppealDto dto);
-    Task<StatisticalSummaryDto> GetStatisticsAsync(Guid resultsId);
+    Task<bool> ProcessAppealAsync(int appealId, ProcessAppealDto dto);
+    Task<StatisticalSummaryDto> GetStatisticsAsync(int resultsId);
 }
 
 public class ResultsFinalizationService : IResultsFinalizationService
@@ -133,10 +133,10 @@ public class ResultsFinalizationService : IResultsFinalizationService
 \`\`\`csharp
 public interface IResultsFinalizationRepository : IBaseRepository<ResultsFinalizationEntity>
 {
-    Task<ResultsFinalizationEntity> GetByExamSessionIdAsync(Guid sessionId);
-    Task<List<FinalGradeEntity>> GetFinalGradesAsync(Guid resultsId);
-    Task<StatisticalSummary> CalculateStatisticsAsync(Guid resultsId);
-    Task<List<GradeAppealEntity>> GetActiveAppealsAsync(Guid resultsId);
+    Task<ResultsFinalizationEntity> GetByExamSessionIdAsync(int sessionId);
+    Task<List<FinalGradeEntity>> GetFinalGradesAsync(int resultsId);
+    Task<StatisticalSummary> CalculateStatisticsAsync(int resultsId);
+    Task<List<GradeAppealEntity>> GetActiveAppealsAsync(int resultsId);
 }
 
 public class ResultsFinalizationRepository : BaseRepository<ResultsFinalizationEntity>, IResultsFinalizationRepository
@@ -156,19 +156,19 @@ public class ResultsFinalizationController : ControllerBase
     private readonly ILogger<ResultsFinalizationController> _logger;
 
     [HttpPost("exams/{examSessionId}/results")]
-    public async Task<ActionResult<ResultsFinalizationDto>> InitializeResults(Guid examSessionId)
+    public async Task<ActionResult<ResultsFinalizationDto>> InitializeResults(int examSessionId)
     {
         // Implementation...
     }
 
     [HttpPost("results/{resultsId}/calculate")]
-    public async Task<ActionResult<ResultsFinalizationDto>> CalculateFinalGrades(Guid resultsId)
+    public async Task<ActionResult<ResultsFinalizationDto>> CalculateFinalGrades(int resultsId)
     {
         // Implementation...
     }
 
     [HttpPost("results/{resultsId}/publish")]
-    public async Task<ActionResult<ResultsFinalizationDto>> PublishResults(Guid resultsId)
+    public async Task<ActionResult<ResultsFinalizationDto>> PublishResults(int resultsId)
     {
         // Implementation...
     }
@@ -450,13 +450,13 @@ npm run test src/modules/grading/components/ResultsFinalizationComponent.test.ts
 
 \`\`\`bash
 # Initialize results
-curl -X POST http://localhost:5000/api/ResultsFinalization/exams/{examSessionId}/results
+curl -X POST https://localhost:7001/api/ResultsFinalization/exams/{examSessionId}/results
 
 # Calculate final grades
-curl -X POST http://localhost:5000/api/ResultsFinalization/results/{resultsId}/calculate
+curl -X POST https://localhost:7001/api/ResultsFinalization/results/{resultsId}/calculate
 
 # Publish results
-curl -X POST http://localhost:5000/api/ResultsFinalization/results/{resultsId}/publish
+curl -X POST https://localhost:7001/api/ResultsFinalization/results/{resultsId}/publish
 \`\`\`
 
 ## 📋 Acceptance Criteria

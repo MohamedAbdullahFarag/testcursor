@@ -12,16 +12,16 @@ namespace Ikhtibar.API.Controllers.UserManagement;
 /// </summary>
 [Authorize]
 [ApiController]
-[Route("api/roles")]
+[Route("api/user-management/roles")]
 [Produces("application/json")]
-public class RolesController : ApiControllerBase
+public class UserManagementRolesController : ApiControllerBase
 {
     private readonly IRoleService _roleService;
-    private readonly ILogger<RolesController> _logger;
+    private readonly ILogger<UserManagementRolesController> _logger;
 
-    public RolesController(
+    public UserManagementRolesController(
         IRoleService roleService,
-        ILogger<RolesController> logger)
+        ILogger<UserManagementRolesController> logger)
     {
         _roleService = roleService;
         _logger = logger;
@@ -62,7 +62,7 @@ public class RolesController : ApiControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<RoleDto>> GetRoleAsync(int id)
+    public async Task<IActionResult> GetRoleAsync(int id)
     {
         try
         {
@@ -75,12 +75,17 @@ public class RolesController : ApiControllerBase
                 return NotFound($"Role with ID {id} not found");
             }
 
-            return Ok(role);
+            return SuccessResponse(role);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving role with ID: {RoleId}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "Failed to retrieve role");
+            return StatusCode(StatusCodes.Status500InternalServerError, new {
+                success = false,
+                message = "Failed to retrieve role",
+                data = (object?)null,
+                timestamp = DateTime.UtcNow
+            });
         }
     }
 
@@ -95,7 +100,7 @@ public class RolesController : ApiControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<RoleDto>> GetRoleByCodeAsync(string code)
+    public async Task<IActionResult> GetRoleByCodeAsync(string code)
     {
         try
         {
@@ -108,12 +113,17 @@ public class RolesController : ApiControllerBase
                 return NotFound($"Role with code {code} not found");
             }
 
-            return Ok(role);
+            return SuccessResponse(role);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving role with code: {RoleCode}", code);
-            return StatusCode(StatusCodes.Status500InternalServerError, "Failed to retrieve role");
+            return StatusCode(StatusCodes.Status500InternalServerError, new {
+                success = false,
+                message = "Failed to retrieve role",
+                data = (object?)null,
+                timestamp = DateTime.UtcNow
+            });
         }
     }
 

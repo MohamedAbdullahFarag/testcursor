@@ -49,7 +49,7 @@ public class Question : BaseEntity
     /// <summary>
     /// Score points
     /// </summary>
-    public int? Points { get; set; }
+    public decimal? Points { get; set; }
 
     /// <summary>
     /// Foreign key to QuestionStatuses
@@ -135,4 +135,8 @@ public class Question : BaseEntity
     /// Navigation property to question versions
     /// </summary>
     public virtual ICollection<Question> QuestionVersions { get; set; } = new List<Question>();
+    public List<QuestionMedia> MediaAttachments { get; set; }
+    public List<QuestionTagAssignment> TagAssignments { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime? PublishedAt { get; set; }
 }

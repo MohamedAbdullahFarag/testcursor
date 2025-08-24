@@ -63,7 +63,7 @@ public class UserDto
     /// <summary>
     /// Last modification timestamp
     /// </summary>
-    public DateTime UpdatedAt { get; set; }
+    public DateTime ModifiedAt { get; set; }
 
     /// <summary>
     /// User's roles

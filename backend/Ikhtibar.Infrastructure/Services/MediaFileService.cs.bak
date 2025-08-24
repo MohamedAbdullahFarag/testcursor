@@ -1,13 +1,13 @@
 using AutoMapper;
 using Microsoft.Extensions.Logging;
-using Ikhtibar.Core.Entities;
+
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Core.Services.Interfaces;
 using Ikhtibar.Shared.DTOs;
 using Ikhtibar.Shared.Enums;
 using Ikhtibar.Shared.Models;
-using CoreMediaType = Ikhtibar.Core.Entities.MediaType;
-using CoreMediaStatus = Ikhtibar.Core.Entities.MediaStatus;
+using CoreMediaType = Ikhtibar.Shared.Entities.MediaType;
+using CoreMediaStatus = Ikhtibar.Shared.Entities.MediaStatus;
 
 namespace Ikhtibar.Infrastructure.Services;
 
@@ -37,7 +37,7 @@ public class MediaFileService : IMediaFileService
     /// <summary>
     /// Retrieves a media file by its unique identifier
     /// </summary>
-    public async Task<MediaFileDto?> GetByIdAsync(Guid id)
+    public async Task<MediaFileDto?> GetByIdAsync(int id)
     {
         using var scope = _logger.BeginScope("Getting media file {MediaFileId}", id);
         
@@ -188,7 +188,7 @@ public class MediaFileService : IMediaFileService
             // Create entity from DTO
             var mediaFile = new MediaFile
             {
-                Id = Guid.NewGuid(),
+                
                 OriginalFileName = createDto.OriginalFileName,
                 StorageFileName = createDto.StorageFileName,
                 ContentType = createDto.ContentType,
@@ -223,7 +223,7 @@ public class MediaFileService : IMediaFileService
     /// <summary>
     /// Updates an existing media file record
     /// </summary>
-    public async Task<MediaFileDto> UpdateAsync(Guid id, UpdateMediaFileDto updateDto)
+    public async Task<MediaFileDto> UpdateAsync(int id, UpdateMediaFileDto updateDto)
     {
         using var scope = _logger.BeginScope("Updating media file {MediaFileId}", id);
         
@@ -273,7 +273,7 @@ public class MediaFileService : IMediaFileService
     /// <summary>
     /// Soft deletes a media file record
     /// </summary>
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(int id)
     {
         using var scope = _logger.BeginScope("Deleting media file {MediaFileId}", id);
         
@@ -329,7 +329,7 @@ public class MediaFileService : IMediaFileService
     /// <summary>
     /// Gets media files by category
     /// </summary>
-    public async Task<List<MediaFileDto>> GetByCategoryAsync(Guid categoryId)
+    public async Task<List<MediaFileDto>> GetByCategoryAsync(int categoryId)
     {
         using var scope = _logger.BeginScope("Getting media files by category {CategoryId}", categoryId);
         
@@ -388,7 +388,7 @@ public class MediaFileService : IMediaFileService
     /// <summary>
     /// Updates media file status
     /// </summary>
-    public async Task<bool> UpdateStatusAsync(Guid id, MediaFileStatus status)
+    public async Task<bool> UpdateStatusAsync(int id, MediaFileStatus status)
     {
         using var scope = _logger.BeginScope("Updating media file status {MediaFileId} to {Status}", id, status);
         
@@ -422,7 +422,7 @@ public class MediaFileService : IMediaFileService
     /// <summary>
     /// Gets media files by user
     /// </summary>
-    public async Task<List<MediaFileDto>> GetByUserAsync(Guid userId)
+    public async Task<List<MediaFileDto>> GetByUserAsync(int userId)
     {
         using var scope = _logger.BeginScope("Getting media files by user {UserId}", userId);
         

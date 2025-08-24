@@ -62,7 +62,7 @@ public class NotificationsController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(NotificationDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<NotificationDto>> GetNotification(Guid id)
+    public async Task<ActionResult<NotificationDto>> GetNotification(int id)
     {
         try
         {
@@ -124,7 +124,7 @@ public class NotificationsController : ControllerBase
     [HttpPut("{id}/status")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<bool>> UpdateNotificationStatus(Guid id, [FromBody] string status)
+    public async Task<ActionResult<bool>> UpdateNotificationStatus(int id, [FromBody] string status)
     {
         try
         {
@@ -147,7 +147,7 @@ public class NotificationsController : ControllerBase
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<bool>> DeleteNotification(Guid id)
+    public async Task<ActionResult<bool>> DeleteNotification(int id)
     {
         try
         {
@@ -170,7 +170,7 @@ public class NotificationsController : ControllerBase
     [HttpPut("{id}/read")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<bool>> MarkAsRead(Guid id)
+    public async Task<ActionResult<bool>> MarkAsRead(int id)
     {
         try
         {

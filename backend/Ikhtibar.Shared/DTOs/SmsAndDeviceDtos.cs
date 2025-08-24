@@ -26,7 +26,7 @@ public class BulkSmsRequest
     /// <summary>
     /// Template ID to use (optional)
     /// </summary>
-    public Guid? TemplateId { get; set; }
+    public int? TemplateId { get; set; }
 
     /// <summary>
     /// Global template variables
@@ -413,7 +413,7 @@ public class DeviceRegistrationResult
     /// <summary>
     /// Device registration ID
     /// </summary>
-    public Guid? DeviceId { get; set; }
+    public int? DeviceId { get; set; }
 
     /// <summary>
     /// Registration token (if different from device token)
@@ -474,7 +474,7 @@ public class DeviceRegistrationInfo
     /// <summary>
     /// Registration ID
     /// </summary>
-    public Guid Id { get; set; }
+    public int id { get; set; }
 
     /// <summary>
     /// User ID

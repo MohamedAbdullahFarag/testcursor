@@ -1,0 +1,439 @@
+﻿using Xunit.Framework;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using Moq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Ikhtibar.Core.Services;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Core.DTOs;
+using Ikhtibar.Shared.Entities;
+
+namespace Ikhtibar.Tests.Core.Services;
+
+/// <summary>
+/// Comprehensive test suite for PermissionService business logic.
+/// Tests all permission management operations, validation rules, and error scenarios.
+/// Uses AAA pattern (Arrange, Act, Assert) with descriptive test names.
+/// Includes integration with mocked dependencies and database.
+/// </summary>
+
+[TestFixture]
+public class PermissionServiceTests
+{
+    private Mock<IPermissionRepository> _mockPermissionRepository;
+    private Mock<IRolePermissionRepository> _mockRolePermissionRepository;
+    private Mock<IUserRoleRepository> _mockUserRoleRepository;
+    private Mock<IMapper> _mockMapper;
+    private Mock<ILogger<PermissionService>> _mockLogger;
+    private PermissionService _permissionService;
+
+    [SetUp]
+    public void Setup()
+    {
+        _mockPermissionRepository = new Mock<IPermissionRepository>();
+        _mockRolePermissionRepository = new Mock<IRolePermissionRepository>();
+        _mockUserRoleRepository = new Mock<IUserRoleRepository>();
+        _mockMapper = new Mock<IMapper>();
+        _mockLogger = new Mock<ILogger<PermissionService>>();
+
+        _permissionService = new PermissionService(
+            _mockPermissionRepository.Object,
+            _mockRolePermissionRepository.Object,
+            _mockUserRoleRepository.Object,
+            _mockMapper.Object,
+            _mockLogger.Object
+        );
+    }
+
+    [Test]
+    public async Task GetAllPermissionsAsync_ShouldReturnAllPermissions_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var permissions = new List<Permission>
+        {
+            new Permission { PermissionId = 1, Code = "user.create", Name = "Create User" },
+            new Permission { PermissionId = 2, Code = "user.read", Name = "Read User" }
+        };
+
+        var expectedDtos = new List<PermissionDto>
+        {
+            new PermissionDto { PermissionId = 1, Code = "user.create", Name = "Create User" },
+            new PermissionDto { PermissionId = 2, Code = "user.read", Name = "Read User" }
+        };
+
+        _mockPermissionRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(permissions);
+        _mockMapper.Setup(m => m.Map<IEnumerable<PermissionDto>>(permissions)).Returns(expectedDtos);
+
+        // Act
+        var result = await _permissionService.GetAllPermissionsAsync();
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Count());
+        _mockPermissionRepository.Verify(r => r.GetAllAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task GetPermissionsByRoleAsync_ShouldReturnRolePermissions_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var roleId = 1;
+        var permissions = new List<Permission>
+        {
+            new Permission { PermissionId = 1, Code = "user.create", Name = "Create User" },
+            new Permission { PermissionId = 2, Code = "user.read", Name = "Read User" }
+        };
+
+        var expectedDtos = new List<PermissionDto>
+        {
+            new PermissionDto { PermissionId = 1, Code = "user.create", Name = "Create User" },
+            new PermissionDto { PermissionId = 2, Code = "user.read", Name = "Read User" }
+        };
+
+        _mockRolePermissionRepository.Setup(r => r.GetPermissionsByRoleAsync(roleId)).ReturnsAsync(permissions);
+        _mockMapper.Setup(m => m.Map<IEnumerable<PermissionDto>>(permissions)).Returns(expectedDtos);
+
+        // Act
+        var result = await _permissionService.GetPermissionsByRoleAsync(roleId);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Count());
+        _mockRolePermissionRepository.Verify(r => r.GetPermissionsByRoleAsync(roleId), Times.Once);
+    }
+
+    [Test]
+    public async Task GetPermissionsByUserAsync_ShouldReturnUserPermissions_WhenUserHasRoles()
+    {
+        // Arrange
+        var userId = 1;
+        var userRoles = new List<Role>
+        {
+            new Role { RoleId = 1, Code = "admin", Name = "Administrator" },
+            new Role { RoleId = 2, Code = "user", Name = "User" }
+        };
+
+        var role1Permissions = new List<Permission>
+        {
+            new Permission { PermissionId = 1, Code = "user.create", Name = "Create User" }
+        };
+
+        var role2Permissions = new List<Permission>
+        {
+            new Permission { PermissionId = 2, Code = "user.read", Name = "Read User" }
+        };
+
+        var expectedDtos = new List<PermissionDto>
+        {
+            new PermissionDto { PermissionId = 1, Code = "user.create", Name = "Create User" },
+            new PermissionDto { PermissionId = 2, Code = "user.read", Name = "Read User" }
+        };
+
+        _mockUserRoleRepository.Setup(r => r.GetUserRolesAsync(userId)).ReturnsAsync(userRoles);
+        _mockRolePermissionRepository.Setup(r => r.GetPermissionsByRoleAsync(1)).ReturnsAsync(role1Permissions);
+        _mockRolePermissionRepository.Setup(r => r.GetPermissionsByRoleAsync(2)).ReturnsAsync(role2Permissions);
+        _mockMapper.Setup(m => m.Map<IEnumerable<PermissionDto>>(It.IsAny<IEnumerable<Permission>>()))
+                  .Returns(expectedDtos);
+
+        // Act
+        var result = await _permissionService.GetPermissionsByUserAsync(userId);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Count());
+        _mockUserRoleRepository.Verify(r => r.GetUserRolesAsync(userId), Times.Once);
+        _mockRolePermissionRepository.Verify(r => r.GetPermissionsByRoleAsync(1), Times.Once);
+        _mockRolePermissionRepository.Verify(r => r.GetPermissionsByRoleAsync(2), Times.Once);
+    }
+
+    [Test]
+    public async Task AssignPermissionsToRoleAsync_ShouldReturnTrue_WhenRepositorySucceeds()
+    {
+        // Arrange
+        var roleId = 1;
+        var permissionIds = new List<int> { 1, 2, 3 };
+
+        _mockRolePermissionRepository.Setup(r => r.AssignPermissionsAsync(roleId, permissionIds))
+                                   .ReturnsAsync(true);
+
+        // Act
+        var result = await _permissionService.AssignPermissionsToRoleAsync(roleId, permissionIds);
+
+        // Assert
+        Assert.That(result, Is.True);
+        _mockRolePermissionRepository.Verify(r => r.AssignPermissionsAsync(roleId, permissionIds), Times.Once);
+    }
+
+    [Test]
+    public async Task AssignPermissionsToRoleAsync_ShouldReturnFalse_WhenRepositoryFails()
+    {
+        // Arrange
+        var roleId = 1;
+        var permissionIds = new List<int> { 1, 2, 3 };
+
+        _mockRolePermissionRepository.Setup(r => r.AssignPermissionsAsync(roleId, permissionIds))
+                                   .ReturnsAsync(false);
+
+        // Act
+        var result = await _permissionService.AssignPermissionsToRoleAsync(roleId, permissionIds);
+
+        // Assert
+        Assert.That(result, Is.False);
+        _mockRolePermissionRepository.Verify(r => r.AssignPermissionsAsync(roleId, permissionIds), Times.Once);
+    }
+
+    [Test]
+    public async Task RemovePermissionsFromRoleAsync_ShouldReturnTrue_WhenRepositorySucceeds()
+    {
+        // Arrange
+        var roleId = 1;
+        var permissionIds = new List<int> { 1, 2 };
+
+        _mockRolePermissionRepository.Setup(r => r.RemovePermissionsAsync(roleId, permissionIds))
+                                   .ReturnsAsync(true);
+
+        // Act
+        var result = await _permissionService.RemovePermissionsFromRoleAsync(roleId, permissionIds);
+
+        // Assert
+        Assert.That(result, Is.True);
+        _mockRolePermissionRepository.Verify(r => r.RemovePermissionsAsync(roleId, permissionIds), Times.Once);
+    }
+
+    [Test]
+    public async Task UserHasPermissionAsync_ShouldReturnTrue_WhenUserHasPermission()
+    {
+        // Arrange
+        var userId = 1;
+        var permissionCode = "user.create";
+        var userRoles = new List<Role>
+        {
+            new Role { RoleId = 1, Code = "admin", Name = "Administrator" }
+        };
+
+        var rolePermissions = new List<Permission>
+        {
+            new Permission { PermissionId = 1, Code = "user.create", Name = "Create User" }
+        };
+
+        var expectedDtos = new List<PermissionDto>
+        {
+            new PermissionDto { PermissionId = 1, Code = "user.create", Name = "Create User" }
+        };
+
+        _mockUserRoleRepository.Setup(r => r.GetUserRolesAsync(userId)).ReturnsAsync(userRoles);
+        _mockRolePermissionRepository.Setup(r => r.GetPermissionsByRoleAsync(1)).ReturnsAsync(rolePermissions);
+        _mockMapper.Setup(m => m.Map<IEnumerable<PermissionDto>>(It.IsAny<IEnumerable<Permission>>()))
+                  .Returns(expectedDtos);
+
+        // Act
+        var result = await _permissionService.UserHasPermissionAsync(userId, permissionCode);
+
+        // Assert
+        Assert.That(result, Is.True);
+        _mockUserRoleRepository.Verify(r => r.GetUserRolesAsync(userId), Times.Once);
+        _mockRolePermissionRepository.Verify(r => r.GetPermissionsByRoleAsync(1), Times.Once);
+    }
+
+    [Test]
+    public async Task UserHasPermissionAsync_ShouldReturnFalse_WhenUserDoesNotHavePermission()
+    {
+        // Arrange
+        var userId = 1;
+        var permissionCode = "user.create";
+        var userRoles = new List<Role>
+        {
+            new Role { RoleId = 1, Code = "user", Name = "User" }
+        };
+
+        var rolePermissions = new List<Permission>
+        {
+            new Permission { PermissionId = 2, Code = "user.read", Name = "Read User" }
+        };
+
+        var expectedDtos = new List<PermissionDto>
+        {
+            new PermissionDto { PermissionId = 2, Code = "user.read", Name = "Read User" }
+        };
+
+        _mockUserRoleRepository.Setup(r => r.GetUserRolesAsync(userId)).ReturnsAsync(userRoles);
+        _mockRolePermissionRepository.Setup(r => r.GetPermissionsByRoleAsync(1)).ReturnsAsync(rolePermissions);
+        _mockMapper.Setup(m => m.Map<IEnumerable<PermissionDto>>(It.IsAny<IEnumerable<Permission>>()))
+                  .Returns(expectedDtos);
+
+        // Act
+        var result = await _permissionService.UserHasPermissionAsync(userId, permissionCode);
+
+        // Assert
+        Assert.That(result, Is.False);
+        _mockUserRoleRepository.Verify(r => r.GetUserRolesAsync(userId), Times.Once);
+        _mockRolePermissionRepository.Verify(r => r.GetPermissionsByRoleAsync(1), Times.Once);
+    }
+
+    [Test]
+    public async Task RoleHasPermissionAsync_ShouldReturnTrue_WhenRoleHasPermission()
+    {
+        // Arrange
+        var roleId = 1;
+        var permissionCode = "user.create";
+        var rolePermissions = new List<Permission>
+        {
+            new Permission { PermissionId = 1, Code = "user.create", Name = "Create User" }
+        };
+
+        var expectedDtos = new List<PermissionDto>
+        {
+            new PermissionDto { PermissionId = 1, Code = "user.create", Name = "Create User" }
+        };
+
+        _mockRolePermissionRepository.Setup(r => r.GetPermissionsByRoleAsync(roleId)).ReturnsAsync(rolePermissions);
+        _mockMapper.Setup(m => m.Map<IEnumerable<PermissionDto>>(rolePermissions)).Returns(expectedDtos);
+
+        // Act
+        var result = await _permissionService.RoleHasPermissionAsync(roleId, permissionCode);
+
+        // Assert
+        Assert.That(result, Is.True);
+        _mockRolePermissionRepository.Verify(r => r.GetPermissionsByRoleAsync(roleId), Times.Once);
+    }
+
+    [Test]
+    public async Task RoleHasPermissionAsync_ShouldReturnFalse_WhenRoleDoesNotHavePermission()
+    {
+        // Arrange
+        var roleId = 1;
+        var permissionCode = "user.create";
+        var rolePermissions = new List<Permission>
+        {
+            new Permission { PermissionId = 2, Code = "user.read", Name = "Read User" }
+        };
+
+        var expectedDtos = new List<PermissionDto>
+        {
+            new PermissionDto { PermissionId = 2, Code = "user.read", Name = "Read User" }
+        };
+
+        _mockRolePermissionRepository.Setup(r => r.GetPermissionsByRoleAsync(roleId)).ReturnsAsync(rolePermissions);
+        _mockMapper.Setup(m => m.Map<IEnumerable<PermissionDto>>(rolePermissions)).Returns(expectedDtos);
+
+        // Act
+        var result = await _permissionService.RoleHasPermissionAsync(roleId, permissionCode);
+
+        // Assert
+        Assert.That(result, Is.False);
+        _mockRolePermissionRepository.Verify(r => r.GetPermissionsByRoleAsync(roleId), Times.Once);
+    }
+
+    [Test]
+    public async Task GetPermissionMatrixAsync_ShouldReturnMatrix_WhenRepositoriesReturnData()
+    {
+        // Arrange
+        var permissions = new List<Permission>
+        {
+            new Permission { PermissionId = 1, Code = "user.create", Name = "Create User" },
+            new Permission { PermissionId = 2, Code = "user.read", Name = "Read User" }
+        };
+
+        var roles = new List<Role>
+        {
+            new Role { RoleId = 1, Code = "admin", Name = "Administrator", IsSystemRole = true },
+            new Role { RoleId = 2, Code = "user", Name = "User", IsSystemRole = false }
+        };
+
+        var expectedPermissionDtos = new List<PermissionDto>
+        {
+            new PermissionDto { PermissionId = 1, Code = "user.create", Name = "Create User" },
+            new PermissionDto { PermissionId = 2, Code = "user.read", Name = "Read User" }
+        };
+
+        _mockPermissionRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(permissions);
+        _mockRolePermissionRepository.Setup(r => r.GetAllRolesWithPermissionsAsync()).ReturnsAsync(roles);
+        _mockRolePermissionRepository.Setup(r => r.GetPermissionsByRoleAsync(1)).ReturnsAsync(permissions);
+        _mockRolePermissionRepository.Setup(r => r.GetPermissionsByRoleAsync(2)).ReturnsAsync(new List<Permission>());
+        _mockMapper.Setup(m => m.Map<IEnumerable<PermissionDto>>(permissions)).Returns(expectedPermissionDtos);
+        _mockMapper.Setup(m => m.Map<IEnumerable<PermissionDto>>(It.IsAny<IEnumerable<Permission>>()))
+                  .Returns(new List<PermissionDto>());
+
+        // Act
+        var result = await _permissionService.GetPermissionMatrixAsync();
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Permissions.Count());
+        Assert.AreEqual(2, result.Roles.Count());
+        Assert.AreEqual(2, result.Matrix.Count);
+        _mockPermissionRepository.Verify(r => r.GetAllAsync(), Times.Once);
+        _mockRolePermissionRepository.Verify(r => r.GetAllRolesWithPermissionsAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task SeedDefaultPermissionsAsync_ShouldCreatePermissions_WhenTheyDoNotExist()
+    {
+        // Arrange
+        var permissionCode = "user.create";
+        _mockPermissionRepository.Setup(r => r.CodeExistsAsync(permissionCode)).ReturnsAsync(false);
+        _mockPermissionRepository.Setup(r => r.AddAsync(It.IsAny<Permission>())).ReturnsAsync(new Permission());
+
+        // Act
+        await _permissionService.SeedDefaultPermissionsAsync();
+
+        // Assert
+        _mockPermissionRepository.Verify(r => r.CodeExistsAsync(It.IsAny<string>()), Times.AtLeastOnce);
+        _mockPermissionRepository.Verify(r => r.AddAsync(It.IsAny<Permission>()), Times.AtLeastOnce);
+    }
+
+    [Test]
+    public async Task SeedDefaultPermissionsAsync_ShouldSkipPermissions_WhenTheyAlreadyExist()
+    {
+        // Arrange
+        var permissionCode = "user.create";
+        _mockPermissionRepository.Setup(r => r.CodeExistsAsync(permissionCode)).ReturnsAsync(true);
+
+        // Act
+        await _permissionService.SeedDefaultPermissionsAsync();
+
+        // Assert
+        _mockPermissionRepository.Verify(r => r.CodeExistsAsync(It.IsAny<string>()), Times.AtLeastOnce);
+        _mockPermissionRepository.Verify(r => r.AddAsync(It.IsAny<Permission>()), Times.Never);
+    }
+
+    [Test]
+    public async Task GetPermissionsByUserAsync_ShouldHandleEmptyUserRoles_WhenUserHasNoRoles()
+    {
+        // Arrange
+        var userId = 1;
+        var emptyUserRoles = new List<Role>();
+
+        _mockUserRoleRepository.Setup(r => r.GetUserRolesAsync(userId)).ReturnsAsync(emptyUserRoles);
+
+        // Act
+        var result = await _permissionService.GetPermissionsByUserAsync(userId);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.Count());
+        _mockUserRoleRepository.Verify(r => r.GetUserRolesAsync(userId), Times.Once);
+        _mockRolePermissionRepository.Verify(r => r.GetPermissionsByRoleAsync(It.IsAny<int>()), Times.Never);
+    }
+
+    [Test]
+    public async Task UserHasPermissionAsync_ShouldReturnFalse_WhenExceptionOccurs()
+    {
+        // Arrange
+        var userId = 1;
+        var permissionCode = "user.create";
+
+        _mockUserRoleRepository.Setup(r => r.GetUserRolesAsync(userId))
+                             .ThrowsAsync(new InvalidOperationException("Database error"));
+
+        // Act
+        var result = await _permissionService.UserHasPermissionAsync(userId, permissionCode);
+
+        // Assert
+        Assert.That(result, Is.False);
+        _mockUserRoleRepository.Verify(r => r.GetUserRolesAsync(userId), Times.Once);
+    }
+}

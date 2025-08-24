@@ -1,147 +1,129 @@
-using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Shared.Entities;
 
-using Ikhtibar.Shared.Models;
 namespace Ikhtibar.Core.Repositories.Interfaces;
 
 /// <summary>
-/// Repository interface for TreeNode entity operations
-/// Provides hierarchical tree operations with materialized path pattern
+/// Repository interface for tree node data operations.
+/// Extends the base repository with tree-specific operations.
 /// </summary>
-public interface ITreeNodeRepository
+public interface ITreeNodeRepository : IBaseRepository<TreeNode>
 {
     /// <summary>
-    /// Get tree node by ID
+    /// Gets all root nodes (nodes without parent).
     /// </summary>
-    /// <param name="treeNodeId">Tree node ID</param>
-    /// <returns>Tree node if found, null otherwise</returns>
-    Task<TreeNode?> GetByIdAsync(int treeNodeId);
-
-    /// <summary>
-    /// Get tree node by code
-    /// </summary>
-    /// <param name="code">Tree node code</param>
-    /// <returns>Tree node if found, null otherwise</returns>
-    Task<TreeNode?> GetByCodeAsync(string code);
-
-    /// <summary>
-    /// Get all tree nodes
-    /// </summary>
-    /// <returns>Collection of all tree nodes</returns>
-    Task<IEnumerable<TreeNode>> GetAllAsync();
-
-    /// <summary>
-    /// Get root nodes (nodes without parent)
-    /// </summary>
-    /// <returns>Collection of root tree nodes ordered by OrderIndex</returns>
+    /// <returns>Collection of root nodes</returns>
     Task<IEnumerable<TreeNode>> GetRootNodesAsync();
 
     /// <summary>
-    /// Get direct children of a parent node
+    /// Gets all children of a specific node.
     /// </summary>
-    /// <param name="parentId">Parent node ID</param>
-    /// <returns>Collection of child nodes ordered by OrderIndex</returns>
+    /// <param name="parentId">The parent node ID</param>
+    /// <returns>Collection of child nodes</returns>
     Task<IEnumerable<TreeNode>> GetChildrenAsync(int parentId);
 
     /// <summary>
-    /// Get all descendants of a node using materialized path
+    /// Gets all descendants of a specific node.
     /// </summary>
-    /// <param name="nodeId">Node ID to get descendants for</param>
+    /// <param name="nodeId">The node ID</param>
     /// <returns>Collection of descendant nodes</returns>
     Task<IEnumerable<TreeNode>> GetDescendantsAsync(int nodeId);
 
     /// <summary>
-    /// Get all ancestors of a node using materialized path
+    /// Gets all ancestors of a specific node.
     /// </summary>
-    /// <param name="nodeId">Node ID to get ancestors for</param>
-    /// <returns>Collection of ancestor nodes ordered by path</returns>
+    /// <param name="nodeId">The node ID</param>
+    /// <returns>Collection of ancestor nodes</returns>
     Task<IEnumerable<TreeNode>> GetAncestorsAsync(int nodeId);
 
     /// <summary>
-    /// Get nodes by path pattern (for subtree queries)
+    /// Gets nodes by their materialized path.
     /// </summary>
-    /// <param name="pathQuery">Path pattern to search</param>
-    /// <returns>Collection of nodes matching the path pattern</returns>
-    Task<IEnumerable<TreeNode>> GetByPathAsync(string pathQuery);
+    /// <param name="path">The materialized path</param>
+    /// <returns>Collection of nodes matching the path</returns>
+    Task<IEnumerable<TreeNode>> GetByPathAsync(string path);
 
     /// <summary>
-    /// Get nodes by tree node type
+    /// Gets nodes by type.
     /// </summary>
-    /// <param name="treeNodeTypeId">Tree node type ID</param>
+    /// <param name="nodeType">The node type</param>
     /// <returns>Collection of nodes of the specified type</returns>
-    Task<IEnumerable<TreeNode>> GetByTypeAsync(int treeNodeTypeId);
+    Task<IEnumerable<TreeNode>> GetByTypeAsync(string nodeType);
 
     /// <summary>
-    /// Create a new tree node
+    /// Gets nodes at a specific depth level.
     /// </summary>
-    /// <param name="treeNode">Tree node to create</param>
-    /// <returns>Created tree node with generated ID</returns>
-    Task<TreeNode> CreateAsync(TreeNode treeNode);
+    /// <param name="depth">The depth level</param>
+    /// <returns>Collection of nodes at the specified depth</returns>
+    Task<IEnumerable<TreeNode>> GetByDepthAsync(int depth);
 
     /// <summary>
-    /// Update an existing tree node
+    /// Gets nodes by search term (name or description).
     /// </summary>
-    /// <param name="treeNode">Tree node to update</param>
-    /// <returns>Updated tree node</returns>
-    Task<TreeNode> UpdateAsync(TreeNode treeNode);
+    /// <param name="searchTerm">The search term</param>
+    /// <returns>Collection of matching nodes</returns>
+    Task<IEnumerable<TreeNode>> SearchAsync(string searchTerm);
 
     /// <summary>
-    /// Delete a tree node (soft delete)
+    /// Gets the next available order index for a parent.
     /// </summary>
-    /// <param name="treeNodeId">Tree node ID to delete</param>
-    /// <returns>True if deleted successfully, false otherwise</returns>
-    Task<bool> DeleteAsync(int treeNodeId);
+    /// <param name="parentId">The parent node ID</param>
+    /// <returns>The next available order index</returns>
+    Task<int> GetNextOrderIndexAsync(int? parentId);
 
     /// <summary>
-    /// Move a node to a new parent (updates paths of node and descendants)
+    /// Updates the order of children within a parent.
     /// </summary>
-    /// <param name="nodeId">Node ID to move</param>
-    /// <param name="newParentId">New parent ID (null for root)</param>
-    /// <param name="newOrderIndex">New order index</param>
-    /// <returns>True if moved successfully, false otherwise</returns>
-    Task<bool> MoveNodeAsync(int nodeId, int? newParentId, int newOrderIndex);
+    /// <param name="parentId">The parent node ID</param>
+    /// <param name="childOrders">Dictionary of child ID to new order</param>
+    /// <returns>True if successful</returns>
+    Task<bool> UpdateChildOrderAsync(int parentId, IDictionary<int, int> childOrders);
 
     /// <summary>
-    /// Update paths for all descendants when a node is moved
+    /// Gets the depth of a node.
     /// </summary>
-    /// <param name="oldPath">Old materialized path</param>
-    /// <param name="newPath">New materialized path</param>
-    /// <returns>True if updated successfully, false otherwise</returns>
-    Task<bool> UpdatePathsAsync(string oldPath, string newPath);
+    /// <param name="nodeId">The node ID</param>
+    /// <returns>The depth level</returns>
+    Task<int> GetDepthAsync(int nodeId);
 
     /// <summary>
-    /// Get the maximum order index for children of a parent
+    /// Checks if a node has children.
     /// </summary>
-    /// <param name="parentId">Parent ID (null for root level)</param>
-    /// <returns>Maximum order index</returns>
-    Task<int> GetMaxOrderIndexAsync(int? parentId);
+    /// <param name="nodeId">The node ID</param>
+    /// <returns>True if the node has children</returns>
+    Task<bool> HasChildrenAsync(int nodeId);
 
     /// <summary>
-    /// Reorder nodes within the same parent
+    /// Gets the count of children for a node.
     /// </summary>
-    /// <param name="parentId">Parent ID</param>
-    /// <param name="nodeOrders">Dictionary of node ID to new order index</param>
-    /// <returns>True if reordered successfully, false otherwise</returns>
-    Task<bool> ReorderNodesAsync(int parentId, IDictionary<int, int> nodeOrders);
+    /// <param name="nodeId">The node ID</param>
+    /// <returns>The child count</returns>
+    Task<int> GetChildCountAsync(int nodeId);
 
     /// <summary>
-    /// Check if node exists
+    /// Gets the count of descendants for a node.
     /// </summary>
-    /// <param name="treeNodeId">Tree node ID to check</param>
-    /// <returns>True if exists, false otherwise</returns>
-    Task<bool> ExistsAsync(int treeNodeId);
+    /// <param name="nodeId">The node ID</param>
+    /// <returns>The descendant count</returns>
+    Task<int> GetDescendantCountAsync(int nodeId);
 
     /// <summary>
-    /// Check if node has children
+    /// Gets nodes by parent path and type.
     /// </summary>
-    /// <param name="treeNodeId">Tree node ID to check</param>
-    /// <returns>True if has children, false otherwise</returns>
-    Task<bool> HasChildrenAsync(int treeNodeId);
+    /// <param name="parentPath">The parent path</param>
+    /// <param name="nodeType">The node type</param>
+    /// <returns>Collection of matching nodes</returns>
+    Task<IEnumerable<TreeNode>> GetByParentPathAndTypeAsync(string parentPath, string nodeType);
 
     /// <summary>
-    /// Get tree statistics for a node
+    /// Gets all active nodes.
     /// </summary>
-    /// <param name="nodeId">Node ID to get statistics for</param>
-    /// <returns>Tree statistics including depth, children count, etc.</returns>
-    Task<TreeNodeStatistics> GetStatisticsAsync(int nodeId);
+    /// <returns>Collection of active nodes</returns>
+    Task<IEnumerable<TreeNode>> GetActiveNodesAsync();
+
+    /// <summary>
+    /// Gets all visible nodes.
+    /// </summary>
+    /// <returns>Collection of visible nodes</returns>
+    Task<IEnumerable<TreeNode>> GetVisibleNodesAsync();
 }

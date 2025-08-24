@@ -75,8 +75,8 @@ The Ikhtibar system has implemented exam creation and publishing workflows, but 
 // Define grading result entity
 public class GradingResultEntity : BaseEntity
 {
-    public Guid StudentResponseId { get; set; }
-    public Guid QuestionId { get; set; }
+    public int StudentResponseId { get; set; }
+    public int QuestionId { get; set; }
     public double Score { get; set; }
     public double MaxScore { get; set; }
     public double Percentage { get; set; }
@@ -91,7 +91,7 @@ public class GradingResultEntity : BaseEntity
 // Define auto-grading configuration entity
 public class AutoGradingConfigEntity : BaseEntity
 {
-    public Guid QuestionId { get; set; }
+    public int QuestionId { get; set; }
     public bool CaseSensitive { get; set; } // For text-based answers
     public double PartialCreditEnabled { get; set; }
     public double ToleranceValue { get; set; } // For numerical questions
@@ -107,10 +107,10 @@ public class AutoGradingConfigEntity : BaseEntity
 ```csharp
 public interface IAutoGradingService
 {
-    Task<GradingResultDto> GradeResponseAsync(Guid studentResponseId);
-    Task<List<GradingResultDto>> GradeExamSessionAsync(Guid examSessionId);
-    Task<bool> ValidateAnswerKeyAsync(Guid questionId, object answerKey);
-    Task<GradingSummaryDto> GetSessionGradingSummaryAsync(Guid examSessionId);
+    Task<GradingResultDto> GradeResponseAsync(int studentResponseId);
+    Task<List<GradingResultDto>> GradeExamSessionAsync(int examSessionId);
+    Task<bool> ValidateAnswerKeyAsync(int questionId, object answerKey);
+    Task<GradingSummaryDto> GetSessionGradingSummaryAsync(int examSessionId);
 }
 
 public class AutoGradingService : IAutoGradingService
@@ -135,7 +135,7 @@ public class AutoGradingService : IAutoGradingService
         _gradingHandlers = gradingHandlers.ToDictionary(h => h.SupportedQuestionType);
     }
     
-    public async Task<GradingResultDto> GradeResponseAsync(Guid studentResponseId)
+    public async Task<GradingResultDto> GradeResponseAsync(int studentResponseId)
     {
         try
         {
@@ -318,9 +318,9 @@ public class MultipleChoiceGradingHandler : IQuestionTypeGradingHandler
 ```csharp
 public interface IGradingResultRepository : IBaseRepository<GradingResultEntity>
 {
-    Task<List<GradingResultEntity>> GetByExamSessionIdAsync(Guid examSessionId);
-    Task<GradingResultEntity> GetByStudentResponseIdAsync(Guid studentResponseId);
-    Task<GradingSummaryDto> GetSessionSummaryAsync(Guid examSessionId);
+    Task<List<GradingResultEntity>> GetByExamSessionIdAsync(int examSessionId);
+    Task<GradingResultEntity> GetByStudentResponseIdAsync(int studentResponseId);
+    Task<GradingSummaryDto> GetSessionSummaryAsync(int examSessionId);
 }
 
 public class GradingResultRepository : BaseRepository<GradingResultEntity>, IGradingResultRepository
@@ -329,7 +329,7 @@ public class GradingResultRepository : BaseRepository<GradingResultEntity>, IGra
     {
     }
     
-    public async Task<List<GradingResultEntity>> GetByExamSessionIdAsync(Guid examSessionId)
+    public async Task<List<GradingResultEntity>> GetByExamSessionIdAsync(int examSessionId)
     {
         const string sql = @"
             SELECT gr.*
@@ -340,7 +340,7 @@ public class GradingResultRepository : BaseRepository<GradingResultEntity>, IGra
         return (await DbContext.QueryAsync<GradingResultEntity>(sql, new { ExamSessionId = examSessionId })).ToList();
     }
     
-    public async Task<GradingResultEntity> GetByStudentResponseIdAsync(Guid studentResponseId)
+    public async Task<GradingResultEntity> GetByStudentResponseIdAsync(int studentResponseId)
     {
         const string sql = @"
             SELECT *
@@ -350,7 +350,7 @@ public class GradingResultRepository : BaseRepository<GradingResultEntity>, IGra
         return await DbContext.QueryFirstOrDefaultAsync<GradingResultEntity>(sql, new { StudentResponseId = studentResponseId });
     }
     
-    public async Task<GradingSummaryDto> GetSessionSummaryAsync(Guid examSessionId)
+    public async Task<GradingSummaryDto> GetSessionSummaryAsync(int examSessionId)
     {
         const string sql = @"
             SELECT 
@@ -397,7 +397,7 @@ public class AutoGradingController : ControllerBase
     }
     
     [HttpPost("response/{responseId}")]
-    public async Task<ActionResult<GradingResultDto>> GradeResponse(Guid responseId)
+    public async Task<ActionResult<GradingResultDto>> GradeResponse(int responseId)
     {
         try
         {
@@ -417,7 +417,7 @@ public class AutoGradingController : ControllerBase
     }
     
     [HttpPost("session/{sessionId}")]
-    public async Task<ActionResult<List<GradingResultDto>>> GradeExamSession(Guid sessionId)
+    public async Task<ActionResult<List<GradingResultDto>>> GradeExamSession(int sessionId)
     {
         try
         {
@@ -432,7 +432,7 @@ public class AutoGradingController : ControllerBase
     }
     
     [HttpGet("summary/{sessionId}")]
-    public async Task<ActionResult<GradingSummaryDto>> GetSessionSummary(Guid sessionId)
+    public async Task<ActionResult<GradingSummaryDto>> GetSessionSummary(int sessionId)
     {
         try
         {
@@ -750,15 +750,15 @@ dotnet test Ikhtibar.Tests/Core/Services/TrueFalseGradingHandlerTests.cs
 
 ```bash
 # Test grading a single response
-curl -X POST http://localhost:5000/api/AutoGrading/response/{responseId}
+curl -X POST https://localhost:7001/api/AutoGrading/response/{responseId}
 # Expected: GradingResult object with score, feedback, etc.
 
 # Test grading an entire exam session
-curl -X POST http://localhost:5000/api/AutoGrading/session/{sessionId}
+curl -X POST https://localhost:7001/api/AutoGrading/session/{sessionId}
 # Expected: Array of GradingResult objects
 
 # Test retrieving session summary
-curl -X GET http://localhost:5000/api/AutoGrading/summary/{sessionId}
+curl -X GET https://localhost:7001/api/AutoGrading/summary/{sessionId}
 # Expected: GradingSummary object with totals, averages, etc.
 ```
 

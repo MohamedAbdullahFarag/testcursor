@@ -1,391 +1,459 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using System.Security.Cryptography;
+using System.Text;
 using Ikhtibar.Core.Services.Interfaces;
 using Ikhtibar.Core.Repositories.Interfaces;
-using Ikhtibar.Core.DTOs;
 using Ikhtibar.Shared.Entities;
-using Ikhtibar.Shared.Models;
+using Ikhtibar.Shared.DTOs;
+using Microsoft.Extensions.Logging;
+using BCrypt.Net;
 
-namespace Ikhtibar.Core.Services.Implementations;
-
-/// <summary>
-/// Authentication service implementation
-/// Following SRP: ONLY authentication business logic
-/// </summary>
-public class AuthenticationService : IAuthenticationService
+namespace Ikhtibar.Core.Services.Implementations
 {
-    private readonly IUserService _userService;
-    private readonly ITokenService _tokenService;
-    private readonly IOidcService _oidcService;
-    private readonly IRefreshTokenRepository _refreshTokenRepository;
-    private readonly ILogger<AuthenticationService> _logger;
-    private readonly AuthSettings _authSettings;
-
-    public AuthenticationService(
-        IUserService userService,
-        ITokenService tokenService,
-        IOidcService oidcService,
-        IRefreshTokenRepository refreshTokenRepository,
-        IOptions<AuthSettings> authSettings,
-        ILogger<AuthenticationService> logger)
+    public class AuthenticationService : IAuthenticationService
     {
-        _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-        _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
-        _oidcService = oidcService ?? throw new ArgumentNullException(nameof(oidcService));
-        _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
-        _authSettings = authSettings?.Value ?? throw new ArgumentNullException(nameof(authSettings));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+        private readonly IUserRepository _userRepository;
+        private readonly ITokenService _tokenService;
+        private readonly IOidcService _oidcService;
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
+        private readonly ILogger<AuthenticationService> _logger;
 
-    /// <summary>
-    /// Authenticate user with email and password
-    /// </summary>
-    public async Task<AuthResult?> AuthenticateAsync(LoginRequest request)
-    {
-        try
+        public AuthenticationService(
+            IUserRepository userRepository,
+            ITokenService tokenService,
+            IOidcService oidcService,
+            IRefreshTokenRepository refreshTokenRepository,
+            ILogger<AuthenticationService> logger)
         {
-            _logger.LogInformation("Authentication attempt for email: {Email}", request.Email);
-
-            // Validate request
-            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-            {
-                _logger.LogWarning("Invalid authentication request: missing email or password");
-                return null;
-            }
-
-            // Authenticate user via user service
-            var user = await _userService.AuthenticateAsync(request.Email, request.Password);
-            if (user == null)
-            {
-                _logger.LogWarning("Authentication failed for email: {Email}", request.Email);
-                return null;
-            }
-
-            // Check if user is active
-            if (!user.IsActive)
-            {
-                _logger.LogWarning("Authentication failed for inactive user: {Email}", request.Email);
-                return null;
-            }
-
-            // Generate tokens
-            var accessToken = await _tokenService.GenerateJwtAsync(user);
-            var refreshToken = await _tokenService.GenerateRefreshTokenAsync();
-
-            // Store refresh token
-            var refreshTokenEntity = new RefreshToken
-            {
-                TokenHash = HashToken(refreshToken),
-                UserId = user.UserId,
-                IssuedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(_authSettings.RefreshTokenExpirationDays),
-                ClientIpAddress = request.ClientIpAddress,
-                UserAgent = request.UserAgent
-            };
-
-            await _refreshTokenRepository.AddAsync(refreshTokenEntity);
-
-            // Log successful authentication
-            _logger.LogInformation("Authentication successful for user: {Email} (ID: {UserId})", 
-                request.Email, user.UserId);
-
-            return new AuthResult
-            {
-                User = user,
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(_authSettings.AccessTokenExpirationMinutes),
-                TokenType = "Bearer"
-            };
+            _userRepository = userRepository;
+            _tokenService = tokenService;
+            _oidcService = oidcService;
+            _refreshTokenRepository = refreshTokenRepository;
+            _logger = logger;
         }
-        catch (Exception ex)
+
+        public async Task<AuthResultDto> AuthenticateAsync(LoginDto request)
         {
-            _logger.LogError(ex, "Error during authentication for email: {Email}", request.Email);
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// Refresh access token using refresh token
-    /// </summary>
-    public async Task<AuthResult?> RefreshTokenAsync(string refreshToken)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(refreshToken))
+            try
             {
-                _logger.LogWarning("Refresh token is null or empty");
-                return null;
-            }
+                _logger.LogInformation("Authentication attempt for user: {Email}", request.Email);
 
-            // Hash the provided token for comparison
-            var tokenHash = HashToken(refreshToken);
+                // Validate input
+                if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+                {
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "Email and password are required"
+                    };
+                }
 
-            // Get stored refresh token
-            var storedToken = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash);
-            if (storedToken == null)
-            {
-                _logger.LogWarning("Refresh token not found in database");
-                return null;
-            }
-
-            // Validate token
-            if (storedToken.IsExpired || storedToken.IsRevoked)
-            {
-                _logger.LogWarning("Refresh token is expired or revoked for user: {UserId}", storedToken.UserId);
-                return null;
-            }
-
-            // Get user information
-            var user = await _userService.GetUserAsync(storedToken.UserId);
-            if (user == null || !user.IsActive)
-            {
-                _logger.LogWarning("User not found or inactive for refresh token: {UserId}", storedToken.UserId);
-                return null;
-            }
-
-            // Revoke old refresh token
-            await _refreshTokenRepository.RevokeByTokenHashAsync(tokenHash, "Token refreshed");
-
-            // Generate new tokens
-            var newAccessToken = await _tokenService.GenerateJwtAsync(user);
-            var newRefreshToken = await _tokenService.GenerateRefreshTokenAsync();
-
-            // Store new refresh token
-            var newRefreshTokenEntity = new RefreshToken
-            {
-                TokenHash = HashToken(newRefreshToken),
-                UserId = user.UserId,
-                IssuedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(_authSettings.RefreshTokenExpirationDays),
-                ClientIpAddress = storedToken.ClientIpAddress,
-                UserAgent = storedToken.UserAgent
-            };
-
-            await _refreshTokenRepository.AddAsync(newRefreshTokenEntity);
-
-            _logger.LogInformation("Token refreshed successfully for user: {UserId}", user.UserId);
-
-            return new AuthResult
-            {
-                User = user,
-                AccessToken = newAccessToken,
-                RefreshToken = newRefreshToken,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(_authSettings.AccessTokenExpirationMinutes),
-                TokenType = "Bearer"
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during token refresh");
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// Process SSO callback and authenticate user
-    /// </summary>
-    public async Task<AuthResult?> ProcessSsoCallbackAsync(SsoCallbackData callbackData)
-    {
-        try
-        {
-            _logger.LogInformation("Processing SSO callback for state: {State}", callbackData.State);
-
-            // Check for OIDC errors
-            if (!string.IsNullOrEmpty(callbackData.Error))
-            {
-                _logger.LogWarning("OIDC callback error: {Error} - {Description}", 
-                    callbackData.Error, callbackData.ErrorDescription);
-                return null;
-            }
-
-            // Exchange authorization code for tokens
-            var redirectUri = callbackData.RedirectUri ?? "http://localhost:3000/callback";
-            var tokenResponse = await _oidcService.ExchangeCodeAsync(callbackData.Code, redirectUri);
-            if (tokenResponse == null)
-            {
-                _logger.LogWarning("Failed to exchange authorization code for tokens");
-                return null;
-            }
-
-            // Get user information from OIDC provider
-            var oidcUserInfo = await _oidcService.GetUserInfoAsync(tokenResponse.AccessToken);
-            if (oidcUserInfo == null)
-            {
-                _logger.LogWarning("Failed to get user info from OIDC provider");
-                return null;
-            }
-
-            // Find or create local user
-            if (string.IsNullOrWhiteSpace(oidcUserInfo.Email))
-            {
-                _logger.LogWarning("OIDC user info missing email address");
-                return null;
-            }
-            
-            var user = await _userService.GetUserByEmailAsync(oidcUserInfo.Email);
-            if (user == null)
-            {
-                // Create new user from OIDC info
-                user = await CreateUserFromOidcAsync(oidcUserInfo);
+                // Get user by email
+                var user = await _userRepository.GetByEmailAsync(request.Email);
                 if (user == null)
                 {
-                    _logger.LogWarning("Failed to create user from OIDC info for email: {Email}", oidcUserInfo.Email);
-                    return null;
+                    _logger.LogWarning("Authentication failed: User not found for email: {Email}", request.Email);
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "Invalid email or password"
+                    };
                 }
+
+                // Check if user is active
+                if (!user.IsActive)
+                {
+                    _logger.LogWarning("Authentication failed: Inactive user for email: {Email}", request.Email);
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "Account is deactivated"
+                    };
+                }
+
+                // Verify password
+                if (!VerifyPassword(request.Password, user.PasswordHash))
+                {
+                    _logger.LogWarning("Authentication failed: Invalid password for user: {Email}", request.Email);
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "Invalid email or password"
+                    };
+                }
+
+                // Check if email is verified (if required)
+                if (!user.EmailVerified)
+                {
+                    _logger.LogWarning("Authentication failed: Unverified email for user: {Email}", request.Email);
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "Please verify your email address before logging in"
+                    };
+                }
+
+                // Generate JWT token
+                var accessToken = await _tokenService.GenerateJwtAsync(user);
+                var refreshToken = await _tokenService.GenerateRefreshTokenAsync();
+
+                // Store refresh token
+                var refreshTokenEntity = new RefreshTokens
+                {
+                    UserId = user.UserId,
+                    TokenHash = HashToken(refreshToken),
+                    ExpiresAt = DateTime.UtcNow.AddDays(30), // 30 days
+                    IssuedAt = DateTime.UtcNow,
+                    ClientIpAddress = request.ClientIpAddress,
+                    UserAgent = request.UserAgent
+                };
+
+                await _refreshTokenRepository.AddAsync(refreshTokenEntity);
+
+                // Get user roles
+                var roles = user.UserRoles?
+                    .Where(ur => ur.Role != null && !string.IsNullOrEmpty(ur.Role.Name))
+                    .Select(ur => ur.Role!.Name)
+                    .ToList() ?? new List<string>();
+
+                _logger.LogInformation("Authentication successful for user: {Email}", request.Email);
+
+                return new AuthResultDto
+                {
+                    Success = true,
+                    User = new UserDto
+                    {
+                        UserId = user.UserId,
+                        Email = user.Email,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Username = user.Username,
+                        IsActive = user.IsActive,
+                        EmailVerified = user.EmailVerified,
+                        CreatedAt = user.CreatedAt,
+                        ModifiedAt = user.ModifiedAt ?? user.CreatedAt
+                    },
+                    AccessToken = accessToken,
+                    RefreshTokens = refreshToken,
+                    TokenType = "Bearer",
+                    ExpiresIn = 3600, // 1 hour
+                    ExpiresAt = DateTime.UtcNow.AddHours(1),
+                    IssuedAt = DateTime.UtcNow,
+                    Roles = roles
+                };
             }
-
-            // Check if user is active
-            if (!user.IsActive)
+            catch (Exception ex)
             {
-                _logger.LogWarning("OIDC user is inactive: {Email}", user.Email);
-                return null;
+                _logger.LogError(ex, "Error during authentication for user: {Email}", request.Email);
+                return new AuthResultDto
+                {
+                    Success = false,
+                    ErrorMessage = "Authentication failed due to a system error"
+                };
             }
-
-            // Generate local tokens
-            var accessToken = await _tokenService.GenerateJwtAsync(user);
-            var refreshToken = await _tokenService.GenerateRefreshTokenAsync();
-
-            // Store refresh token
-            var refreshTokenEntity = new RefreshToken
-            {
-                TokenHash = HashToken(refreshToken),
-                UserId = user.UserId,
-                IssuedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(_authSettings.RefreshTokenExpirationDays),
-                ClientIpAddress = null, // OIDC flow doesn't provide this
-                UserAgent = null // OIDC flow doesn't provide this
-            };
-
-            await _refreshTokenRepository.AddAsync(refreshTokenEntity);
-
-            _logger.LogInformation("SSO authentication successful for user: {Email} (ID: {UserId})", 
-                user.Email, user.UserId);
-
-            return new AuthResult
-            {
-                User = user,
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(_authSettings.AccessTokenExpirationMinutes),
-                TokenType = "Bearer"
-            };
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing SSO callback");
-            throw;
-        }
-    }
 
-    /// <summary>
-    /// Revoke refresh token
-    /// </summary>
-    public async Task<bool> RevokeTokenAsync(string refreshToken)
-    {
-        try
+        public async Task<AuthResultDto> RefreshTokenAsync(string refreshToken)
         {
-            if (string.IsNullOrWhiteSpace(refreshToken))
+            try
             {
+                var tokenPrefix = refreshToken != null && refreshToken.Length >= 8 ? refreshToken[..8] : refreshToken;
+                _logger.LogInformation("Token refresh attempt for token: {TokenPrefix}", tokenPrefix);
+
+                if (string.IsNullOrWhiteSpace(refreshToken))
+                {
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "Refresh token is required"
+                    };
+                }
+
+                // Hash the refresh token
+                var tokenHash = HashToken(refreshToken);
+
+                // Find the refresh token in database
+                var storedToken = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash);
+                if (storedToken == null)
+                {
+                    _logger.LogWarning("Token refresh failed: Invalid refresh token");
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "Invalid refresh token"
+                    };
+                }
+
+                // Check if token is revoked
+                if (storedToken.IsRevoked)
+                {
+                    _logger.LogWarning("Token refresh failed: Token is revoked");
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "Refresh token has been revoked"
+                    };
+                }
+
+                // Check if token is expired
+                if (storedToken.ExpiresAt <= DateTime.UtcNow)
+                {
+                    _logger.LogWarning("Token refresh failed: Token is expired");
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "Refresh token has expired"
+                    };
+                }
+
+                // Get user
+                var user = await _userRepository.GetByIdAsync(storedToken.UserId);
+                if (user == null || !user.IsActive)
+                {
+                    _logger.LogWarning("Token refresh failed: User not found or inactive");
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "User account is not available"
+                    };
+                }
+
+                // Generate new tokens
+                var newAccessToken = await _tokenService.GenerateJwtAsync(user);
+                var newRefreshToken = await _tokenService.GenerateRefreshTokenAsync();
+
+                // Revoke old refresh token
+                await _refreshTokenRepository.RevokeByTokenHashAsync(tokenHash);
+
+                // Store new refresh token
+                var newRefreshTokenEntity = new RefreshTokens
+                {
+                    UserId = user.UserId,
+                    TokenHash = HashToken(newRefreshToken),
+                    ExpiresAt = DateTime.UtcNow.AddDays(30),
+                    IssuedAt = DateTime.UtcNow,
+                    ClientIpAddress = storedToken.ClientIpAddress,
+                    UserAgent = storedToken.UserAgent
+                };
+
+                await _refreshTokenRepository.AddAsync(newRefreshTokenEntity);
+
+                // Get user roles
+                var roles = user.UserRoles?
+                    .Where(ur => ur.Role != null && !string.IsNullOrEmpty(ur.Role.Name))
+                    .Select(ur => ur.Role!.Name)
+                    .ToList() ?? new List<string>();
+
+                _logger.LogInformation("Token refresh successful for user: {Email}", user.Email);
+
+                return new AuthResultDto
+                {
+                    Success = true,
+                    User = new UserDto
+                    {
+                        UserId = user.UserId,
+                        Email = user.Email,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Username = user.Username,
+                        IsActive = user.IsActive,
+                        EmailVerified = user.EmailVerified,
+                        CreatedAt = user.CreatedAt,
+                        ModifiedAt = user.ModifiedAt ?? user.CreatedAt
+                    },
+                    AccessToken = newAccessToken,
+                    RefreshTokens = newRefreshToken,
+                    TokenType = "Bearer",
+                    ExpiresIn = 3600,
+                    ExpiresAt = DateTime.UtcNow.AddHours(1),
+                    IssuedAt = DateTime.UtcNow,
+                    Roles = roles
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during token refresh");
+                return new AuthResultDto
+                {
+                    Success = false,
+                    ErrorMessage = "Token refresh failed due to a system error"
+                };
+            }
+        }
+
+        public async Task<AuthResultDto> ProcessSsoCallbackAsync(SsoCallbackDto callbackData)
+        {
+            try
+            {
+                _logger.LogInformation("Processing SSO callback for user");
+
+                // Validate callback data
+                if (string.IsNullOrWhiteSpace(callbackData.Code))
+                {
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "Authorization code is required"
+                    };
+                }
+
+                // Exchange authorization code for tokens
+                var tokenResponse = await _oidcService.ExchangeCodeAsync(callbackData.Code);
+                if (tokenResponse == null)
+                {
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "Failed to exchange authorization code for tokens"
+                    };
+                }
+
+                // Get user info from OIDC provider
+                var userInfo = await _oidcService.GetUserInfoAsync(tokenResponse.AccessToken);
+                if (userInfo == null)
+                {
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        ErrorMessage = "Failed to retrieve user information"
+                    };
+                }
+
+                // Find or create user
+                var user = await _userRepository.GetByEmailAsync(userInfo.Email ?? string.Empty);
+                if (user == null)
+                {
+                    // Create new user from SSO
+                    var normalizedEmail = userInfo.Email ?? string.Empty;
+                    user = new User
+                    {
+                        Email = normalizedEmail,
+                        FirstName = userInfo.GivenName ?? userInfo.Name?.Split(' ').FirstOrDefault() ?? "",
+                        LastName = userInfo.FamilyName ?? userInfo.Name?.Split(' ').Skip(1).FirstOrDefault() ?? "",
+                        Username = normalizedEmail.Split('@')[0], // Use email prefix as username
+                        IsActive = true,
+                        EmailVerified = userInfo.EmailVerified,
+                        CreatedAt = DateTime.UtcNow,
+                        ModifiedAt = DateTime.UtcNow
+                    };
+
+                    await _userRepository.AddAsync(user);
+                    _logger.LogInformation("Created new user from SSO: {Email}", user.Email);
+                }
+
+                // Generate JWT token
+                var accessToken = await _tokenService.GenerateJwtAsync(user);
+                var refreshToken = await _tokenService.GenerateRefreshTokenAsync();
+
+                // Store refresh token
+                var refreshTokenEntity = new RefreshTokens
+                {
+                    UserId = user.UserId,
+                    TokenHash = HashToken(refreshToken),
+                    ExpiresAt = DateTime.UtcNow.AddDays(30),
+                    IssuedAt = DateTime.UtcNow,
+                    ClientIpAddress = callbackData.ClientIpAddress,
+                    UserAgent = callbackData.UserAgent
+                };
+
+                await _refreshTokenRepository.AddAsync(refreshTokenEntity);
+
+                // Get user roles
+                var roles = user.UserRoles?
+                    .Where(ur => ur.Role != null && !string.IsNullOrEmpty(ur.Role.Name))
+                    .Select(ur => ur.Role!.Name)
+                    .ToList() ?? new List<string>();
+
+                _logger.LogInformation("SSO authentication successful for user: {Email}", user.Email);
+
+                return new AuthResultDto
+                {
+                    Success = true,
+                    User = new UserDto
+                    {
+                        UserId = user.UserId,
+                        Email = user.Email ?? string.Empty,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Username = user.Username,
+                        IsActive = user.IsActive,
+                        EmailVerified = user.EmailVerified,
+                        CreatedAt = user.CreatedAt,
+                        ModifiedAt = user.ModifiedAt ?? user.CreatedAt
+                    },
+                    AccessToken = accessToken,
+                    RefreshTokens = refreshToken,
+                    TokenType = "Bearer",
+                    ExpiresIn = 3600,
+                    ExpiresAt = DateTime.UtcNow.AddHours(1),
+                    IssuedAt = DateTime.UtcNow,
+                    Roles = roles
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing SSO callback");
+                return new AuthResultDto
+                {
+                    Success = false,
+                    ErrorMessage = "SSO authentication failed due to a system error"
+                };
+            }
+        }
+
+        public async Task<bool> RevokeTokenAsync(string refreshToken)
+        {
+            try
+            {
+                var tokenHash = HashToken(refreshToken);
+                var result = await _refreshTokenRepository.RevokeByTokenHashAsync(tokenHash);
+
+                if (result)
+                {
+                    _logger.LogInformation("Refresh token revoked successfully");
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error revoking refresh token");
                 return false;
             }
+        }
 
-            var tokenHash = HashToken(refreshToken);
-            var result = await _refreshTokenRepository.RevokeByTokenHashAsync(tokenHash, "Token revoked by user");
-
-            if (result)
+        public async Task<bool> ValidateTokenAsync(string accessToken)
+        {
+            try
             {
-                _logger.LogInformation("Refresh token revoked successfully");
+                return await _tokenService.IsTokenValidAsync(accessToken);
             }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error revoking refresh token");
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// Validate access token
-    /// </summary>
-    public async Task<bool> ValidateTokenAsync(string accessToken)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(accessToken))
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error validating access token");
                 return false;
             }
-
-            return await _tokenService.ValidateTokenAsync(accessToken);
         }
-        catch (Exception ex)
+
+        private bool VerifyPassword(string password, string passwordHash)
         {
-            _logger.LogError(ex, "Error validating access token");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Logout user and revoke all tokens
-    /// </summary>
-    public async Task<bool> LogoutAsync(int userId)
-    {
-        try
-        {
-            _logger.LogInformation("Logging out user: {UserId}", userId);
-
-            // Revoke all refresh tokens for the user
-            var result = await _refreshTokenRepository.RevokeAllByUserIdAsync(userId, "User logout");
-
-            if (result)
+            try
             {
-                _logger.LogInformation("Successfully logged out user: {UserId}", userId);
+                // Use BCrypt for password verification
+                return BCrypt.Net.BCrypt.Verify(password, passwordHash);
             }
-
-            return result;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error verifying password");
+                return false;
+            }
         }
-        catch (Exception ex)
+
+        private string HashToken(string token)
         {
-            _logger.LogError(ex, "Error during logout for user: {UserId}", userId);
-            throw;
+            using var sha256 = SHA256.Create();
+            var bytes = Encoding.UTF8.GetBytes(token);
+            var hash = sha256.ComputeHash(bytes);
+            return Convert.ToBase64String(hash);
         }
     }
-
-    #region Private Helper Methods
-
-    /// <summary>
-    /// Hash refresh token for secure storage
-    /// </summary>
-    private static string HashToken(string token)
-    {
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(token));
-        return Convert.ToBase64String(hashBytes);
-    }
-
-
-
-    /// <summary>
-    /// Create new user from OIDC information
-    /// </summary>
-    private Task<UserDto?> CreateUserFromOidcAsync(OidcUserInfo oidcUserInfo)
-    {
-        try
-        {
-            // This would typically involve creating a new user with default settings
-            // For now, we'll return null to indicate user creation is not implemented
-            _logger.LogWarning("User creation from OIDC not implemented for email: {Email}", oidcUserInfo.Email);
-            return Task.FromResult<UserDto?>(null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating user from OIDC info for email: {Email}", oidcUserInfo.Email);
-            return Task.FromResult<UserDto?>(null);
-        }
-    }
-
-    #endregion
 }

@@ -6,7 +6,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// Repository interface for RolePermission relationship operations
 /// Following SRP: ONLY RolePermission relationship data operations
 /// </summary>
-public interface IRolePermissionRepository : IRepository<RolePermission>
+public interface IRolePermissionRepository : IBaseRepository<RolePermission>
 {
     /// <summary>
     /// Get permissions by role ID

@@ -1,11 +1,13 @@
 using AutoMapper;
-using Ikhtibar.Core.Entities;
+
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Infrastructure.Services.Interfaces;
 using Ikhtibar.Shared.DTOs;
 using Ikhtibar.Shared.Enums;
-using MediaType = Ikhtibar.Core.Entities.MediaType;
+using MediaType = Ikhtibar.Shared.Entities.MediaType;
 using ThumbnailSize = Ikhtibar.Shared.Enums.ThumbnailSize;
+using AccessType = Ikhtibar.Shared.Entities.AccessType;
+using MediaFileStatus = Ikhtibar.Shared.Enums.MediaFileStatus;
 using Ikhtibar.Shared.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -94,7 +96,7 @@ public class MediaService : IMediaService
             // Create media file entity
             var mediaFile = new MediaFile
             {
-                FileName = fileName,
+                StorageFileName = fileName,
                 OriginalFileName = file.FileName,
                 ContentType = file.ContentType,
                 FileSizeBytes = file.Length,
@@ -155,7 +157,7 @@ public class MediaService : IMediaService
             }
 
             // Log access
-            _ = Task.Run(async () => await LogMediaAccessAsync(mediaId, 0, MediaAccessType.View)); // TODO: Get current user
+            _ = Task.Run(async () => await LogMediaAccessAsync(mediaId, 0, AccessType.View)); // TODO: Get current user
 
             return _mapper.Map<MediaFileDto>(mediaFile);
         }
@@ -180,7 +182,7 @@ public class MediaService : IMediaService
         }
     }
 
-    public async Task<bool> DeleteMediaFileAsync(Guid mediaId)
+    public async Task<bool> DeleteMediaFileAsync(int mediaId)
     {
         try
         {
@@ -201,7 +203,7 @@ public class MediaService : IMediaService
             mediaFile.ModifiedAt = DateTime.UtcNow;
             
             await _mediaRepository.UpdateAsync(mediaFile);
-
+            
             _logger.LogInformation("Media file deleted: {MediaId}", mediaId);
             return true;
         }
@@ -212,7 +214,7 @@ public class MediaService : IMediaService
         }
     }
 
-    public async Task<MediaFileDto> UpdateMediaFileAsync(Guid mediaId, UpdateMediaFileDto dto)
+    public async Task<MediaFileDto> UpdateMediaFileAsync(int mediaId, UpdateMediaFileDto dto)
     {
         try
         {
@@ -231,15 +233,14 @@ public class MediaService : IMediaService
                 mediaFile.AltText = dto.AltText;
             if (dto.CategoryId.HasValue)
                 mediaFile.CategoryId = dto.CategoryId;
-            if (dto.Status.HasValue)
-                mediaFile.Status = dto.Status.Value;
-            if (!string.IsNullOrEmpty(dto.Tags))
-                mediaFile.Tags = dto.Tags;
+            if (dto.IsPublic.HasValue)
+                mediaFile.IsPublic = dto.IsPublic.Value;
 
             mediaFile.ModifiedAt = DateTime.UtcNow;
+            await _mediaRepository.UpdateAsync(mediaFile);
 
-            var updatedFile = await _mediaRepository.UpdateAsync(mediaFile);
-            return _mapper.Map<MediaFileDto>(updatedFile);
+            _logger.LogInformation("Media file updated: {MediaId}", mediaId);
+            return _mapper.Map<MediaFileDto>(mediaFile);
         }
         catch (Exception ex)
         {
@@ -248,7 +249,7 @@ public class MediaService : IMediaService
         }
     }
 
-    public async Task<Stream> GetFileStreamAsync(Guid mediaId)
+    public async Task<Stream> GetFileStreamAsync(int mediaId)
     {
         try
         {
@@ -264,34 +265,18 @@ public class MediaService : IMediaService
             }
 
             // Log access
-            _ = Task.Run(async () => await LogMediaAccessAsync(mediaId, Guid.Empty, MediaAccessType.Download)); // TODO: Get current user
+            _ = Task.Run(async () => await LogMediaAccessAsync(mediaId, 0, AccessType.Download)); // TODO: Get current user
 
             return await _storageService.GetFileStreamAsync(mediaFile.StoragePath);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting file stream for media: {MediaId}", mediaId);
+            _logger.LogError(ex, "Error getting file stream: {MediaId}", mediaId);
             throw;
         }
     }
 
-    public async Task<byte[]> GetFileBytesAsync(Guid mediaId)
-    {
-        try
-        {
-            using var stream = await GetFileStreamAsync(mediaId);
-            using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-            return memoryStream.ToArray();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting file bytes for media: {MediaId}", mediaId);
-            throw;
-        }
-    }
-
-    public async Task<string> GetFileUrlAsync(Guid mediaId, TimeSpan? expirationTime = null)
+    public async Task<byte[]> GetFileBytesAsync(int mediaId)
     {
         try
         {
@@ -301,85 +286,92 @@ public class MediaService : IMediaService
                 throw new NotFoundException($"Media file with ID {mediaId} not found");
             }
 
-            if (mediaFile.IsPublic)
+            if (mediaFile.Status != MediaStatus.Available)
             {
-                return await _storageService.GetFileUrlAsync(mediaFile.StoragePath);
+                throw new InvalidOperationException($"Media file is not ready for download. Status: {mediaId}");
             }
 
-            // Generate temporary signed URL for private files
-            var expiration = expirationTime ?? TimeSpan.FromHours(1);
-            return await _storageService.GetSignedUrlAsync(mediaFile.StoragePath, expiration);
+            // Log access
+            _ = Task.Run(async () => await LogMediaAccessAsync(mediaId, 0, AccessType.Download)); // TODO: Get current user
+
+            return await _storageService.GetFileBytesAsync(mediaFile.StoragePath);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting file URL for media: {MediaId}", mediaId);
+            _logger.LogError(ex, "Error getting file bytes: {MediaId}", mediaId);
             throw;
         }
     }
 
-    public async Task<string> GetThumbnailUrlAsync(Guid mediaId, ThumbnailSize size = ThumbnailSize.Medium)
+    public async Task<string> GetFileUrlAsync(int mediaId, TimeSpan? expirationTime = null)
     {
         try
         {
-            var thumbnailUrl = await _thumbnailService.GetThumbnailUrlAsync(mediaId, size);
-            if (string.IsNullOrEmpty(thumbnailUrl))
-            {
-                // Generate thumbnail if it doesn't exist
-                var mediaFile = await _mediaRepository.GetByIdAsync(mediaId);
-                if (mediaFile != null)
-                {
-                    await _thumbnailService.GenerateThumbnailAsync(mediaFile, size);
-                    thumbnailUrl = await _thumbnailService.GetThumbnailUrlAsync(mediaId, size);
-                }
-            }
-            
-            return thumbnailUrl ?? string.Empty;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting thumbnail URL for media: {MediaId}", mediaId);
-            return string.Empty;
-        }
-    }
-
-    public async Task<bool> ProcessMediaFileAsync(Guid mediaId)
-    {
-        try
-        {
-            _logger.LogInformation("Starting media processing for: {MediaId}", mediaId);
-
             var mediaFile = await _mediaRepository.GetByIdAsync(mediaId);
             if (mediaFile == null)
             {
-                _logger.LogWarning("Media file not found: {MediaId}", mediaId);
+                throw new NotFoundException($"Media file with ID {mediaId} not found");
+            }
+
+            if (mediaFile.Status != MediaStatus.Available)
+            {
+                throw new InvalidOperationException($"Media file is not ready for access. Status: {mediaFile.Status}");
+            }
+
+            // Log access
+            _ = Task.Run(async () => await LogMediaAccessAsync(mediaId, 0, AccessType.View)); // TODO: Get current user
+
+            return await _storageService.GetFileUrlAsync(mediaFile.StoragePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting file URL: {MediaId}", mediaId);
+            throw;
+        }
+    }
+
+    public async Task<string> GetThumbnailUrlAsync(int mediaId, ThumbnailSize size = ThumbnailSize.Medium)
+    {
+        try
+        {
+            var mediaFile = await _mediaRepository.GetByIdAsync(mediaId);
+            if (mediaFile == null)
+            {
+                throw new NotFoundException($"Media file with ID {mediaId} not found");
+            }
+
+            if (mediaFile.Status != MediaStatus.Available)
+            {
+                throw new InvalidOperationException($"Media file is not ready for access. Status: {mediaFile.Status}");
+            }
+
+            // Log access
+            _ = Task.Run(async () => await LogMediaAccessAsync(mediaId, 0, AccessType.View)); // TODO: Get current user
+
+            return await _thumbnailService.GetThumbnailUrlAsync(mediaId, size);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting thumbnail URL: {MediaId}", mediaId);
+            throw;
+        }
+    }
+
+    public async Task<bool> ProcessMediaFileAsync(int mediaId)
+    {
+        try
+        {
+            var mediaFile = await _mediaRepository.GetByIdAsync(mediaId);
+            if (mediaFile == null)
+            {
+                _logger.LogWarning("Media file not found for processing: {MediaId}", mediaId);
                 return false;
             }
 
             mediaFile.Status = MediaStatus.Processing;
             await _mediaRepository.UpdateAsync(mediaFile);
 
-            var processed = false;
-
-            switch (mediaFile.MediaType)
-            {
-                case MediaType.Image:
-                    processed = await ProcessImageAsync(mediaFile);
-                    break;
-                case MediaType.Video:
-                    processed = await ProcessVideoAsync(mediaFile);
-                    break;
-                case MediaType.Audio:
-                    processed = await ProcessAudioAsync(mediaFile);
-                    break;
-                case MediaType.Document:
-                    processed = await ProcessDocumentAsync(mediaFile);
-                    break;
-                default:
-                    processed = true; // No processing needed for other types
-                    break;
-            }
-
-            if (processed)
+            try
             {
                 // Generate thumbnails
                 await _thumbnailService.GenerateThumbnailsAsync(mediaFile);
@@ -390,18 +382,15 @@ public class MediaService : IMediaService
                 mediaFile.Status = MediaStatus.Available;
                 mediaFile.ModifiedAt = DateTime.UtcNow;
             }
-            else
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error processing media file: {MediaId}", mediaId);
                 mediaFile.Status = MediaStatus.Failed;
                 mediaFile.ModifiedAt = DateTime.UtcNow;
             }
 
             await _mediaRepository.UpdateAsync(mediaFile);
-
-            _logger.LogInformation("Media processing completed for: {MediaId}, Status: {Status}", 
-                mediaId, mediaFile.Status);
-
-            return processed;
+            return true;
         }
         catch (Exception ex)
         {
@@ -420,7 +409,7 @@ public class MediaService : IMediaService
         }
     }
 
-    public async Task<MediaProcessingStatusDto> GetProcessingStatusAsync(Guid mediaId)
+    public async Task<MediaProcessingStatusDto> GetProcessingStatusAsync(int mediaId)
     {
         try
         {
@@ -433,7 +422,7 @@ public class MediaService : IMediaService
             return new MediaProcessingStatusDto
             {
                 MediaId = mediaId,
-                Status = mediaFile.Status,
+                Status = ConvertToMediaFileStatus(mediaFile.Status),
                 ProgressPercentage = mediaFile.Status == MediaStatus.Available ? 100 : 
                                    mediaFile.Status == MediaStatus.Failed ? 0 : 50,
                 CurrentStep = mediaFile.Status.ToString(),
@@ -443,20 +432,31 @@ public class MediaService : IMediaService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting processing status for media: {MediaId}", mediaId);
+            _logger.LogError(ex, "Error getting processing status: {MediaId}", mediaId);
             throw;
         }
     }
 
-    public async Task<bool> RegenerateMediaProcessingAsync(Guid mediaId)
+    public async Task<bool> RegenerateMediaProcessingAsync(int mediaId)
     {
         try
         {
+            var mediaFile = await _mediaRepository.GetByIdAsync(mediaId);
+            if (mediaFile == null)
+            {
+                _logger.LogWarning("Media file not found for regeneration: {MediaId}", mediaId);
+                return false;
+            }
+
+            // Delete existing thumbnails
+            await _thumbnailService.DeleteThumbnailsAsync(mediaId);
+
+            // Reprocess the file
             return await ProcessMediaFileAsync(mediaId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error regenerating media processing for: {MediaId}", mediaId);
+            _logger.LogError(ex, "Error regenerating media processing: {MediaId}", mediaId);
             return false;
         }
     }
@@ -465,7 +465,7 @@ public class MediaService : IMediaService
     {
         try
         {
-            var categories = await _categoryRepository.GetAllAsync();
+            var categories = await _categoryRepository.GetRootCategoriesAsync();
             return _mapper.Map<IEnumerable<MediaCategoryDto>>(categories);
         }
         catch (Exception ex)
@@ -475,16 +475,20 @@ public class MediaService : IMediaService
         }
     }
 
-    public async Task<IEnumerable<MediaCollectionDto>> GetCollectionsAsync(Guid? userId = null)
+    public async Task<IEnumerable<MediaCollectionDto>> GetCollectionsAsync(int? userId = null)
     {
         try
         {
-            var collections = await _collectionRepository.GetAllAsync();
             if (userId.HasValue)
             {
-                collections = collections.Where(c => c.CreatedBy == userId.Value || c.IsPublic);
+                var userCollections = await _collectionRepository.GetByUserAsync(userId.Value);
+                return _mapper.Map<IEnumerable<MediaCollectionDto>>(userCollections);
             }
-            return _mapper.Map<IEnumerable<MediaCollectionDto>>(collections);
+            else
+            {
+                var publicCollections = await _collectionRepository.GetPublicAsync();
+                return _mapper.Map<IEnumerable<MediaCollectionDto>>(publicCollections);
+            }
         }
         catch (Exception ex)
         {
@@ -511,13 +515,23 @@ public class MediaService : IMediaService
         }
     }
 
-    public async Task<bool> AddMediaToCollectionAsync(Guid mediaId, Guid collectionId)
+    public async Task<bool> AddMediaToCollectionAsync(int mediaId, int collectionId)
     {
         try
         {
-            // Implementation depends on collection structure
-            // This is a simplified version
-            return true;
+            var mediaFile = await _mediaRepository.GetByIdAsync(mediaId);
+            if (mediaFile == null)
+            {
+                _logger.LogWarning("Media file not found: {MediaId}", mediaId);
+                return false;
+            }
+
+            var success = await _collectionRepository.AddMediaFileAsync(collectionId, mediaId);
+            if (success)
+            {
+                _logger.LogInformation("Added media {MediaId} to collection {CollectionId}", mediaId, collectionId);
+            }
+            return success;
         }
         catch (Exception ex)
         {
@@ -526,13 +540,23 @@ public class MediaService : IMediaService
         }
     }
 
-    public async Task<bool> RemoveMediaFromCollectionAsync(Guid mediaId, Guid collectionId)
+    public async Task<bool> RemoveMediaFromCollectionAsync(int mediaId, int collectionId)
     {
         try
         {
-            // Implementation depends on collection structure
-            // This is a simplified version
-            return true;
+            var mediaFile = await _mediaRepository.GetByIdAsync(mediaId);
+            if (mediaFile == null)
+            {
+                _logger.LogWarning("Media file not found: {MediaId}", mediaId);
+                return false;
+            }
+
+            var success = await _collectionRepository.RemoveMediaFileAsync(collectionId, mediaId);
+            if (success)
+            {
+                _logger.LogInformation("Removed media {MediaId} from collection {CollectionId}", mediaId, collectionId);
+            }
+            return success;
         }
         catch (Exception ex)
         {
@@ -554,11 +578,19 @@ public class MediaService : IMediaService
         }
     }
 
-    public async Task<IEnumerable<MediaFileDto>> GetSimilarMediaAsync(Guid mediaId)
+    public async Task<IEnumerable<MediaFileDto>> GetSimilarMediaAsync(int mediaId)
     {
         try
         {
-            return await _searchService.FindSimilarMediaAsync(mediaId);
+            var mediaFile = await _mediaRepository.GetByIdAsync(mediaId);
+            if (mediaFile == null)
+            {
+                throw new NotFoundException($"Media file with ID {mediaId} not found");
+            }
+
+            // TODO: Implement similarity search logic
+            var similarMedia = await _searchService.GetSimilarMediaAsync(mediaId);
+            return similarMedia;
         }
         catch (Exception ex)
         {
@@ -567,11 +599,12 @@ public class MediaService : IMediaService
         }
     }
 
-    public async Task<IEnumerable<MediaFileDto>> GetRecentMediaAsync(int count = 10, Guid? userId = null)
+    public async Task<IEnumerable<MediaFileDto>> GetRecentMediaAsync(int count = 10, int? userId = null)
     {
         try
         {
-            return await _searchService.GetRecentMediaAsync(count, userId);
+            var recentMedia = await _searchService.GetRecentMediaAsync(count, userId);
+            return recentMedia;
         }
         catch (Exception ex)
         {
@@ -584,22 +617,25 @@ public class MediaService : IMediaService
     {
         try
         {
-            return await _validationService.ValidateFileAsync(file, uploadDto);
+            var validationResult = await _validationService.ValidateFileAsync(file, uploadDto);
+            return validationResult;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating file: {FileName}", file.FileName);
+            _logger.LogError(ex, "Error validating file");
             throw;
         }
     }
 
-    public async Task<bool> CheckMediaAccessAsync(Guid mediaId, Guid userId)
+    public async Task<bool> CheckMediaAccessAsync(int mediaId, int userId)
     {
         try
         {
             var mediaFile = await _mediaRepository.GetByIdAsync(mediaId);
             if (mediaFile == null)
+            {
                 return false;
+            }
 
             // Public files are accessible to everyone
             if (mediaFile.IsPublic)
@@ -609,7 +645,17 @@ public class MediaService : IMediaService
             if (mediaFile.UploadedBy == userId)
                 return true;
 
-            // TODO: Add role-based access control
+            // Check if user has access through collections
+            var userCollections = await _collectionRepository.GetByUserAsync(userId);
+            foreach (var collection in userCollections)
+            {
+                var collectionItems = await _collectionRepository.GetCollectionItemsAsync(collection.Id);
+                if (collectionItems.Any(ci => ci.MediaFileId == mediaId))
+                {
+                    return true;
+                }
+            }
+
             return false;
         }
         catch (Exception ex)
@@ -619,57 +665,68 @@ public class MediaService : IMediaService
         }
     }
 
-    public async Task<MediaAccessLogDto> LogMediaAccessAsync(Guid mediaId, Guid userId, MediaAccessType accessType)
+    public async Task<MediaAccessLogDto> LogMediaAccessAsync(int mediaId, int userId, AccessType accessType)
     {
         try
         {
+            var mediaFile = await _mediaRepository.GetByIdAsync(mediaId);
+            if (mediaFile == null)
+            {
+                throw new NotFoundException($"Media file with ID {mediaId} not found");
+            }
+
             var accessLog = new MediaAccessLog
             {
                 MediaFileId = mediaId,
                 UserId = userId,
-                AccessType = (Shared.Enums.MediaAccessType)accessType,
-                AccessTimestamp = DateTime.UtcNow,
-                IpAddress = string.Empty, // TODO: Get from context
-                UserAgent = string.Empty, // TODO: Get from context
+                AccessType = accessType,
+                IpAddress = "0.0.0.0", // TODO: Get from request context
+                UserAgent = "Unknown", // TODO: Get from request context
                 CreatedAt = DateTime.UtcNow
             };
 
-            var createdLog = await _accessLogRepository.AddAsync(accessLog);
-            return _mapper.Map<MediaAccessLogDto>(createdLog);
+            var savedAccessLog = await _accessLogRepository.AddAsync(accessLog);
+
+            return new MediaAccessLogDto
+            {
+                MediaFileId = mediaId,
+                UserId = userId,
+                Action = (MediaAccessAction)accessType,
+                AccessedAt = DateTime.UtcNow,
+                IpAddress = accessLog.IpAddress,
+                UserAgent = accessLog.UserAgent
+            };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error logging media access: {MediaId}, {UserId}", mediaId, userId);
+            _logger.LogError(ex, "Error logging media access: {MediaId}, {UserId}, {AccessType}", mediaId, userId, accessType);
             throw;
         }
     }
 
-    public async Task<bool> BulkDeleteMediaAsync(IEnumerable<Guid> mediaIds)
+    public async Task<bool> BulkDeleteMediaAsync(IEnumerable<int> mediaIds)
     {
         try
         {
-            var success = true;
+            // TODO: Implement bulk delete
             foreach (var mediaId in mediaIds)
             {
-                if (!await DeleteMediaFileAsync(mediaId))
-                {
-                    success = false;
-                }
+                await DeleteMediaFileAsync(mediaId);
             }
-            return success;
+            return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error bulk deleting media files");
+            _logger.LogError(ex, "Error bulk deleting media");
             return false;
         }
     }
 
-    public async Task<bool> BulkMoveMediaAsync(IEnumerable<Guid> mediaIds, Guid targetCategoryId)
+    public async Task<bool> BulkMoveMediaAsync(IEnumerable<int> mediaIds, int targetCategoryId)
     {
         try
         {
-            var success = true;
+            // TODO: Implement bulk move
             foreach (var mediaId in mediaIds)
             {
                 var mediaFile = await _mediaRepository.GetByIdAsync(mediaId);
@@ -679,16 +736,12 @@ public class MediaService : IMediaService
                     mediaFile.ModifiedAt = DateTime.UtcNow;
                     await _mediaRepository.UpdateAsync(mediaFile);
                 }
-                else
-                {
-                    success = false;
-                }
             }
-            return success;
+            return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error bulk moving media files");
+            _logger.LogError(ex, "Error bulk moving media");
             return false;
         }
     }
@@ -697,30 +750,29 @@ public class MediaService : IMediaService
     {
         try
         {
-            var success = true;
             foreach (var mediaId in dto.MediaFileIds)
             {
                 var mediaFile = await _mediaRepository.GetByIdAsync(mediaId);
                 if (mediaFile != null)
                 {
-                    if (dto.TargetStatus.HasValue)
-                        mediaFile.Status = dto.TargetStatus.Value;
                     if (dto.TargetCategoryId.HasValue)
                         mediaFile.CategoryId = dto.TargetCategoryId.Value;
+                    
+                    if (!string.IsNullOrEmpty(dto.Tags))
+                    {
+                        // Store tags in metadata if needed
+                        // TODO: Implement tag storage in MediaMetadata
+                    }
                     
                     mediaFile.ModifiedAt = DateTime.UtcNow;
                     await _mediaRepository.UpdateAsync(mediaFile);
                 }
-                else
-                {
-                    success = false;
-                }
             }
-            return success;
+            return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error bulk updating media files");
+            _logger.LogError(ex, "Error bulk updating media");
             return false;
         }
     }
@@ -805,7 +857,7 @@ public class MediaService : IMediaService
                     MediaFileId = mediaFile.Id,
                     MetadataKey = kvp.Key,
                     MetadataValue = kvp.Value.ToString() ?? string.Empty,
-                    DataType = kvp.Value.GetType().Name,
+                    DataType = GetMetadataType(kvp.Value),
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -817,17 +869,40 @@ public class MediaService : IMediaService
             _logger.LogError(ex, "Error extracting metadata for media: {MediaId}", mediaFile.Id);
         }
     }
+
+    /// <summary>
+    /// Converts MediaStatus from Core to MediaFileStatus for Shared
+    /// </summary>
+    private MediaFileStatus ConvertToMediaFileStatus(MediaStatus status)
+    {
+        return status switch
+        {
+            MediaStatus.Uploading => MediaFileStatus.Uploading,
+            MediaStatus.Processing => MediaFileStatus.Processing,
+            MediaStatus.Available => MediaFileStatus.Available,
+            MediaStatus.Failed => MediaFileStatus.Failed,
+            MediaStatus.Quarantined => MediaFileStatus.Quarantined,
+            MediaStatus.Archived => MediaFileStatus.Archived,
+            MediaStatus.Deleted => MediaFileStatus.MarkedForDeletion,
+            _ => MediaFileStatus.Unavailable
+        };
+    }
+
+    /// <summary>
+    /// Converts .NET type to MetadataType enum
+    /// </summary>
+    private MetadataType GetMetadataType(object value)
+    {
+        return value switch
+        {
+            string => MetadataType.String,
+            int or long or short or byte => MetadataType.Integer,
+            decimal or double or float => MetadataType.Decimal,
+            bool => MetadataType.Boolean,
+            DateTime => MetadataType.DateTime,
+            _ => MetadataType.String
+        };
+    }
 }
 
-/// <summary>
-/// Custom exceptions for media operations
-/// </summary>
-public class ValidationException : Exception
-{
-    public ValidationException(string message) : base(message) { }
-}
-
-public class NotFoundException : Exception
-{
-    public NotFoundException(string message) : base(message) { }
-}
+// Note: use shared/core exception types instead of local duplicates

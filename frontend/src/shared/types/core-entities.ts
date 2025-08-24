@@ -167,7 +167,7 @@ export interface ExamQuestion {
 }
 
 // ================= Authentication Tables =================
-export interface RefreshToken extends BaseEntity {
+export interface RefreshTokens extends BaseEntity {
   refreshTokenId: number;
   tokenHash: string;
   userId: number;

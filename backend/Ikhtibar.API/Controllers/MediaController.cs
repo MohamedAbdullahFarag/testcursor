@@ -4,6 +4,9 @@ using Ikhtibar.Core.Services.Interfaces;
 using Ikhtibar.Shared.DTOs;
 using Ikhtibar.Shared.Models;
 using System.ComponentModel.DataAnnotations;
+using Ikhtibar.Infrastructure.Services.Interfaces;
+using Ikhtibar.Infrastructure.Services;
+using Ikhtibar.Shared.Enums;
 
 namespace Ikhtibar.API.Controllers;
 
@@ -41,13 +44,11 @@ public class MediaController : ControllerBase
                 return BadRequest("No file provided");
             }
 
-            // TODO: Get current user ID from claims
-            uploadDto.UploadedBy = Guid.NewGuid(); // Temporary
-
+            uploadDto.UploadedBy = int.Parse(User.FindFirst("sub")?.Value ?? User.FindFirst("userId")?.Value ?? "0");
             var result = await _mediaService.UploadFileAsync(file, uploadDto);
             return CreatedAtAction(nameof(GetMediaFile), new { id = result.Id }, result);
         }
-        catch (ValidationException ex)
+        catch (Ikhtibar.Core.Exceptions.ValidationException ex)
         {
             return BadRequest(ex.Message);
         }
@@ -61,8 +62,8 @@ public class MediaController : ControllerBase
     /// <summary>
     /// Get a media file by ID
     /// </summary>
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<MediaFileDto>> GetMediaFile(Guid id)
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<MediaFileDto>> GetMediaFile(int id)
     {
         try
         {
@@ -103,10 +104,10 @@ public class MediaController : ControllerBase
     /// <summary>
     /// Update a media file
     /// </summary>
-    [HttpPut("{id:guid}")]
+    [HttpPut("{id:int}")]
     [Authorize(Policy = "QuestionManagement")]
     public async Task<ActionResult<MediaFileDto>> UpdateMediaFile(
-        Guid id,
+        int id,
         [FromBody] UpdateMediaFileDto updateDto)
     {
         try
@@ -128,9 +129,9 @@ public class MediaController : ControllerBase
     /// <summary>
     /// Delete a media file
     /// </summary>
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("{id:int}")]
     [Authorize(Policy = "QuestionManagement")]
-    public async Task<ActionResult> DeleteMediaFile(Guid id)
+    public async Task<ActionResult> DeleteMediaFile(int id)
     {
         try
         {
@@ -152,8 +153,8 @@ public class MediaController : ControllerBase
     /// <summary>
     /// Download a media file
     /// </summary>
-    [HttpGet("{id:guid}/download")]
-    public async Task<IActionResult> DownloadMediaFile(Guid id)
+    [HttpGet("{id:int}/download")]
+    public async Task<IActionResult> DownloadMediaFile(int id)
     {
         try
         {
@@ -176,9 +177,9 @@ public class MediaController : ControllerBase
     /// <summary>
     /// Get media file URL
     /// </summary>
-    [HttpGet("{id:guid}/url")]
+    [HttpGet("{id:int}/url")]
     public async Task<ActionResult<string>> GetMediaFileUrl(
-        Guid id,
+        int id,
         [FromQuery] TimeSpan? expirationTime = null)
     {
         try
@@ -200,9 +201,9 @@ public class MediaController : ControllerBase
     /// <summary>
     /// Get thumbnail URL for a media file
     /// </summary>
-    [HttpGet("{id:guid}/thumbnail")]
+    [HttpGet("{id:int}/thumbnail")]
     public async Task<ActionResult<string>> GetThumbnailUrl(
-        Guid id,
+        int id,
         [FromQuery] ThumbnailSize size = ThumbnailSize.Medium)
     {
         try
@@ -225,8 +226,8 @@ public class MediaController : ControllerBase
     /// <summary>
     /// Get processing status for a media file
     /// </summary>
-    [HttpGet("{id:guid}/processing-status")]
-    public async Task<ActionResult<MediaProcessingStatusDto>> GetProcessingStatus(Guid id)
+    [HttpGet("{id:int}/processing-status")]
+    public async Task<ActionResult<MediaProcessingStatusDto>> GetProcessingStatus(int id)
     {
         try
         {
@@ -247,9 +248,9 @@ public class MediaController : ControllerBase
     /// <summary>
     /// Regenerate media processing for a file
     /// </summary>
-    [HttpPost("{id:guid}/regenerate-processing")]
+    [HttpPost("{id:int}/regenerate-processing")]
     [Authorize(Policy = "QuestionManagement")]
-    public async Task<ActionResult> RegenerateProcessing(Guid id)
+    public async Task<ActionResult> RegenerateProcessing(int id)
     {
         try
         {
@@ -291,7 +292,7 @@ public class MediaController : ControllerBase
     /// </summary>
     [HttpGet("collections")]
     public async Task<ActionResult<IEnumerable<MediaCollectionDto>>> GetCollections(
-        [FromQuery] Guid? userId = null)
+        [FromQuery] int? userId = null)
     {
         try
         {
@@ -315,9 +316,7 @@ public class MediaController : ControllerBase
     {
         try
         {
-            // TODO: Get current user ID from claims
-            createDto.CreatedBy = Guid.NewGuid(); // Temporary
-
+            createDto.CreatedByUserId = int.Parse(User.FindFirst("sub")?.Value ?? User.FindFirst("userId")?.Value ?? "0");
             var result = await _mediaService.CreateCollectionAsync(createDto);
             return CreatedAtAction(nameof(GetCollections), new { id = result.Id }, result);
         }
@@ -331,9 +330,9 @@ public class MediaController : ControllerBase
     /// <summary>
     /// Add media to collection
     /// </summary>
-    [HttpPost("collections/{collectionId:guid}/media/{mediaId:guid}")]
+    [HttpPost("collections/{collectionId:int}/media/{mediaId:int}")]
     [Authorize(Policy = "QuestionManagement")]
-    public async Task<ActionResult> AddMediaToCollection(Guid collectionId, Guid mediaId)
+    public async Task<ActionResult> AddMediaToCollection(int collectionId, int mediaId)
     {
         try
         {
@@ -355,9 +354,9 @@ public class MediaController : ControllerBase
     /// <summary>
     /// Remove media from collection
     /// </summary>
-    [HttpDelete("collections/{collectionId:guid}/media/{mediaId:guid}")]
+    [HttpDelete("collections/{collectionId:int}/media/{mediaId:int}")]
     [Authorize(Policy = "QuestionManagement")]
-    public async Task<ActionResult> RemoveMediaFromCollection(Guid collectionId, Guid mediaId)
+    public async Task<ActionResult> RemoveMediaFromCollection(int collectionId, int mediaId)
     {
         try
         {
@@ -398,9 +397,9 @@ public class MediaController : ControllerBase
     /// <summary>
     /// Get similar media files
     /// </summary>
-    [HttpGet("{id:guid}/similar")]
+    [HttpGet("{id:int}/similar")]
     public async Task<ActionResult<IEnumerable<MediaFileDto>>> GetSimilarMedia(
-        Guid id,
+        int id,
         [FromQuery] int maxResults = 10)
     {
         try
@@ -421,7 +420,7 @@ public class MediaController : ControllerBase
     [HttpGet("recent")]
     public async Task<ActionResult<IEnumerable<MediaFileDto>>> GetRecentMedia(
         [FromQuery] int count = 10,
-        [FromQuery] Guid? userId = null)
+        [FromQuery] int? userId = null)
     {
         try
         {
@@ -440,7 +439,7 @@ public class MediaController : ControllerBase
     /// </summary>
     [HttpPost("bulk-delete")]
     [Authorize(Policy = "QuestionManagement")]
-    public async Task<ActionResult> BulkDeleteMedia([FromBody] List<Guid> mediaIds)
+    public async Task<ActionResult> BulkDeleteMedia([FromBody] List<int> mediaIds)
     {
         try
         {
@@ -555,6 +554,6 @@ public class MediaController : ControllerBase
 /// </summary>
 public class BulkMoveMediaDto
 {
-    public List<Guid> MediaIds { get; set; } = new();
-    public Guid TargetCategoryId { get; set; }
+    public List<int> MediaIds { get; set; } = new();
+    public int TargetCategoryId { get; set; }
 }

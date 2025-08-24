@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using System.Security.Cryptography;
-using MediaType = Ikhtibar.Core.Entities.MediaType;
+using MediaType = Ikhtibar.Shared.Entities.MediaType;
 
 namespace Ikhtibar.Infrastructure.Services;
 
@@ -17,36 +17,33 @@ public class MediaValidationService : IMediaValidationService
     private readonly IConfiguration _configuration;
 
     // File size limits by media type (in bytes)
-    private readonly Dictionary<MediaType, long> _maxFileSizes = new()
+    private readonly Dictionary<Shared.Enums.MediaType, long> _maxFileSizes = new()
     {
-        { MediaType.Image, 10 * 1024 * 1024 },      // 10MB
-        { MediaType.Video, 100 * 1024 * 1024 },     // 100MB
-        { MediaType.Audio, 50 * 1024 * 1024 },      // 50MB
-        { MediaType.Document, 25 * 1024 * 1024 },   // 25MB
-        { MediaType.Archive, 100 * 1024 * 1024 },   // 100MB
-        { MediaType.Other, 10 * 1024 * 1024 }       // 10MB default
+        { Shared.Enums.MediaType.Image, 10 * 1024 * 1024 },      // 10MB
+        { Shared.Enums.MediaType.Video, 100 * 1024 * 1024 },     // 100MB
+        { Shared.Enums.MediaType.Audio, 50 * 1024 * 1024 },      // 50MB
+        { Shared.Enums.MediaType.Document, 25 * 1024 * 1024 },   // 25MB
+        { Shared.Enums.MediaType.Interactive, 100 * 1024 * 1024 } // 100MB
     };
 
     // Allowed file extensions by media type
-    private readonly Dictionary<MediaType, string[]> _allowedExtensions = new()
+    private readonly Dictionary<Shared.Enums.MediaType, string[]> _allowedExtensions = new()
     {
-        { MediaType.Image, new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".tiff" } },
-        { MediaType.Video, new[] { ".mp4", ".webm", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".m4v" } },
-        { MediaType.Audio, new[] { ".mp3", ".wav", ".ogg", ".aac", ".flac", ".wma", ".m4a" } },
-        { MediaType.Document, new[] { ".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".pages" } },
-        { MediaType.Archive, new[] { ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2" } },
-        { MediaType.Other, new[] { ".json", ".xml", ".csv", ".log" } }
+        { Shared.Enums.MediaType.Image, new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".tiff" } },
+        { Shared.Enums.MediaType.Video, new[] { ".mp4", ".webm", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".m4v" } },
+        { Shared.Enums.MediaType.Audio, new[] { ".mp3", ".wav", ".ogg", ".aac", ".flac", ".wma", ".m4a" } },
+        { Shared.Enums.MediaType.Document, new[] { ".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".pages", ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2" } },
+        { Shared.Enums.MediaType.Interactive, new[] { ".json", ".xml", ".csv", ".log", ".md", ".html", ".css", ".js" } }
     };
 
     // Allowed content types by media type
-    private readonly Dictionary<MediaType, string[]> _allowedContentTypes = new()
+    private readonly Dictionary<Shared.Enums.MediaType, string[]> _allowedContentTypes = new()
     {
-        { MediaType.Image, new[] { "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "image/bmp", "image/tiff" } },
-        { MediaType.Video, new[] { "video/mp4", "video/webm", "video/avi", "video/quicktime", "video/x-msvideo", "video/x-flv", "video/x-matroska" } },
-        { MediaType.Audio, new[] { "audio/mpeg", "audio/wav", "audio/ogg", "audio/aac", "audio/flac", "audio/x-ms-wma", "audio/x-m4a" } },
-        { MediaType.Document, new[] { "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain", "application/rtf", "application/vnd.oasis.opendocument.text" } },
-        { MediaType.Archive, new[] { "application/zip", "application/x-rar-compressed", "application/x-7z-compressed", "application/x-tar", "application/gzip", "application/x-bzip2" } },
-        { MediaType.Other, new[] { "application/json", "application/xml", "text/csv", "text/plain" } }
+        { Shared.Enums.MediaType.Image, new[] { "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "image/bmp", "image/tiff" } },
+        { Shared.Enums.MediaType.Video, new[] { "video/mp4", "video/webm", "video/avi", "video/quicktime", "video/x-msvideo", "video/x-flv", "video/x-matroska" } },
+        { Shared.Enums.MediaType.Audio, new[] { "audio/mpeg", "audio/wav", "audio/ogg", "audio/aac", "audio/flac", "audio/x-ms-wma", "audio/x-m4a" } },
+        { Shared.Enums.MediaType.Document, new[] { "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain", "application/rtf", "application/vnd.oasis.opendocument.text", "application/zip", "application/x-rar-compressed", "application/x-7z-compressed", "application/x-tar", "application/gzip", "application/x-bzip2" } },
+        { Shared.Enums.MediaType.Interactive, new[] { "application/json", "application/xml", "text/csv", "text/plain", "text/markdown", "text/html", "text/css", "application/javascript" } }
     };
 
     public MediaValidationService(ILogger<MediaValidationService> logger, IConfiguration configuration)
@@ -100,7 +97,7 @@ public class MediaValidationService : IMediaValidationService
             }
 
             // Virus scanning (if enabled)
-            var virusScanEnabled = _configuration.GetValue<bool>("MediaValidation:EnableVirusScan", false);
+            var virusScanEnabled = bool.TryParse(_configuration["MediaValidation:EnableVirusScan"], out var scanEnabled) ? scanEnabled : false;
             if (virusScanEnabled)
             {
                 result.IsVirusScanned = true;
@@ -125,7 +122,7 @@ public class MediaValidationService : IMediaValidationService
             }
 
             // Add warnings for uncommon file types
-            if (mediaType == MediaType.Other)
+            if (mediaType == Shared.Enums.MediaType.Interactive)
             {
                 result.Warnings.Add("File type is not in the standard categories");
             }
@@ -154,7 +151,7 @@ public class MediaValidationService : IMediaValidationService
         return allowedExtensions.Contains(extension) && allowedContentTypes.Contains(contentType);
     }
 
-    public bool IsFileSizeValid(long fileSizeBytes, MediaType mediaType)
+    public bool IsFileSizeValid(long fileSizeBytes, Shared.Enums.MediaType mediaType)
     {
         return fileSizeBytes <= _maxFileSizes[mediaType];
     }
@@ -231,24 +228,24 @@ public class MediaValidationService : IMediaValidationService
         }
     }
 
-    private MediaType DetermineMediaType(string contentType, string fileName)
+    private Shared.Enums.MediaType DetermineMediaType(string contentType, string fileName)
     {
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
         
         // Check by content type first
         if (contentType.StartsWith("image/"))
-            return MediaType.Image;
+            return Shared.Enums.MediaType.Image;
         if (contentType.StartsWith("video/"))
-            return MediaType.Video;
+            return Shared.Enums.MediaType.Video;
         if (contentType.StartsWith("audio/"))
-            return MediaType.Audio;
+            return Shared.Enums.MediaType.Audio;
         if (contentType.StartsWith("application/pdf") || 
             contentType.StartsWith("application/msword") ||
             contentType.StartsWith("application/vnd.openxmlformats"))
-            return MediaType.Document;
+            return Shared.Enums.MediaType.Document;
         if (contentType.StartsWith("application/zip") ||
             contentType.StartsWith("application/x-rar-compressed"))
-            return MediaType.Archive;
+            return Shared.Enums.MediaType.Document;
         
         // Fallback to file extension
         foreach (var kvp in _allowedExtensions)
@@ -257,6 +254,6 @@ public class MediaValidationService : IMediaValidationService
                 return kvp.Key;
         }
         
-        return MediaType.Other;
+        return Shared.Enums.MediaType.Document;
     }
 }

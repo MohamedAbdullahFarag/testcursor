@@ -1,0 +1,245 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit.Framework;
+using Ikhtibar.API.Controllers;
+using System.Text.Json;
+
+namespace Ikhtibar.Tests.API.Controllers;
+
+/// <summary>
+/// Tests for HealthController functionality
+/// </summary>
+[TestFixture]
+public class HealthControllerTests
+{
+    private Mock<ILogger<HealthController>> _mockLogger;
+    private HealthController _controller;
+
+    [SetUp]
+    public void Setup()
+    {
+        _mockLogger = new Mock<ILogger<HealthController>>();
+        _controller = new HealthController(_mockLogger.Object);
+    }
+
+    [Test]
+    public void Ping_ShouldReturn200Ok()
+    {
+        // Act
+        var result = _controller.Ping();
+
+        // Assert
+        Assert.IsInstanceOf<OkObjectResult>(result);
+        var okResult = result as OkObjectResult;
+        Assert.AreEqual(200, okResult?.StatusCode);
+    }
+
+    [Test]
+    public void Ping_ShouldReturnSuccessResponse()
+    {
+        // Act
+        var result = _controller.Ping();
+        var okResult = result as OkObjectResult;
+        var responseData = okResult?.Value;
+
+        // Assert
+        Assert.NotNull(responseData);
+        
+        // Use reflection to check the response structure
+        var responseType = responseData?.GetType();
+        var successProperty = responseType?.GetProperty("success");
+        var messageProperty = responseType?.GetProperty("message");
+        var dataProperty = responseType?.GetProperty("data");
+        
+        Assert.NotNull(successProperty);
+        Assert.NotNull(messageProperty);
+        Assert.NotNull(dataProperty);
+    }
+
+    [Test]
+    public void Ping_ShouldReturnHealthStatus()
+    {
+        // Act
+        var result = _controller.Ping();
+        var okResult = result as OkObjectResult;
+        var responseData = okResult?.Value;
+
+        // Assert
+        var dataProperty = responseData?.GetType().GetProperty("data");
+        var dataValue = dataProperty?.GetValue(responseData);
+        
+        Assert.NotNull(dataValue);
+        
+        // Check if data contains expected health information
+        var dataType = dataValue?.GetType();
+        var statusProperty = dataType?.GetProperty("Status");
+        var versionProperty = dataType?.GetProperty("Version");
+        var environmentProperty = dataType?.GetProperty("Environment");
+        
+        Assert.NotNull(statusProperty);
+        Assert.NotNull(versionProperty);
+        Assert.NotNull(environmentProperty);
+    }
+
+    [Test]
+    public void Ping_ShouldLogInformation()
+    {
+        // Act
+        _controller.Ping();
+
+        // Assert
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => true),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void Status_ShouldReturn200Ok()
+    {
+        // Act
+        var result = _controller.Status();
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var okResult = result as OkObjectResult;
+        Assert.AreEqual(200, okResult?.StatusCode);
+    }
+
+    [Test]
+    public void Status_ShouldReturnDetailedHealthInformation()
+    {
+        // Act
+        var result = _controller.Status();
+        var okResult = result as OkObjectResult;
+        var responseData = okResult?.Value;
+
+        // Assert
+        Assert.NotNull(responseData);
+        
+        var dataProperty = responseData?.GetType().GetProperty("data");
+        var dataValue = dataProperty?.GetValue(responseData);
+        
+        Assert.NotNull(dataValue);
+        
+        // Check if data contains detailed health information
+        var dataType = dataValue?.GetType();
+        var statusProperty = dataType?.GetProperty("Status");
+        var versionProperty = dataType?.GetProperty("Version");
+        var machineProperty = dataType?.GetProperty("Machine");
+        var processorCountProperty = dataType?.GetProperty("ProcessorCount");
+        var workingSetProperty = dataType?.GetProperty("WorkingSet");
+        var uptimeProperty = dataType?.GetProperty("Uptime");
+        
+        Assert.NotNull(statusProperty);
+        Assert.NotNull(versionProperty);
+        Assert.NotNull(machineProperty);
+        Assert.NotNull(processorCountProperty);
+        Assert.NotNull(workingSetProperty);
+        Assert.NotNull(uptimeProperty);
+    }
+
+    [Test]
+    public void Status_ShouldLogInformation()
+    {
+        // Act
+        _controller.Status();
+
+        // Assert
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => true),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void Status_ShouldReturnValidResponseStructure()
+    {
+        // Act
+        var result = _controller.Status();
+        var okResult = result as OkObjectResult;
+        var responseData = okResult?.Value;
+
+        // Assert
+        var responseType = responseData?.GetType();
+        var successProperty = responseType?.GetProperty("success");
+        var messageProperty = responseType?.GetProperty("message");
+        var dataProperty = responseType?.GetProperty("data");
+        var timestampProperty = responseType?.GetProperty("timestamp");
+        
+        Assert.NotNull(successProperty);
+        Assert.NotNull(messageProperty);
+        Assert.NotNull(dataProperty);
+        Assert.NotNull(timestampProperty);
+    }
+
+    [Test]
+    public void Status_ShouldReturnHealthyStatus()
+    {
+        // Act
+        var result = _controller.Status();
+        var okResult = result as OkObjectResult;
+        var responseData = okResult?.Value;
+
+        // Assert
+        var dataProperty = responseData?.GetType().GetProperty("data");
+        var dataValue = dataProperty?.GetValue(responseData);
+        var statusProperty = dataValue?.GetType().GetProperty("Status");
+        var statusValue = statusProperty?.GetValue(dataValue);
+
+        Assert.AreEqual("Healthy", statusValue);
+    }
+
+    [Test]
+    public void Status_ShouldReturnCorrectVersion()
+    {
+        // Act
+        var result = _controller.Status();
+        var okResult = result as OkObjectResult;
+        var responseData = okResult?.Value;
+
+        // Assert
+        var dataProperty = responseData?.GetType().GetProperty("data");
+        var dataValue = dataProperty?.GetValue(responseData);
+        var versionProperty = dataValue?.GetType().GetProperty("Version");
+        var versionValue = versionProperty?.GetValue(dataValue);
+
+        Assert.AreEqual("1.0.0", versionValue);
+    }
+
+    [Test]
+    public void Status_ShouldReturnSystemInformation()
+    {
+        // Act
+        var result = _controller.Status();
+        var okResult = result as OkResult;
+        var responseData = okResult?.Value;
+
+        // Assert
+        var dataProperty = responseData?.GetType().GetProperty("data");
+        var dataValue = dataProperty?.GetValue(responseData);
+        
+        // Check system-specific properties
+        var machineProperty = dataValue?.GetType().GetProperty("Machine");
+        var processorCountProperty = dataValue?.GetType().GetProperty("ProcessorCount");
+        
+        Assert.NotNull(machineProperty);
+        Assert.NotNull(processorCountProperty);
+        
+        // Verify these properties have values
+        var machineValue = machineProperty?.GetValue(dataValue);
+        var processorCountValue = processorCountProperty?.GetValue(dataValue);
+        
+        Assert.NotNull(machineValue);
+        Assert.NotNull(processorCountValue);
+    }
+}

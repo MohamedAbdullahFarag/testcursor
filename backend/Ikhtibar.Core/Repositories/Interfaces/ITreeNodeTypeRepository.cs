@@ -1,72 +1,76 @@
+using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Shared.Entities;
 
-using Ikhtibar.Shared.Models;
 namespace Ikhtibar.Core.Repositories.Interfaces;
 
 /// <summary>
-/// Repository interface for TreeNodeType entity operations
-/// Manages tree node type definitions and metadata
+/// Repository interface for tree node type data operations.
+/// Extends the base repository with type-specific operations.
 /// </summary>
-public interface ITreeNodeTypeRepository
+public interface ITreeNodeTypeRepository : IBaseRepository<TreeNodeType>
 {
     /// <summary>
-    /// Get tree node type by ID
+    /// Gets a tree node type by its code.
     /// </summary>
-    /// <param name="treeNodeTypeId">Tree node type ID</param>
-    /// <returns>Tree node type if found, null otherwise</returns>
-    Task<TreeNodeType?> GetByIdAsync(int treeNodeTypeId);
+    /// <param name="code">The type code</param>
+    /// <returns>The type if found, null otherwise</returns>
+    Task<TreeNodeType?> GetByCodeAsync(string code);
 
     /// <summary>
-    /// Get tree node type by name
+    /// Gets all active tree node types.
     /// </summary>
-    /// <param name="name">Tree node type name</param>
-    /// <returns>Tree node type if found, null otherwise</returns>
-    Task<TreeNodeType?> GetByNameAsync(string name);
+    /// <returns>Collection of active types</returns>
+    Task<IEnumerable<TreeNodeType>> GetActiveTypesAsync();
 
     /// <summary>
-    /// Get all tree node types
+    /// Gets all visible tree node types.
     /// </summary>
-    /// <returns>Collection of all tree node types</returns>
-    Task<IEnumerable<TreeNodeType>> GetAllAsync();
+    /// <returns>Collection of visible types</returns>
+    Task<IEnumerable<TreeNodeType>> GetVisibleTypesAsync();
 
     /// <summary>
-    /// Get active tree node types ordered by display order
+    /// Gets tree node types that allow children.
     /// </summary>
-    /// <returns>Collection of active tree node types</returns>
-    Task<IEnumerable<TreeNodeType>> GetActiveAsync();
+    /// <returns>Collection of types that allow children</returns>
+    Task<IEnumerable<TreeNodeType>> GetTypesThatAllowChildrenAsync();
 
     /// <summary>
-    /// Create a new tree node type
+    /// Gets tree node types by search term.
     /// </summary>
-    /// <param name="treeNodeType">Tree node type to create</param>
-    /// <returns>Created tree node type with generated ID</returns>
-    Task<TreeNodeType> CreateAsync(TreeNodeType treeNodeType);
+    /// <param name="searchTerm">The search term</param>
+    /// <returns>Collection of matching types</returns>
+    Task<IEnumerable<TreeNodeType>> SearchAsync(string searchTerm);
 
     /// <summary>
-    /// Update an existing tree node type
+    /// Gets system-defined tree node types.
     /// </summary>
-    /// <param name="treeNodeType">Tree node type to update</param>
-    /// <returns>Updated tree node type</returns>
-    Task<TreeNodeType> UpdateAsync(TreeNodeType treeNodeType);
+    /// <returns>Collection of system types</returns>
+    Task<IEnumerable<TreeNodeType>> GetSystemTypesAsync();
 
     /// <summary>
-    /// Delete a tree node type (soft delete)
+    /// Gets user-defined tree node types.
     /// </summary>
-    /// <param name="treeNodeTypeId">Tree node type ID to delete</param>
-    /// <returns>True if deleted successfully, false otherwise</returns>
-    Task<bool> DeleteAsync(int treeNodeTypeId);
+    /// <returns>Collection of user-defined types</returns>
+    Task<IEnumerable<TreeNodeType>> GetUserDefinedTypesAsync();
 
     /// <summary>
-    /// Check if tree node type exists
+    /// Checks if a type code is unique.
     /// </summary>
-    /// <param name="treeNodeTypeId">Tree node type ID to check</param>
-    /// <returns>True if exists, false otherwise</returns>
-    Task<bool> ExistsAsync(int treeNodeTypeId);
+    /// <param name="code">The type code to check</param>
+    /// <param name="excludeId">ID to exclude from uniqueness check</param>
+    /// <returns>True if the code is unique</returns>
+    Task<bool> IsCodeUniqueAsync(string code, int? excludeId = null);
 
     /// <summary>
-    /// Check if tree node type is in use by any nodes
+    /// Gets the count of tree nodes using a specific type.
     /// </summary>
-    /// <param name="treeNodeTypeId">Tree node type ID to check</param>
-    /// <returns>True if in use, false otherwise</returns>
-    Task<bool> IsInUseAsync(int treeNodeTypeId);
+    /// <param name="typeId">The type ID</param>
+    /// <returns>The count of nodes using this type</returns>
+    Task<int> GetNodeCountByTypeAsync(int typeId);
+
+    /// <summary>
+    /// Gets tree node types with their usage statistics.
+    /// </summary>
+    /// <returns>Collection of types with node counts</returns>
+    Task<IEnumerable<TreeNodeType>> GetTypesWithUsageStatsAsync();
 }

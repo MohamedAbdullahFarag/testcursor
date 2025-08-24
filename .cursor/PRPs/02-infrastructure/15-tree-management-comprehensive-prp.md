@@ -1202,15 +1202,15 @@ npm run test:e2e -- --testPathPattern=tree-management
 ### Tree Structure Validation Loop
 ```bash
 # 1. Hierarchy Validation
-curl -X GET "http://localhost:5000/api/question-bank-tree/validate/structure"
+curl -X GET "https://localhost:7001/api/question-bank-tree/validate/structure"
 # Expected: 200 OK with validation report
 
 # 2. Path Integrity Check
-curl -X GET "http://localhost:5000/api/question-bank-tree/validate/paths"
+curl -X GET "https://localhost:7001/api/question-bank-tree/validate/paths"
 # Expected: 200 OK with path validation results
 
 # 3. Category Operations
-curl -X POST "http://localhost:5000/api/question-bank-tree/categories" \
+curl -X POST "https://localhost:7001/api/question-bank-tree/categories" \
   -H "Content-Type: application/json" \
   -d '{"name":"Mathematics","code":"MATH001","type":"Subject"}'
 # Expected: 201 Created with category data

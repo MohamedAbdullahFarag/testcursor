@@ -1,0 +1,218 @@
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Moq;
+using Moq.Protected;
+using Xunit.Framework;
+using System;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Ikhtibar.API.Models;
+using Ikhtibar.Infrastructure.Services;
+using Ikhtibar.Shared.Models;
+
+namespace Ikhtibar.Tests.Auth;
+
+[TestFixture]
+public class OidcServiceTests
+{
+    private Mock<HttpMessageHandler> _mockHttpHandler;
+    private HttpClient _httpClient;
+    private OidcSettings _oidcSettings;
+    private Mock<ILogger<OidcService>> _mockLogger;
+    private OidcService _service;
+
+    [SetUp]
+    public void Setup()
+    {
+        _mockHttpHandler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        _httpClient = new HttpClient(_mockHttpHandler.Object);
+        _oidcSettings = new OidcSettings
+        {
+            Authority = "https://oidc.example.com",
+            ClientId = "test-client",
+            ClientSecret = "test-secret",
+            RedirectUri = "https://localhost:7001/callback",
+            Scopes = new[] { "openid", "profile", "email" }
+        };
+        _mockLogger = new Mock<ILogger<OidcService>>();
+
+        var mockOptions = new Mock<IOptions<OidcSettings>>();
+        mockOptions.Setup(x => x.Value).Returns(_oidcSettings);
+
+        _service = new OidcService(_httpClient, mockOptions.Object);
+    }
+
+    [Test]
+    public async Task ExchangeCodeAsync_WithValidCode_ReturnsTokenResponse()
+    {
+        // Arrange
+        var tokenResponse = new OidcTokenResponse
+        {
+            AccessToken = "access-token",
+            IdToken = "id-token",
+            RefreshTokens = "refresh-token",
+            TokenType = "Bearer",
+            ExpiresIn = 3600
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(tokenResponse);
+        var expectedEndpoint = "https://oidc.example.com/protocol/openid-connect/token";
+
+        _mockHttpHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+            })
+            .Verifiable();
+
+        // Act
+        var result = await _service.ExchangeCodeAsync("valid-code", _oidcSettings.RedirectUri);
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.AccessToken, Is.EqualTo("access-token"));
+        Assert.That(result.IdToken, Is.EqualTo("id-token"));
+        Assert.That(result.RefreshTokens, Is.EqualTo("refresh-token"));
+        Assert.That(result.TokenType, Is.EqualTo("Bearer"));
+        Assert.That(result.ExpiresIn, Is.EqualTo(3600));
+
+        _mockHttpHandler
+            .Protected()
+            .Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(req =>
+                    req.Method == HttpMethod.Post &&
+                    req.RequestUri.ToString() == expectedEndpoint
+                ),
+                ItExpr.IsAny<CancellationToken>()
+            );
+    }
+
+    [Test]
+    public async Task GetUserInfoAsync_WithValidToken_ReturnsUserInfo()
+    {
+        // Arrange
+        var userInfo = new OidcUserInfo
+        {
+            Sub = "user-123",
+            Email = "user@example.com",
+            Name = "Test User",
+            GivenName = "Test",
+            FamilyName = "User",
+            EmailVerified = true
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(userInfo);
+        var expectedEndpoint = "https://oidc.example.com/protocol/openid-connect/userinfo";
+
+        _mockHttpHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+            })
+            .Verifiable();
+
+        // Act
+        var result = await _service.GetUserInfoAsync("valid-token");
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Sub, Is.EqualTo("user-123"));
+        Assert.That(result.Email, Is.EqualTo("user@example.com"));
+        Assert.That(result.Name, Is.EqualTo("Test User"));
+        Assert.That(result.GivenName, Is.EqualTo("Test"));
+        Assert.That(result.FamilyName, Is.EqualTo("User"));
+        Assert.That(result.EmailVerified, Is.True);
+
+        _mockHttpHandler
+            .Protected()
+            .Verify(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.Is<HttpRequestMessage>(req =>
+                    req.Method == HttpMethod.Get &&
+                    req.RequestUri.ToString() == expectedEndpoint &&
+                    req.Headers.Authorization?.Scheme == "Bearer" &&
+                    req.Headers.Authorization?.Parameter == "valid-token"
+                ),
+                ItExpr.IsAny<CancellationToken>()
+            );
+    }
+
+    [Test]
+    public async Task ValidateTokenAsync_WithValidToken_ReturnsTrue()
+    {
+        // Arrange
+        var introspectionResponse = new { active = true };
+        var jsonResponse = JsonSerializer.Serialize(introspectionResponse);
+        var expectedEndpoint = "https://oidc.example.com/protocol/openid-connect/token/introspect";
+
+        _mockHttpHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+            })
+            .Verifiable();
+
+        // Act
+        var result = await _service.ValidateTokenAsync("valid-token");
+
+        // Assert
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public async Task ValidateTokenAsync_WithInvalidToken_ReturnsFalse()
+    {
+        // Arrange
+        var introspectionResponse = new { active = false };
+        var jsonResponse = JsonSerializer.Serialize(introspectionResponse);
+        var expectedEndpoint = "https://oidc.example.com/protocol/openid-connect/token/introspect";
+
+        _mockHttpHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+            })
+            .Verifiable();
+
+        // Act
+        var result = await _service.ValidateTokenAsync("invalid-token");
+
+        // Assert
+        Assert.That(result, Is.False);
+    }
+}

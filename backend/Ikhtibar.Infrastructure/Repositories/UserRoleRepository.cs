@@ -1,5 +1,5 @@
 using Dapper;
-using Ikhtibar.Core.Entities;
+
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
@@ -12,7 +12,7 @@ namespace Ikhtibar.Infrastructure.Repositories;
 /// </summary>
 public class UserRoleRepository : BaseRepository<UserRole>, IUserRoleRepository
 {
-    private readonly ILogger<UserRoleRepository> _logger;
+    private new readonly ILogger<UserRoleRepository> _logger;
 
     public UserRoleRepository(IDbConnectionFactory connectionFactory, ILogger<UserRoleRepository> logger)
         : base(connectionFactory, logger, "UserRoles", "UserId")

@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using MediaType = Ikhtibar.Core.Entities.MediaType;
 
 namespace Ikhtibar.Infrastructure.Services.Interfaces;
 
@@ -22,7 +21,7 @@ public interface IFileUploadService
     /// <summary>
     /// Determines media type based on content type and file extension
     /// </summary>
-    MediaType DetermineMediaType(string contentType, string fileName);
+    Shared.Enums.MediaType DetermineMediaType(string contentType, string fileName);
 
     /// <summary>
     /// Validates file size and type constraints

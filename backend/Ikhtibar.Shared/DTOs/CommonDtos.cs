@@ -52,7 +52,7 @@ public class TemplateUsageStats
     /// <summary>
     /// Template ID
     /// </summary>
-    public Guid TemplateId { get; set; }
+    public int TemplateId { get; set; }
 
     /// <summary>
     /// Template name or key
@@ -108,7 +108,7 @@ public class PreferenceSummary
     /// <summary>
     /// User ID
     /// </summary>
-    public Guid UserId { get; set; }
+    public int userId { get; set; }
 
     /// <summary>
     /// Total number of notification types configured

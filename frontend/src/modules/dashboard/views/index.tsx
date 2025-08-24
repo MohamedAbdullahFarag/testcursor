@@ -5,6 +5,8 @@ import { Create, OpenInNew, Work } from 'google-material-icons/outlined'
 import { Badge, Button, Card, Stack } from 'mada-design-system'
 import { When } from 'react-if'
 const Dashboard = () => {
+    console.log('Dashboard component rendering')
+    
     return (
         <MainPanel>
             <h1 className="title-01 font-bold text-card-foreground">{strings.dashboard.title}</h1>

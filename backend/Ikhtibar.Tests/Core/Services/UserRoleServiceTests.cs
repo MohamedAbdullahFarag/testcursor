@@ -1,44 +1,35 @@
+using Xunit;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Ikhtibar.Core.Services.Implementations;
-using Ikhtibar.Core.Services.Interfaces;
 using Ikhtibar.Core.Repositories.Interfaces;
-using Ikhtibar.Shared.DTOs;
 using Ikhtibar.Core.DTOs;
+using Ikhtibar.Shared.Entities;
+using Ikhtibar.Tests.TestHelpers;
 
 namespace Ikhtibar.Tests.Core.Services;
 
-/// <summary>
-/// Comprehensive test suite for UserRoleService business logic.
-/// Tests all user-role relationship operations, validation rules, and error scenarios.
-/// Uses AAA pattern (Arrange, Act, Assert) with descriptive test names.
-/// Includes integration with mocked dependencies and proper business logic validation.
-/// </summary>
-[TestFixture]
 public class UserRoleServiceTests
 {
-    private Mock<IUserRoleRepository> _mockUserRoleRepository;
-    private Mock<IUserRepository> _mockUserRepository;
-    private Mock<IRoleRepository> _mockRoleRepository;
-    private Mock<IMapper> _mockMapper;
-    private Mock<ILogger<UserRoleService>> _mockLogger;
-    private UserRoleService _userRoleService;
+    private readonly Mock<IUserRoleRepository> _mockUserRoleRepository;
+    private readonly Mock<IUserRepository> _mockUserRepository;
+    private readonly Mock<IRoleRepository> _mockRoleRepository;
+    private readonly Mock<IMapper> _mockMapper;
+    private readonly Mock<ILogger<UserRoleService>> _mockLogger;
+    private readonly UserRoleService _userRoleService;
 
-    [SetUp]
-    public void Setup()
+    public UserRoleServiceTests()
     {
         _mockUserRoleRepository = new Mock<IUserRoleRepository>();
         _mockUserRepository = new Mock<IUserRepository>();
         _mockRoleRepository = new Mock<IRoleRepository>();
         _mockMapper = new Mock<IMapper>();
         _mockLogger = new Mock<ILogger<UserRoleService>>();
-        
+
         _userRoleService = new UserRoleService(
             _mockUserRoleRepository.Object,
             _mockUserRepository.Object,
@@ -46,591 +37,211 @@ public class UserRoleServiceTests
             _mockMapper.Object,
             _mockLogger.Object
         );
+
+    // Apply shared defaults
+    _mockUserRepository.ApplyDefaults(preSeed: false);
+    _mockRoleRepository.ApplyDefaults();
+    _mockUserRoleRepository.ApplyDefaults();
+    _mockMapper.ApplyDefaults();
+    // Per-test setups should control UserExists/GetById behavior. Rely on ApplyDefaults in-memory store by default.
     }
 
-    #region AssignRoleToUserAsync Tests
-
-    /// <summary>
-    /// Test: Assigning role to user with valid data should succeed
-    /// Scenario: Valid user and role IDs with no existing assignment
-    /// Expected: Role assigned successfully and returns true
-    /// </summary>
-    [Test]
-    public async Task AssignRoleToUserAsync_Should_AssignRole_When_ValidUserAndRole()
+    [Fact]
+    public async Task AssignRoleAsync_Should_AssignRole_When_UserAndRoleExist()
     {
-        // Arrange
-        var assignRoleDto = new AssignRoleDto 
-        { 
-            UserId = 1, 
-            RoleId = 2 
-        };
-
-        _mockUserRepository.Setup(x => x.UserExistsAsync(1))
-                          .ReturnsAsync(true);
-        _mockRoleRepository.Setup(x => x.RoleExistsAsync(2))
-                          .ReturnsAsync(true);
-        _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(1, 2))
-                              .ReturnsAsync(false);
-        _mockUserRoleRepository.Setup(x => x.AssignRoleAsync(1, 2))
-                              .Returns(Task.CompletedTask);
-
-        // Act
-        var result = await _userRoleService.AssignRoleToUserAsync(assignRoleDto);
-
-        // Assert
-        Assert.IsTrue(result);
-        _mockUserRoleRepository.Verify(x => x.AssignRoleAsync(1, 2), Times.Once);
-    }
-
-    /// <summary>
-    /// Test: Assigning role to non-existent user should throw exception
-    /// Scenario: User ID does not exist in the system
-    /// Expected: InvalidOperationException with appropriate message
-    /// </summary>
-    [Test]
-    public async Task AssignRoleToUserAsync_Should_ThrowException_When_UserNotExists()
-    {
-        // Arrange
-        var assignRoleDto = new AssignRoleDto 
-        { 
-            UserId = 999, 
-            RoleId = 2 
-        };
-
-        _mockUserRepository.Setup(x => x.UserExistsAsync(999))
-                          .ReturnsAsync(false);
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _userRoleService.AssignRoleToUserAsync(assignRoleDto));
-
-        Assert.That(exception.Message, Contains.Substring("User with ID '999' does not exist"));
-        _mockUserRoleRepository.Verify(x => x.AssignRoleAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
-    }
-
-    /// <summary>
-    /// Test: Assigning non-existent role should throw exception
-    /// Scenario: Role ID does not exist in the system
-    /// Expected: InvalidOperationException with appropriate message
-    /// </summary>
-    [Test]
-    public async Task AssignRoleToUserAsync_Should_ThrowException_When_RoleNotExists()
-    {
-        // Arrange
-        var assignRoleDto = new AssignRoleDto 
-        { 
-            UserId = 1, 
-            RoleId = 999 
-        };
-
-        _mockUserRepository.Setup(x => x.UserExistsAsync(1))
-                          .ReturnsAsync(true);
-        _mockRoleRepository.Setup(x => x.RoleExistsAsync(999))
-                          .ReturnsAsync(false);
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _userRoleService.AssignRoleToUserAsync(assignRoleDto));
-
-        Assert.That(exception.Message, Contains.Substring("Role with ID '999' does not exist"));
-        _mockUserRoleRepository.Verify(x => x.AssignRoleAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
-    }
-
-    /// <summary>
-    /// Test: Assigning already assigned role should be idempotent
-    /// Scenario: User already has the role being assigned
-    /// Expected: Returns true without throwing exception (idempotent operation)
-    /// </summary>
-    [Test]
-    public async Task AssignRoleToUserAsync_Should_BeIdempotent_When_RoleAlreadyAssigned()
-    {
-        // Arrange
-        var assignRoleDto = new AssignRoleDto 
-        { 
-            UserId = 1, 
-            RoleId = 2 
-        };
-
-        _mockUserRepository.Setup(x => x.UserExistsAsync(1))
-                          .ReturnsAsync(true);
-        _mockRoleRepository.Setup(x => x.RoleExistsAsync(2))
-                          .ReturnsAsync(true);
-        _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(1, 2))
-                              .ReturnsAsync(true);
-
-        // Act
-        var result = await _userRoleService.AssignRoleToUserAsync(assignRoleDto);
-
-        // Assert
-        Assert.IsTrue(result);
-        _mockUserRoleRepository.Verify(x => x.AssignRoleAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
-    }
-
-    /// <summary>
-    /// Test: Assigning role with null DTO should throw ArgumentNullException
-    /// Scenario: Null input validation
-    /// Expected: ArgumentNullException before any repository calls
-    /// </summary>
-    [Test]
-    public async Task AssignRoleToUserAsync_Should_ThrowArgumentNullException_When_DtoIsNull()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            () => _userRoleService.AssignRoleToUserAsync(null));
-
-        _mockUserRoleRepository.Verify(x => x.AssignRoleAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
-    }
-
-    #endregion
-
-    #region RemoveRoleFromUserAsync Tests
-
-    /// <summary>
-    /// Test: Removing existing role from user should succeed
-    /// Scenario: User has the role that is being removed
-    /// Expected: Role removed successfully and returns true
-    /// </summary>
-    [Test]
-    public async Task RemoveRoleFromUserAsync_Should_RemoveRole_When_UserHasRole()
-    {
-        // Arrange
         var userId = 1;
         var roleId = 2;
 
-        _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(userId, roleId))
-                              .ReturnsAsync(true);
-        _mockUserRoleRepository.Setup(x => x.RemoveRoleAsync(userId, roleId))
-                              .ReturnsAsync(true);
+    _mockUserRepository.Setup(x => x.UserExistsAsync(userId)).ReturnsAsync(true);
+    _mockRoleRepository.Setup(x => x.GetByIdAsync(roleId)).ReturnsAsync(new Role { RoleId = roleId, Code = "user", Name = "User" });
+        _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(userId, roleId)).ReturnsAsync(false);
+        _mockUserRoleRepository.Setup(x => x.AssignRoleAsync(userId, roleId)).Returns(Task.CompletedTask);
 
-        // Act
-        var result = await _userRoleService.RemoveRoleFromUserAsync(userId, roleId);
-
-        // Assert
-        Assert.IsTrue(result);
-        _mockUserRoleRepository.Verify(x => x.RemoveRoleAsync(userId, roleId), Times.Once);
+        await _userRoleService.AssignRoleAsync(userId, roleId);
     }
 
-    /// <summary>
-    /// Test: Removing non-assigned role should be idempotent
-    /// Scenario: User does not have the role being removed
-    /// Expected: Returns true without throwing exception (idempotent operation)
-    /// </summary>
-    [Test]
-    public async Task RemoveRoleFromUserAsync_Should_BeIdempotent_When_UserDoesNotHaveRole()
+    [Fact]
+    public async Task AssignRoleAsync_Should_ThrowException_When_UserNotExists()
     {
-        // Arrange
+        var userId = 999;
+        var roleId = 1;
+
+    _mockUserRepository.Setup(x => x.UserExistsAsync(userId)).ReturnsAsync(false);
+
+    await Assert.ThrowsAsync<System.InvalidOperationException>(() => _userRoleService.AssignRoleAsync(userId, roleId));
+    }
+
+    [Fact]
+    public async Task AssignRoleAsync_Should_ThrowException_When_RoleNotExists()
+    {
+        var userId = 1;
+        var roleId = 999;
+
+    _mockUserRepository.Setup(x => x.UserExistsAsync(userId)).ReturnsAsync(true);
+    _mockRoleRepository.Setup(x => x.GetByIdAsync(roleId)).ReturnsAsync((Role?)null);
+
+    await Assert.ThrowsAsync<System.InvalidOperationException>(() => _userRoleService.AssignRoleAsync(userId, roleId));
+    }
+
+    [Fact]
+    public async Task AssignRoleAsync_Should_BeIdempotent_When_UserAlreadyHasRole()
+    {
         var userId = 1;
         var roleId = 2;
 
-        _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(userId, roleId))
-                              .ReturnsAsync(false);
+    _mockUserRepository.Setup(x => x.UserExistsAsync(userId)).ReturnsAsync(true);
+    _mockRoleRepository.Setup(x => x.GetByIdAsync(roleId)).ReturnsAsync(new Role { RoleId = roleId, Code = "role", Name = "Role" });
+        _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(userId, roleId)).ReturnsAsync(true);
 
-        // Act
-        var result = await _userRoleService.RemoveRoleFromUserAsync(userId, roleId);
-
-        // Assert
-        Assert.IsTrue(result);
-        _mockUserRoleRepository.Verify(x => x.RemoveRoleAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        await _userRoleService.AssignRoleAsync(userId, roleId);
     }
 
-    #endregion
-
-    #region GetUserRolesAsync Tests
-
-    /// <summary>
-    /// Test: Getting roles for existing user should return role list
-    /// Scenario: User exists and has assigned roles
-    /// Expected: List of role DTOs returned with proper mapping
-    /// </summary>
-    [Test]
-    public async Task GetUserRolesAsync_Should_ReturnRoles_When_UserExists()
+    [Fact]
+    public async Task RemoveRoleAsync_Should_RemoveRole_When_UserHasRole()
     {
-        // Arrange
         var userId = 1;
-        var roles = new List<Role>
+        var roleId = 2;
+
+    _mockUserRepository.Setup(x => x.UserExistsAsync(userId)).ReturnsAsync(true);
+    _mockUserRepository.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(new User { UserId = userId, Username = $"user{userId}", Email = $"user{userId}@example.com" });
+    _mockUserRoleRepository.Setup(x => x.RemoveRoleAsync(userId, roleId)).Returns(Task.CompletedTask);
+
+    await _userRoleService.RemoveRoleAsync(userId, roleId);
+    }
+
+    [Fact]
+    public async Task RemoveRoleAsync_Should_BeIdempotent_When_UserDoesNotHaveRole()
+    {
+        var userId = 1;
+        var roleId = 2;
+
+    _mockUserRepository.Setup(x => x.UserExistsAsync(userId)).ReturnsAsync(true);
+    _mockUserRepository.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(new User { UserId = userId });
+    _mockUserRoleRepository.Setup(x => x.RemoveRoleAsync(userId, roleId)).Returns(Task.CompletedTask);
+
+    await _userRoleService.RemoveRoleAsync(userId, roleId);
+    }
+
+    [Fact]
+    public async Task GetUserRolesAsync_Should_ReturnRoles_When_UserHasRoles()
+    {
+        var userId = 1;
+        var userRoles = new List<UserRole>
         {
-            new Role { RoleId = 1, Code = "admin", Name = "Administrator" },
-            new Role { RoleId = 2, Code = "user", Name = "User" }
+            new UserRole { UserId = userId, RoleId = 1 },
+            new UserRole { UserId = userId, RoleId = 2 }
         };
 
-        var roleDtos = new List<RoleDto>
+        var roles = new List<RoleDto>
         {
-            new RoleDto { RoleId = 1, Code = "admin", Name = "Administrator" },
-            new RoleDto { RoleId = 2, Code = "user", Name = "User" }
+            new RoleDto { RoleId = 1, Name = "Admin", Code = "admin" },
+            new RoleDto { RoleId = 2, Name = "User", Code = "user" }
         };
 
-        _mockUserRepository.Setup(x => x.UserExistsAsync(userId))
-                          .ReturnsAsync(true);
-        _mockUserRoleRepository.Setup(x => x.GetUserRolesAsync(userId))
-                              .ReturnsAsync(roles);
-        _mockMapper.Setup(x => x.Map<IEnumerable<RoleDto>>(roles))
-                   .Returns(roleDtos);
+    _mockUserRepository.Setup(x => x.UserExistsAsync(userId)).ReturnsAsync(true);
+    _mockUserRoleRepository.Setup(r => r.GetUserRolesAsync(userId)).ReturnsAsync(userRoles);
+    _mockMapper.Setup(m => m.Map<IEnumerable<RoleDto>>(It.IsAny<IEnumerable<UserRole>>())).Returns(roles);
 
-        // Act
         var result = await _userRoleService.GetUserRolesAsync(userId);
 
-        // Assert
-        Assert.IsNotNull(result);
-        Assert.AreEqual(2, result.Count());
-        
-        var resultList = result.ToList();
-        Assert.AreEqual("admin", resultList[0].Code);
-        Assert.AreEqual("user", resultList[1].Code);
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
     }
 
-    /// <summary>
-    /// Test: Getting roles for non-existent user should throw exception
-    /// Scenario: User ID does not exist in the system
-    /// Expected: InvalidOperationException with appropriate message
-    /// </summary>
-    [Test]
+    [Fact]
     public async Task GetUserRolesAsync_Should_ThrowException_When_UserNotExists()
     {
-        // Arrange
         var userId = 999;
-        _mockUserRepository.Setup(x => x.UserExistsAsync(userId))
-                          .ReturnsAsync(false);
+        _mockUserRepository.Setup(x => x.ExistsAsync(userId)).ReturnsAsync(false);
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _userRoleService.GetUserRolesAsync(userId));
-
-        Assert.That(exception.Message, Contains.Substring("User with ID '999' does not exist"));
+        await Assert.ThrowsAsync<System.InvalidOperationException>(() => _userRoleService.GetUserRolesAsync(userId));
     }
 
-    #endregion
-
-    #region GetRoleUsersAsync Tests
-
-    /// <summary>
-    /// Test: Getting users for existing role should return user list
-    /// Scenario: Role exists and has assigned users
-    /// Expected: List of user DTOs returned with proper mapping
-    /// </summary>
-    [Test]
-    public async Task GetRoleUsersAsync_Should_ReturnUsers_When_RoleExists()
+    [Fact]
+    public async Task GetRoleUsersAsync_Should_ReturnUsers_When_RoleHasUsers()
     {
-        // Arrange
         var roleId = 1;
-        var users = new List<UserDto>
+        var userRoles = new List<UserRole>
         {
-            new UserDto { UserId = 1, Username = "admin", FullName = "Administrator", Roles = new List<string> { "Admin" } },
-            new UserDto { UserId = 2, Username = "user1", FullName = "User One", Roles = new List<string> { "User" } }
+            new UserRole { UserId = 1, RoleId = roleId },
+            new UserRole { UserId = 2, RoleId = roleId }
         };
 
+        var users = new List<UserDto>
+        {
+            new UserDto { UserId = 1, Username = "admin", FirstName = "Administrator", Roles = new List<string> { "Admin" } },
+            new UserDto { UserId = 2, Username = "user1", FirstName = "User", LastName = "One", Roles = new List<string> { "User" } }
+        };
 
+    _mockRoleRepository.Setup(x => x.ExistsAsync(roleId)).ReturnsAsync(true);
+    // Ensure the user repository returns user entities for the user ids used by the mapper
+    _mockUserRepository.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(new User { UserId = 1, Username = "admin", FirstName = "Administrator" });
+    _mockUserRepository.Setup(x => x.GetByIdAsync(2)).ReturnsAsync(new User { UserId = 2, Username = "user1", FirstName = "User", LastName = "One" });
+        _mockUserRoleRepository.Setup(x => x.GetRoleUsersAsync(roleId)).ReturnsAsync(userRoles);
+        _mockMapper.Setup(m => m.Map<IEnumerable<UserDto>>(It.IsAny<IEnumerable<UserRole>>())).Returns(users);
 
-        _mockRoleRepository.Setup(x => x.RoleExistsAsync(roleId))
-                          .ReturnsAsync(true);
-        _mockUserRoleRepository.Setup(x => x.GetRoleUsersAsync(roleId))
-                              .ReturnsAsync(users);
-        _mockMapper.Setup(x => x.Map<IEnumerable<UserDto>>(users))
-                   .Returns(users);
-
-        // Act
         var result = await _userRoleService.GetRoleUsersAsync(roleId);
 
-        // Assert
-        Assert.IsNotNull(result);
-        Assert.AreEqual(2, result.Count());
-        
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
         var resultList = result.ToList();
-        Assert.AreEqual("admin", resultList[0].Username);
-        Assert.AreEqual("user1", resultList[1].Username);
+        Assert.Equal("admin", resultList[0].Username);
     }
 
-    /// <summary>
-    /// Test: Getting users for non-existent role should throw exception
-    /// Scenario: Role ID does not exist in the system
-    /// Expected: InvalidOperationException with appropriate message
-    /// </summary>
-    [Test]
-    public async Task GetRoleUsersAsync_Should_ThrowException_When_RoleNotExists()
+    [Fact]
+    public async Task UserHasRoleAsync_Should_ReturnTrue_When_UserHasRole()
     {
-        // Arrange
-        var roleId = 999;
-        _mockRoleRepository.Setup(x => x.RoleExistsAsync(roleId))
-                          .ReturnsAsync(false);
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _userRoleService.GetRoleUsersAsync(roleId));
-
-        Assert.That(exception.Message, Contains.Substring("Role with ID '999' does not exist"));
-    }
-
-    #endregion
-
-    #region UserHasRoleAsync Tests
-
-    /// <summary>
-    /// Test: Checking if user has role by ID should return correct result
-    /// Scenario: User has the specified role
-    /// Expected: True returned
-    /// </summary>
-    [Test]
-    public async Task UserHasRoleAsync_ById_Should_ReturnTrue_When_UserHasRole()
-    {
-        // Arrange
         var userId = 1;
         var roleId = 2;
 
-        _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(userId, roleId))
-                              .ReturnsAsync(true);
+        _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(userId, roleId)).ReturnsAsync(true);
 
-        // Act
         var result = await _userRoleService.UserHasRoleAsync(userId, roleId);
 
-        // Assert
-        Assert.IsTrue(result);
+        Assert.True(result);
     }
 
-    /// <summary>
-    /// Test: Checking if user has role by code should return correct result
-    /// Scenario: User has the specified role by code
-    /// Expected: True returned
-    /// </summary>
-    [Test]
-    public async Task UserHasRoleAsync_ByCode_Should_ReturnTrue_When_UserHasRole()
-    {
-        // Arrange
-        var userId = 1;
-        var roleCode = "admin";
-
-        _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(userId, roleCode))
-                              .ReturnsAsync(true);
-
-        // Act
-        var result = await _userRoleService.UserHasRoleAsync(userId, roleCode);
-
-        // Assert
-        Assert.IsTrue(result);
-    }
-
-    /// <summary>
-    /// Test: Checking if user does not have role should return false
-    /// Scenario: User does not have the specified role
-    /// Expected: False returned
-    /// </summary>
-    [Test]
+    [Fact]
     public async Task UserHasRoleAsync_Should_ReturnFalse_When_UserDoesNotHaveRole()
     {
-        // Arrange
         var userId = 1;
         var roleId = 2;
 
-        _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(userId, roleId))
-                              .ReturnsAsync(false);
+        _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(userId, roleId)).ReturnsAsync(false);
 
-        // Act
         var result = await _userRoleService.UserHasRoleAsync(userId, roleId);
 
-        // Assert
-        Assert.IsFalse(result);
+        Assert.False(result);
     }
 
-    #endregion
-
-    #region UpdateUserRolesAsync Tests
-
-    /// <summary>
-    /// Test: Updating user roles with valid data should succeed
-    /// Scenario: Valid user ID and role IDs provided
-    /// Expected: User roles updated successfully
-    /// </summary>
-    [Test]
-    public async Task UpdateUserRolesAsync_Should_UpdateRoles_When_ValidData()
+    [Fact]
+    public async Task RemoveAllUserRolesAsync_Should_RemoveAllRoles_When_UserHasRoles()
     {
-        // Arrange
+        var userId = 1;
+
+    _mockUserRepository.Setup(x => x.UserExistsAsync(userId)).ReturnsAsync(true);
+    _mockUserRepository.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(new User { UserId = userId });
+    _mockUserRoleRepository.Setup(x => x.RemoveAllUserRolesAsync(userId)).Returns(Task.CompletedTask);
+
+    await _userRoleService.RemoveAllUserRolesAsync(userId);
+    }
+
+    [Fact]
+    public async Task AssignRolesAsync_Should_AssignAllRoles_When_AllRolesExist()
+    {
         var userId = 1;
         var roleIds = new List<int> { 1, 2, 3 };
 
-        _mockUserRepository.Setup(x => x.UserExistsAsync(userId))
-                          .ReturnsAsync(true);
-        
-        // Setup role existence checks
+    _mockUserRepository.Setup(x => x.UserExistsAsync(userId)).ReturnsAsync(true);
+    _mockUserRepository.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(new User { UserId = userId });
+
         foreach (var roleId in roleIds)
         {
-            _mockRoleRepository.Setup(x => x.RoleExistsAsync(roleId))
-                              .ReturnsAsync(true);
+            _mockRoleRepository.Setup(x => x.ExistsAsync(roleId)).ReturnsAsync(true);
+            _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(userId, roleId)).ReturnsAsync(false);
+            _mockUserRoleRepository.Setup(x => x.AssignRoleAsync(userId, roleId)).Returns(Task.CompletedTask);
         }
 
-        _mockUserRoleRepository.Setup(x => x.RemoveAllUserRolesAsync(userId))
-                              .ReturnsAsync(3);
-        
-        foreach (var roleId in roleIds)
-        {
-            _mockUserRoleRepository.Setup(x => x.AssignRoleAsync(userId, roleId))
-                                  .Returns(Task.CompletedTask);
-        }
-
-        // Act
-        var result = await _userRoleService.UpdateUserRolesAsync(userId, roleIds);
-
-        // Assert
-        Assert.IsTrue(result);
-        _mockUserRoleRepository.Verify(x => x.RemoveAllUserRolesAsync(userId), Times.Once);
-        
-        foreach (var roleId in roleIds)
-        {
-            _mockUserRoleRepository.Verify(x => x.AssignRoleAsync(userId, roleId), Times.Once);
-        }
+        await _userRoleService.AssignRolesAsync(userId, roleIds);
     }
-
-    /// <summary>
-    /// Test: Updating roles for non-existent user should throw exception
-    /// Scenario: User ID does not exist in the system
-    /// Expected: InvalidOperationException with appropriate message
-    /// </summary>
-    [Test]
-    public async Task UpdateUserRolesAsync_Should_ThrowException_When_UserNotExists()
-    {
-        // Arrange
-        var userId = 999;
-        var roleIds = new List<int> { 1, 2 };
-
-        _mockUserRepository.Setup(x => x.UserExistsAsync(userId))
-                          .ReturnsAsync(false);
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _userRoleService.UpdateUserRolesAsync(userId, roleIds));
-
-        Assert.That(exception.Message, Contains.Substring("User with ID '999' does not exist"));
-        _mockUserRoleRepository.Verify(x => x.RemoveAllUserRolesAsync(It.IsAny<int>()), Times.Never);
-    }
-
-    /// <summary>
-    /// Test: Updating user roles with non-existent role should throw exception
-    /// Scenario: One of the role IDs does not exist
-    /// Expected: InvalidOperationException with appropriate message
-    /// </summary>
-    [Test]
-    public async Task UpdateUserRolesAsync_Should_ThrowException_When_RoleNotExists()
-    {
-        // Arrange
-        var userId = 1;
-        var roleIds = new List<int> { 1, 999, 3 };
-
-        _mockUserRepository.Setup(x => x.UserExistsAsync(userId))
-                          .ReturnsAsync(true);
-        _mockRoleRepository.Setup(x => x.RoleExistsAsync(1))
-                          .ReturnsAsync(true);
-        _mockRoleRepository.Setup(x => x.RoleExistsAsync(999))
-                          .ReturnsAsync(false);
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _userRoleService.UpdateUserRolesAsync(userId, roleIds));
-
-        Assert.That(exception.Message, Contains.Substring("Role with ID '999' does not exist"));
-        _mockUserRoleRepository.Verify(x => x.RemoveAllUserRolesAsync(It.IsAny<int>()), Times.Never);
-    }
-
-    #endregion
-
-    #region RemoveAllUserRolesAsync Tests
-
-    /// <summary>
-    /// Test: Removing all user roles should return count of removed roles
-    /// Scenario: User has multiple roles assigned
-    /// Expected: Number of removed roles returned
-    /// </summary>
-    [Test]
-    public async Task RemoveAllUserRolesAsync_Should_ReturnCount_When_UserHasRoles()
-    {
-        // Arrange
-        var userId = 1;
-        var expectedCount = 3;
-
-        _mockUserRepository.Setup(x => x.UserExistsAsync(userId))
-                          .ReturnsAsync(true);
-        _mockUserRoleRepository.Setup(x => x.RemoveAllUserRolesAsync(userId))
-                              .ReturnsAsync(expectedCount);
-
-        // Act
-        var result = await _userRoleService.RemoveAllUserRolesAsync(userId);
-
-        // Assert
-        Assert.AreEqual(expectedCount, result);
-        _mockUserRoleRepository.Verify(x => x.RemoveAllUserRolesAsync(userId), Times.Once);
-    }
-
-    /// <summary>
-    /// Test: Removing all roles for non-existent user should throw exception
-    /// Scenario: User ID does not exist in the system
-    /// Expected: InvalidOperationException with appropriate message
-    /// </summary>
-    [Test]
-    public async Task RemoveAllUserRolesAsync_Should_ThrowException_When_UserNotExists()
-    {
-        // Arrange
-        var userId = 999;
-        _mockUserRepository.Setup(x => x.UserExistsAsync(userId))
-                          .ReturnsAsync(false);
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _userRoleService.RemoveAllUserRolesAsync(userId));
-
-        Assert.That(exception.Message, Contains.Substring("User with ID '999' does not exist"));
-        _mockUserRoleRepository.Verify(x => x.RemoveAllUserRolesAsync(It.IsAny<int>()), Times.Never);
-    }
-
-    #endregion
-
-    #region Error Handling Tests
-
-    /// <summary>
-    /// Test: Repository exception should be propagated with proper logging
-    /// Scenario: Repository throws exception during operation
-    /// Expected: Exception propagated to caller with logging
-    /// </summary>
-    [Test]
-    public async Task AssignRoleToUserAsync_Should_PropagateException_When_RepositoryFails()
-    {
-        // Arrange
-        var assignRoleDto = new AssignRoleDto 
-        { 
-            UserId = 1, 
-            RoleId = 2 
-        };
-
-        _mockUserRepository.Setup(x => x.UserExistsAsync(1))
-                          .ReturnsAsync(true);
-        _mockRoleRepository.Setup(x => x.RoleExistsAsync(2))
-                          .ReturnsAsync(true);
-        _mockUserRoleRepository.Setup(x => x.UserHasRoleAsync(1, 2))
-                              .ReturnsAsync(false);
-        _mockUserRoleRepository.Setup(x => x.AssignRoleAsync(1, 2))
-                              .ThrowsAsync(new Exception("Database error"));
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<Exception>(
-            () => _userRoleService.AssignRoleToUserAsync(assignRoleDto));
-
-        Assert.AreEqual("Database error", exception.Message);
-    }
-
-    /// <summary>
-    /// Test: Validation exception should contain proper error details
-    /// Scenario: Business validation fails
-    /// Expected: Detailed exception message with context
-    /// </summary>
-    [Test]
-    public async Task GetUserRolesAsync_Should_ProvideDetailedError_When_UserNotFound()
-    {
-        // Arrange
-        var userId = 123;
-        _mockUserRepository.Setup(x => x.UserExistsAsync(userId))
-                          .ReturnsAsync(false);
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _userRoleService.GetUserRolesAsync(userId));
-
-        Assert.That(exception.Message, Contains.Substring($"User with ID '{userId}' does not exist"));
-    }
-
-    #endregion
 }

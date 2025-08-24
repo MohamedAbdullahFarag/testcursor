@@ -5,7 +5,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// <summary>
 /// Repository interface for QuestionType lookup operations
 /// </summary>
-public interface IQuestionTypeRepository : IRepository<QuestionTypeEntity>
+public interface IQuestionTypeRepository : IBaseRepository<QuestionTypeEntity>
 {
     /// <summary>
     /// Gets question type by name

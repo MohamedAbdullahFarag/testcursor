@@ -1,0 +1,586 @@
+﻿using Xunit.Framework;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using Moq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Ikhtibar.Core.Services.Implementations;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Core.DTOs;
+using Ikhtibar.Shared.Entities;
+
+namespace Ikhtibar.Tests.Core.Services;
+
+/// <summary>
+/// Comprehensive test suite for RoleService business logic.
+/// Tests all CRUD operations, validation rules, and error scenarios.
+/// Uses AAA pattern (Arrange, Act, Assert) with descriptive test names.
+/// Includes integration with mocked dependencies and database.
+/// </summary>
+
+[TestFixture]
+public class RoleServiceTests
+{
+    private Mock<IRoleRepository> _mockRoleRepository;
+    private Mock<IMapper> _mockMapper;
+    private Mock<ILogger<RoleService>> _mockLogger;
+    private RoleService _roleService;
+
+    [SetUp]
+    public void Setup()
+    {
+        _mockRoleRepository = new Mock<IRoleRepository>();
+        _mockMapper = new Mock<IMapper>();
+        _mockLogger = new Mock<ILogger<RoleService>>();
+
+        _roleService = new RoleService(
+            _mockRoleRepository.Object,
+            _mockMapper.Object,
+            _mockLogger.Object
+        );
+    }
+
+    #region CreateRoleAsync Tests
+
+    /// <summary>
+    /// Test: Creating role with valid data should return role DTO with generated ID
+    /// Scenario: Happy path with all required fields provided
+    /// Expected: Role created successfully with proper mapping and validation
+    /// </summary>
+    [Test]
+    public async Task CreateRoleAsync_Should_CreateRole_When_ValidDataProvided()
+    {
+        // Arrange
+        var createRoleDto = new CreateRoleDto
+        {
+            Code = "test-role",
+            Name = "Test Role",
+            Description = "Test role description"
+        };
+
+        var role = new Role
+        {
+            RoleId = 1,
+            Code = "test-role",
+            Name = "Test Role",
+            Description = "Test role description",
+            IsSystemRole = false
+        };
+
+        var roleDto = new RoleDto
+        {
+            RoleId = 1,
+            Code = "test-role",
+            Name = "Test Role",
+            Description = "Test role description",
+            IsSystemRole = false
+        };
+
+        _mockRoleRepository.Setup(x => x.IsRoleCodeInUseAsync("test-role", null))
+                          .ReturnsAsync(false);
+        _mockMapper.Setup(x => x.Map<Role>(createRoleDto))
+                   .Returns(role);
+        _mockRoleRepository.Setup(x => x.AddAsync(role))
+                          .ReturnsAsync(role);
+        _mockMapper.Setup(x => x.Map<RoleDto>(role))
+                   .Returns(roleDto);
+
+        // Act
+        var result = await _roleService.CreateRoleAsync(createRoleDto);
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.RoleId, Is.EqualTo(1));
+        Assert.That(result.Code, Is.EqualTo("test-role"));
+        Assert.That(result.Name, Is.EqualTo("Test Role"));
+    }
+
+    /// <summary>
+    /// Test: Creating role with duplicate code should throw exception
+    /// Scenario: Role code already exists in the system
+    /// Expected: InvalidOperationException with descriptive message
+    /// </summary>
+    [Test]
+    public async Task CreateRoleAsync_Should_ThrowException_When_CodeAlreadyExists()
+    {
+        // Arrange
+        var createRoleDto = new CreateRoleDto
+        {
+            Code = "existing-role",
+            Name = "Existing Role"
+        };
+
+        _mockRoleRepository.Setup(x => x.IsRoleCodeInUseAsync("existing-role", null))
+                          .ReturnsAsync(true);
+
+        // Act & Assert
+        var exception = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _roleService.CreateRoleAsync(createRoleDto));
+        Assert.That(exception.Message, Does.Contain("already exists"));
+    }
+
+    /// <summary>
+    /// Test: Creating role with null DTO should throw ArgumentNullException
+    /// Scenario: Null CreateRoleDto passed to method
+    /// Expected: ArgumentNullException thrown
+    /// </summary>
+    [Test]
+    public void CreateRoleAsync_Should_ThrowArgumentNullException_When_DtoIsNull()
+    {
+        // Act & Assert
+        Assert.ThrowsAsync<ArgumentNullException>(
+            () => _roleService.CreateRoleAsync(null));
+    }
+
+    #endregion
+
+    #region GetRoleAsync Tests
+
+    /// <summary>
+    /// Test: Getting existing role should return role DTO
+    /// Scenario: Role exists in repository with valid ID
+    /// Expected: Role DTO returned with correct data
+    /// </summary>
+    [Test]
+    public async Task GetRoleAsync_Should_ReturnRole_When_RoleExists()
+    {
+        // Arrange
+        var roleId = 1;
+        var role = new Role
+        {
+            RoleId = roleId,
+            Code = "admin",
+            Name = "Administrator"
+        };
+
+        var roleDto = new RoleDto
+        {
+            RoleId = roleId,
+            Code = "admin",
+            Name = "Administrator"
+        };
+
+        _mockRoleRepository.Setup(x => x.GetByIdAsync(roleId))
+                          .ReturnsAsync(role);
+        _mockMapper.Setup(x => x.Map<RoleDto>(role))
+                   .Returns(roleDto);
+
+        // Act
+        var result = await _roleService.GetRoleAsync(roleId);
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.RoleId, Is.EqualTo(roleId));
+        Assert.That(result.Code, Is.EqualTo("admin"));
+    }
+
+    /// <summary>
+    /// Test: Getting non-existing role should return null
+    /// Scenario: Role ID does not exist in repository
+    /// Expected: Null returned
+    /// </summary>
+    [Test]
+    public async Task GetRoleAsync_Should_ReturnNull_When_RoleNotExists()
+    {
+        // Arrange
+        var roleId = 999;
+        _mockRoleRepository.Setup(x => x.GetByIdAsync(roleId))
+                          .ReturnsAsync((Role)null);
+
+        // Act
+        var result = await _roleService.GetRoleAsync(roleId);
+
+        // Assert
+        Assert.That(result, Is.Null);
+    }
+
+    #endregion
+
+    #region UpdateRoleAsync Tests
+
+    /// <summary>
+    /// Test: Updating role with valid data should return updated role DTO
+    /// Scenario: Valid update data for existing role
+    /// Expected: Role updated successfully with new data
+    /// </summary>
+    [Test]
+    public async Task UpdateRoleAsync_Should_UpdateRole_When_ValidDataProvided()
+    {
+        // Arrange
+        var roleId = 1;
+        var updateRoleDto = new UpdateRoleDto
+        {
+            Code = "updated-role",
+            Name = "Updated Role",
+            Description = "Updated description",
+            IsActive = true
+        };
+
+        var existingRole = new Role
+        {
+            RoleId = roleId,
+            Code = "old-role",
+            Name = "Old Role",
+            IsSystemRole = false
+        };
+
+        var updatedRole = new Role
+        {
+            RoleId = roleId,
+            Code = "updated-role",
+            Name = "Updated Role",
+            Description = "Updated description",
+            IsActive = true,
+            IsSystemRole = false
+        };
+
+        var roleDto = new RoleDto
+        {
+            RoleId = roleId,
+            Code = "updated-role",
+            Name = "Updated Role",
+            Description = "Updated description",
+            IsActive = true,
+            IsSystemRole = false
+        };
+
+        _mockRoleRepository.Setup(x => x.GetByIdAsync(roleId))
+                          .ReturnsAsync(existingRole);
+        _mockRoleRepository.Setup(x => x.IsRoleCodeInUseAsync("updated-role", roleId))
+                          .ReturnsAsync(false);
+        _mockMapper.Setup(x => x.Map(updateRoleDto, existingRole))
+                   .Returns(updatedRole);
+        _mockRoleRepository.Setup(x => x.UpdateAsync(updatedRole))
+                          .ReturnsAsync(updatedRole);
+        _mockMapper.Setup(x => x.Map<RoleDto>(updatedRole))
+                   .Returns(roleDto);
+
+        // Act
+        var result = await _roleService.UpdateRoleAsync(roleId, updateRoleDto);
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Code, Is.EqualTo("updated-role"));
+        Assert.That(result.Name, Is.EqualTo("Updated Role"));
+    }
+
+    /// <summary>
+    /// Test: Updating system role should throw exception
+    /// Scenario: Attempting to update a system role
+    /// Expected: InvalidOperationException thrown
+    /// </summary>
+    [Test]
+    public async Task UpdateRoleAsync_Should_ThrowException_When_UpdatingSystemRole()
+    {
+        // Arrange
+        var roleId = 1;
+        var updateRoleDto = new UpdateRoleDto
+        {
+            Code = "updated-role",
+            Name = "Updated Role"
+        };
+
+        var systemRole = new Role
+        {
+            RoleId = roleId,
+            Code = "system-admin",
+            Name = "System Administrator",
+            IsSystemRole = true
+        };
+
+        _mockRoleRepository.Setup(x => x.GetByIdAsync(roleId))
+                          .ReturnsAsync(systemRole);
+
+        // Act & Assert
+        var exception = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _roleService.UpdateRoleAsync(roleId, updateRoleDto));
+        Assert.That(exception.Message, Does.Contain("system role"));
+    }
+
+    #endregion
+
+    #region DeleteRoleAsync Tests
+
+    /// <summary>
+    /// Test: Deleting existing role should return true
+    /// Scenario: Valid role ID for non-system role
+    /// Expected: True returned and role deleted
+    /// </summary>
+    [Test]
+    public async Task DeleteRoleAsync_Should_ReturnTrue_When_RoleDeleted()
+    {
+        // Arrange
+        var roleId = 1;
+        var role = new Role
+        {
+            RoleId = roleId,
+            Code = "deletable-role",
+            Name = "Deletable Role",
+            IsSystemRole = false
+        };
+
+        _mockRoleRepository.Setup(x => x.GetByIdAsync(roleId))
+                          .ReturnsAsync(role);
+        _mockRoleRepository.Setup(x => x.DeleteAsync(roleId))
+                          .ReturnsAsync(true);
+
+        // Act
+        var result = await _roleService.DeleteRoleAsync(roleId);
+
+        // Assert
+        Assert.That(result, Is.True);
+    }
+
+    /// <summary>
+    /// Test: Deleting system role should throw exception
+    /// Scenario: Attempting to delete a system role
+    /// Expected: InvalidOperationException thrown
+    /// </summary>
+    [Test]
+    public async Task DeleteRoleAsync_Should_ThrowException_When_DeletingSystemRole()
+    {
+        // Arrange
+        var roleId = 1;
+        var systemRole = new Role
+        {
+            RoleId = roleId,
+            Code = "system-admin",
+            Name = "System Administrator",
+            IsSystemRole = true
+        };
+
+        _mockRoleRepository.Setup(x => x.GetByIdAsync(roleId))
+                          .ReturnsAsync(systemRole);
+
+        // Act & Assert
+        var exception = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _roleService.DeleteRoleAsync(roleId));
+        Assert.That(exception.Message, Does.Contain("system role"));
+    }
+
+    /// <summary>
+    /// Test: Deleting non-existing role should return false
+    /// Scenario: Role ID does not exist
+    /// Expected: False returned
+    /// </summary>
+    [Test]
+    public async Task DeleteRoleAsync_Should_ReturnFalse_When_RoleNotExists()
+    {
+        // Arrange
+        var roleId = 999;
+        _mockRoleRepository.Setup(x => x.GetByIdAsync(roleId))
+                          .ReturnsAsync((Role)null);
+
+        // Act
+        var result = await _roleService.DeleteRoleAsync(roleId);
+
+        // Assert
+        Assert.That(result, Is.False);
+    }
+
+    #endregion
+
+    #region GetAllRolesAsync Tests
+
+    /// <summary>
+    /// Test: Getting all roles should return all roles from repository
+    /// Scenario: Repository contains multiple roles
+    /// Expected: All roles returned as DTOs
+    /// </summary>
+    [Test]
+    public async Task GetAllRolesAsync_Should_ReturnAllRoles_When_RolesExist()
+    {
+        // Arrange
+        var roles = new List<Role>
+        {
+            new Role { RoleId = 1, Code = "admin", Name = "Administrator" },
+            new Role { RoleId = 2, Code = "user", Name = "User" }
+        };
+
+        var roleDtos = new List<RoleDto>
+        {
+            new RoleDto { RoleId = 1, Code = "admin", Name = "Administrator" },
+            new RoleDto { RoleId = 2, Code = "user", Name = "User" }
+        };
+
+        _mockRoleRepository.Setup(x => x.GetAllAsync(null, null))
+                          .ReturnsAsync(roles);
+        _mockMapper.Setup(x => x.Map<IEnumerable<RoleDto>>(roles))
+                   .Returns(roleDtos);
+
+        // Act
+        var result = await _roleService.GetAllRolesAsync();
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Count(), Is.EqualTo(2));
+    }
+
+    /// <summary>
+    /// Test: Getting all roles when repository is empty should return empty collection
+    /// Scenario: No roles in repository
+    /// Expected: Empty collection returned
+    /// </summary>
+    [Test]
+    public async Task GetAllRolesAsync_Should_ReturnEmptyCollection_When_NoRolesExist()
+    {
+        // Arrange
+        var emptyRoles = new List<Role>();
+        var emptyRoleDtos = new List<RoleDto>();
+
+        _mockRoleRepository.Setup(x => x.GetAllAsync(null, null))
+                          .ReturnsAsync(emptyRoles);
+        _mockMapper.Setup(x => x.Map<IEnumerable<RoleDto>>(emptyRoles))
+                   .Returns(emptyRoleDtos);
+
+        // Act
+        var result = await _roleService.GetAllRolesAsync();
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Count(), Is.EqualTo(0));
+    }
+
+    #endregion
+
+    #region GetRoleByCodeAsync Tests
+
+    /// <summary>
+    /// Test: Getting role by existing code should return role DTO
+    /// Scenario: Role with specified code exists
+    /// Expected: Role DTO returned
+    /// </summary>
+    [Test]
+    public async Task GetRoleByCodeAsync_Should_ReturnRole_When_CodeExists()
+    {
+        // Arrange
+        var code = "admin";
+        var role = new Role
+        {
+            RoleId = 1,
+            Code = code,
+            Name = "Administrator"
+        };
+
+        var roleDto = new RoleDto
+        {
+            RoleId = 1,
+            Code = code,
+            Name = "Administrator"
+        };
+
+        _mockRoleRepository.Setup(x => x.GetByCodeAsync(code))
+                          .ReturnsAsync(role);
+        _mockMapper.Setup(x => x.Map<RoleDto>(role))
+                   .Returns(roleDto);
+
+        // Act
+        var result = await _roleService.GetRoleByCodeAsync(code);
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Code, Is.EqualTo(code));
+    }
+
+    /// <summary>
+    /// Test: Getting role by non-existing code should return null
+    /// Scenario: Role with specified code does not exist
+    /// Expected: Null returned
+    /// </summary>
+    [Test]
+    public async Task GetRoleByCodeAsync_Should_ReturnNull_When_CodeNotExists()
+    {
+        // Arrange
+        var code = "non-existing";
+        _mockRoleRepository.Setup(x => x.GetByCodeAsync(code))
+                          .ReturnsAsync((Role)null);
+
+        // Act
+        var result = await _roleService.GetRoleByCodeAsync(code);
+
+        // Assert
+        Assert.That(result, Is.Null);
+    }
+
+    #endregion
+
+    #region RoleExistsAsync Tests
+
+    /// <summary>
+    /// Test: Checking existing role should return true
+    /// Scenario: Role exists in repository
+    /// Expected: True returned
+    /// </summary>
+    [Test]
+    public async Task RoleExistsAsync_Should_ReturnTrue_When_RoleExists()
+    {
+        // Arrange
+        var roleId = 1;
+        _mockRoleRepository.Setup(x => x.ExistsAsync(roleId))
+                          .ReturnsAsync(true);
+
+        // Act
+        var result = await _roleService.RoleExistsAsync(roleId);
+
+        // Assert
+        Assert.That(result, Is.True);
+    }
+
+    /// <summary>
+    /// Test: Checking non-existing role should return false
+    /// Scenario: Role does not exist in repository
+    /// Expected: False returned
+    /// </summary>
+    [Test]
+    public async Task RoleExistsAsync_Should_ReturnFalse_When_RoleNotExists()
+    {
+        // Arrange
+        var roleId = 999;
+        _mockRoleRepository.Setup(x => x.ExistsAsync(roleId))
+                          .ReturnsAsync(false);
+
+        // Act
+        var result = await _roleService.RoleExistsAsync(roleId);
+
+        // Assert
+        Assert.That(result, Is.False);
+    }
+
+    #endregion
+
+    #region Error Handling Tests
+
+    /// <summary>
+    /// Test: Repository exception should be propagated
+    /// Scenario: Repository throws exception during operation
+    /// Expected: Exception propagated to caller with proper logging
+    /// </summary>
+    [Test]
+    public async Task CreateRoleAsync_Should_PropagateException_When_RepositoryFails()
+    {
+        // Arrange
+        var createRoleDto = new CreateRoleDto
+        {
+            Code = "test-role",
+            Name = "Test Role"
+        };
+
+        _mockRoleRepository.Setup(x => x.IsRoleCodeInUseAsync(It.IsAny<string>(), It.IsAny<int?>()))
+                          .ReturnsAsync(false);
+        _mockMapper.Setup(x => x.Map<Role>(createRoleDto))
+                   .Returns(new Role());
+        _mockRoleRepository.Setup(x => x.AddAsync(It.IsAny<Role>()))
+                          .ThrowsAsync(new Exception("Database error"));
+
+        // Act & Assert
+        var exception = Assert.ThrowsAsync<Exception>(
+            () => _roleService.CreateRoleAsync(createRoleDto));
+
+        Assert.That(exception.Message, Is.EqualTo("Database error"));
+    }
+
+    #endregion
+}

@@ -1,4 +1,4 @@
-using Ikhtibar.Core.Entities;
+
 
 namespace Ikhtibar.Core.Repositories.Interfaces;
 

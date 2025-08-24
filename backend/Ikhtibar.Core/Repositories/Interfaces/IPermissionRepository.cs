@@ -6,7 +6,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// Repository interface for Permission entity operations
 /// Following SRP: ONLY Permission data operations
 /// </summary>
-public interface IPermissionRepository : IRepository<Permission>
+public interface IPermissionRepository : IBaseRepository<Permission>
 {
     /// <summary>
     /// Get permission by code

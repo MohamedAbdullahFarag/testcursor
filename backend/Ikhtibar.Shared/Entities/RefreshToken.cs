@@ -8,7 +8,7 @@ namespace Ikhtibar.Shared.Entities;
 /// Stores hashed refresh tokens with expiration and user association
 /// </summary>
 [Table("RefreshTokens")]
-public class RefreshToken : BaseEntity
+public class RefreshTokens : BaseEntity
 {
     /// <summary>
     /// Unique identifier for the refresh token
@@ -78,6 +78,5 @@ public class RefreshToken : BaseEntity
     /// </summary>
     public bool IsRevoked => RevokedAt != null;
 
-    // Navigation property
-    public User User { get; set; } = null!;
+    // Navigation property removed for Dapper compatibility
 }

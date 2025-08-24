@@ -101,7 +101,7 @@ export const AccessibilityMobile = ({ Close, onBack }: { Close: ReactNode; onBac
             <div className="flex items-center justify-between pr-space-02">
                 <button className="flex items-center gap-space-02 py-space-03 text-primary" onClick={onBack}>
                     <ChevronLeft className="h-space-05 w-space-05 rtl:rotate-180" />
-                    <span className="text-body-02">{strings.shared.back}</span>
+                    <span className="text-body-02">{strings.common?.back || 'Back'}</span>
                 </button>
                 {Close}
             </div>

@@ -35,7 +35,7 @@ public class BulkEmailRequest
     /// <summary>
     /// Template ID to use (optional)
     /// </summary>
-    public Guid? TemplateId { get; set; }
+    public int? TemplateId { get; set; }
 
     /// <summary>
     /// Global template variables

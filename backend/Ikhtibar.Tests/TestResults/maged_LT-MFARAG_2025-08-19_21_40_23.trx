@@ -1,0 +1,1294 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="9caefe91-7747-4190-b4a6-8cc3ad0484f3" name="maged@LT-MFARAG 2025-08-19 21:40:23" runUser="LT-MFARAG\maged" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2025-08-19T21:40:23.1823991+03:00" queuing="2025-08-19T21:40:23.1823994+03:00" start="2025-08-19T21:40:20.7361005+03:00" finish="2025-08-19T21:40:25.4150709+03:00" />
+  <TestSettings name="default" id="a713358d-c4ca-474f-881b-08cc2e047af0">
+    <Deployment runDeploymentRoot="maged_LT-MFARAG_2025-08-19_21_40_23" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="eae2c31c-c0bf-4636-a578-95e2554e007c" testId="da187af2-cb1e-2129-a5a9-d89d7fcb760b" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.GetRoles_Should_ReturnOkWithRoles_When_RequestIsValid" computerName="LT-MFARAG" duration="00:00:00.1549894" startTime="2025-08-19T21:40:25.1636309+03:00" endTime="2025-08-19T21:40:25.1636314+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eae2c31c-c0bf-4636-a578-95e2554e007c" />
+    <UnitTestResult executionId="28816fb8-f0b9-44f8-a075-794847e2089a" testId="3c20e4b7-27af-fdae-792d-549b6db92fec" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.API_Should_ReturnConsistentErrorFormat_When_ErrorOccurs" computerName="LT-MFARAG" duration="00:00:00.1325932" startTime="2025-08-19T21:40:24.4568276+03:00" endTime="2025-08-19T21:40:24.4568280+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="28816fb8-f0b9-44f8-a075-794847e2089a" />
+    <UnitTestResult executionId="b5347fa6-7765-4442-85d1-640e2a5f73c7" testId="969c9040-ffb7-89da-9e07-72f32d1f05af" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.GetRole_Should_ReturnNotFound_When_RoleDoesNotExist" computerName="LT-MFARAG" duration="00:00:00.1315391" startTime="2025-08-19T21:40:23.5903968+03:00" endTime="2025-08-19T21:40:23.5903971+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b5347fa6-7765-4442-85d1-640e2a5f73c7" />
+    <UnitTestResult executionId="d2a43805-a62e-442c-b69c-4d2ab946daeb" testId="8869649f-54d9-b9ed-db43-7205a39e05b9" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_BeIdempotent_When_RoleAlreadyAssigned" computerName="LT-MFARAG" duration="00:00:00.3273696" startTime="2025-08-19T21:40:23.1167355+03:00" endTime="2025-08-19T21:40:23.1167357+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d2a43805-a62e-442c-b69c-4d2ab946daeb" />
+    <UnitTestResult executionId="f1e81f0a-17f1-4757-9bfc-3e2b718dd0e2" testId="99fa4ad5-546b-93e2-6487-71034e2e7386" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.API_Should_RequireAuthentication_When_TokenNotProvided" computerName="LT-MFARAG" duration="00:00:00.0017756" startTime="2025-08-19T21:40:23.1350773+03:00" endTime="2025-08-19T21:40:23.1350775+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f1e81f0a-17f1-4757-9bfc-3e2b718dd0e2">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.True() Failure&#xD;
+Expected: True&#xD;
+Actual:   False</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.API_Should_RequireAuthentication_When_TokenNotProvided() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 503&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="9170a36e-752a-48cc-8084-08296c6d2192" testId="2cb87cc3-95a8-8769-c374-8bd4ef9debcb" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveAllUserRoles_Should_ReturnOkWithCount_When_UserExists" computerName="LT-MFARAG" duration="00:00:00.0012996" startTime="2025-08-19T21:40:23.2117829+03:00" endTime="2025-08-19T21:40:23.2117832+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9170a36e-752a-48cc-8084-08296c6d2192">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: OK&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveAllUserRoles_Should_ReturnOkWithCount_When_UserExists() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 455&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1cdb4946-5b13-4fdc-89f8-4e3206fb2a98" testId="0ea02773-084d-8be1-7fed-e0369d355a7e" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_ReturnOk_When_AssignmentIsValid" computerName="LT-MFARAG" duration="00:00:00.0035638" startTime="2025-08-19T21:40:23.1839046+03:00" endTime="2025-08-19T21:40:23.1839047+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1cdb4946-5b13-4fdc-89f8-4e3206fb2a98" />
+    <UnitTestResult executionId="d985b267-a55d-495b-8bc7-a85cb2480438" testId="ba553e47-1ced-cb52-526e-a51d91ccdfc5" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.UpdateRole_Should_ReturnOkWithUpdatedRole_When_DataIsValid" computerName="LT-MFARAG" duration="00:00:00.1385429" startTime="2025-08-19T21:40:23.9091633+03:00" endTime="2025-08-19T21:40:23.9091635+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d985b267-a55d-495b-8bc7-a85cb2480438">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: OK&#xD;
+Actual:   BadRequest</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.UpdateRole_Should_ReturnOkWithUpdatedRole_When_DataIsValid() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\RolesControllerIntegrationTests.cs:line 265&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="9294b6b8-e474-44ff-969f-ed45d300b316" testId="7be9a7ea-d231-9134-f328-adb6c201a43f" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UserHasRole_Should_ReturnTrue_When_UserHasRole" computerName="LT-MFARAG" duration="00:00:00.0013163" startTime="2025-08-19T21:40:23.1808646+03:00" endTime="2025-08-19T21:40:23.1808647+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9294b6b8-e474-44ff-969f-ed45d300b316">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: OK&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UserHasRole_Should_ReturnTrue_When_UserHasRole() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 333&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="5f99ef9d-86ab-40e0-a980-5f70c1149ac0" testId="3850fa07-7313-623f-0025-b14ff53da709" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.UpdateRole_Should_ReturnNotFound_When_RoleDoesNotExist" computerName="LT-MFARAG" duration="00:00:00.1115821" startTime="2025-08-19T21:40:24.1646024+03:00" endTime="2025-08-19T21:40:24.1646026+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5f99ef9d-86ab-40e0-a980-5f70c1149ac0">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: NotFound&#xD;
+Actual:   BadRequest</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.UpdateRole_Should_ReturnNotFound_When_RoleDoesNotExist() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\RolesControllerIntegrationTests.cs:line 298&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="3762a8cf-9e8f-4218-b6d3-5aca86fe5db4" testId="46951c4a-acd5-c181-1b7e-c1fb20bcebb4" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveAllUserRoles_Should_ReturnBadRequest_When_UserDoesNotExist" computerName="LT-MFARAG" duration="00:00:00.0011065" startTime="2025-08-19T21:40:23.2167244+03:00" endTime="2025-08-19T21:40:23.2167246+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3762a8cf-9e8f-4218-b6d3-5aca86fe5db4">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: BadRequest&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveAllUserRoles_Should_ReturnBadRequest_When_UserDoesNotExist() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 478&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="38db15c7-37ad-4feb-9ac7-f5d781d730e8" testId="b397d526-40b0-fba5-e86a-45732017b9f1" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetUserRoles_Should_ReturnNotFound_When_UserDoesNotExist" computerName="LT-MFARAG" duration="00:00:00.0014224" startTime="2025-08-19T21:40:23.1472261+03:00" endTime="2025-08-19T21:40:23.1472263+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="38db15c7-37ad-4feb-9ac7-f5d781d730e8" />
+    <UnitTestResult executionId="b2d8c269-3599-4ccd-9868-0ae23cf2e9b4" testId="d7e00e9e-70a7-0bbf-c5df-89d7d6cdb823" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnBadRequest_When_UserDoesNotExist" computerName="LT-MFARAG" duration="00:00:00.0020863" startTime="2025-08-19T21:40:23.1508159+03:00" endTime="2025-08-19T21:40:23.1508161+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b2d8c269-3599-4ccd-9868-0ae23cf2e9b4">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: BadRequest&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnBadRequest_When_UserDoesNotExist() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 411&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="49d933ee-5c82-431c-8e90-39de2d5c66c1" testId="1b652d36-a107-49e2-c5c9-de6aa8e6d263" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.DeleteRole_Should_ReturnNoContent_When_RoleExists" computerName="LT-MFARAG" duration="00:00:00.1437629" startTime="2025-08-19T21:40:24.0533815+03:00" endTime="2025-08-19T21:40:24.0533819+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="49d933ee-5c82-431c-8e90-39de2d5c66c1">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: NoContent&#xD;
+Actual:   BadRequest</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.DeleteRole_Should_ReturnNoContent_When_RoleExists() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\RolesControllerIntegrationTests.cs:line 320&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="abf82d26-d8c2-4d0a-8370-e996961816e1" testId="baa6b051-87f4-ec10-4fbd-673c9535f7e4" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UserHasRole_Should_ReturnFalse_When_UserDoesNotHaveRole" computerName="LT-MFARAG" duration="00:00:00.0013865" startTime="2025-08-19T21:40:23.2153834+03:00" endTime="2025-08-19T21:40:23.2153835+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="abf82d26-d8c2-4d0a-8370-e996961816e1">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: OK&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UserHasRole_Should_ReturnFalse_When_UserDoesNotHaveRole() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 358&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="22fea657-5566-4bb5-a77d-9dee6ce6adcd" testId="09a7204f-abcf-0b82-44bf-0b72d3f4ac97" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.CreateRole_Should_ReturnConflict_When_RoleCodeExists" computerName="LT-MFARAG" duration="00:00:00.1595851" startTime="2025-08-19T21:40:24.3240508+03:00" endTime="2025-08-19T21:40:24.3240512+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="22fea657-5566-4bb5-a77d-9dee6ce6adcd" />
+    <UnitTestResult executionId="7eb97e4a-36d8-4205-9a27-6022b560e92f" testId="457a2589-a60a-89d7-4a62-55d14a1adb3c" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.API_Should_ReturnConsistentErrorFormat_When_ErrorOccurs" computerName="LT-MFARAG" duration="00:00:00.0213144" startTime="2025-08-19T21:40:23.2073070+03:00" endTime="2025-08-19T21:40:23.2073076+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7eb97e4a-36d8-4205-9a27-6022b560e92f" />
+    <UnitTestResult executionId="1e8ee841-300b-4339-93e3-db064b460db2" testId="ed1bedad-e215-445f-d3ac-7e765f46eb16" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.DeleteRole_Should_ReturnNotFound_When_RoleDoesNotExist" computerName="LT-MFARAG" duration="00:00:00.1455226" startTime="2025-08-19T21:40:24.6026258+03:00" endTime="2025-08-19T21:40:24.6026264+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1e8ee841-300b-4339-93e3-db064b460db2" />
+    <UnitTestResult executionId="d093f6a5-10d8-4515-b7d9-a0b533a2bcd0" testId="8b635fd6-5f81-aa88-5229-00db62d80434" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.GetRole_Should_ReturnBadRequest_When_IdIsInvalid" computerName="LT-MFARAG" duration="00:00:00.1406832" startTime="2025-08-19T21:40:24.7436642+03:00" endTime="2025-08-19T21:40:24.7436647+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d093f6a5-10d8-4515-b7d9-a0b533a2bcd0" />
+    <UnitTestResult executionId="d9b2b553-4600-433e-91ac-ba9213dcf2fb" testId="0ec64111-e6b3-a477-675f-a42eefd4b66d" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetRoleUsers_Should_ReturnOkWithUsers_When_RoleExists" computerName="LT-MFARAG" duration="00:00:00.0014618" startTime="2025-08-19T21:40:23.1348580+03:00" endTime="2025-08-19T21:40:23.1348582+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d9b2b553-4600-433e-91ac-ba9213dcf2fb">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: OK&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetRoleUsers_Should_ReturnOkWithUsers_When_RoleExists() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 286&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="aae4c7fc-1548-4983-9163-51d25872885f" testId="5d7cdb27-2d2c-dffd-08ce-c30aa5d1df92" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_ReturnBadRequest_When_RoleDoesNotExist" computerName="LT-MFARAG" duration="00:00:00.0125728" startTime="2025-08-19T21:40:23.1770832+03:00" endTime="2025-08-19T21:40:23.1770833+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="aae4c7fc-1548-4983-9163-51d25872885f">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: BadRequest&#xD;
+Actual:   Conflict</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_ReturnBadRequest_When_RoleDoesNotExist() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 108&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="88ecaf93-a1b4-4cb3-89f6-13f0f85789dd" testId="0e3c5e6e-b57b-034c-1abf-2c0b372a279d" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.GetRoles_Should_ReturnJsonContentType" computerName="LT-MFARAG" duration="00:00:00.1777589" startTime="2025-08-19T21:40:23.7683478+03:00" endTime="2025-08-19T21:40:23.7683481+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="88ecaf93-a1b4-4cb3-89f6-13f0f85789dd" />
+    <UnitTestResult executionId="8a6033b7-6709-4d46-8c4e-144565f9a625" testId="6df58e22-b72e-074f-feda-1d0408619575" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_ReturnOk_When_RemovalIsValid" computerName="LT-MFARAG" duration="00:00:00.0014694" startTime="2025-08-19T21:40:23.1466073+03:00" endTime="2025-08-19T21:40:23.1466075+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8a6033b7-6709-4d46-8c4e-144565f9a625">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: OK&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_ReturnOk_When_RemovalIsValid() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 156&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="92d2ea34-c71d-49e1-819b-dccaeb0c0f0f" testId="0152cd15-0025-e292-f9a4-27cb4c58044b" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.DeleteRole_Should_ReturnBadRequest_When_RoleIsSystemRole" computerName="LT-MFARAG" duration="00:00:00.1430992" startTime="2025-08-19T21:40:25.0083278+03:00" endTime="2025-08-19T21:40:25.0083283+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="92d2ea34-c71d-49e1-819b-dccaeb0c0f0f" />
+    <UnitTestResult executionId="7affe1e5-4d98-4ea1-8172-536df7d424c4" testId="5d6b7347-b445-7984-3d1b-7aea13fbce19" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.CreateRole_Should_ReturnCreatedWithRole_When_DataIsValid" computerName="LT-MFARAG" duration="00:00:00.2289640" startTime="2025-08-19T21:40:23.4663847+03:00" endTime="2025-08-19T21:40:23.4663851+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7affe1e5-4d98-4ea1-8172-536df7d424c4">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Created&#xD;
+Actual:   InternalServerError</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.CreateRole_Should_ReturnCreatedWithRole_When_DataIsValid() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\RolesControllerIntegrationTests.cs:line 174&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="dfc552c9-f3f0-49ae-a83e-7281147db9d7" testId="de883fa4-46c0-b45a-e093-46e985247181" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.API_Should_HandleMalformedRequests_Gracefully" computerName="LT-MFARAG" duration="00:00:00.0035476" startTime="2025-08-19T21:40:23.2199069+03:00" endTime="2025-08-19T21:40:23.2199071+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dfc552c9-f3f0-49ae-a83e-7281147db9d7" />
+    <UnitTestResult executionId="c49708fd-3632-4023-94de-d95d33e56fd2" testId="77655e66-b6ca-91ac-455d-f9a18f1531bd" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnOk_When_UpdateIsValid" computerName="LT-MFARAG" duration="00:00:00.0019114" startTime="2025-08-19T21:40:23.2102015+03:00" endTime="2025-08-19T21:40:23.2102018+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c49708fd-3632-4023-94de-d95d33e56fd2">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: OK&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnOk_When_UpdateIsValid() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 389&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="26e61534-7f5a-4e1e-9f4f-cd6718225aee" testId="e7a79dd5-9315-b4fe-7be6-d234b861ed04" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetUserRoles_Should_ReturnOkWithRoles_When_UserExists" computerName="LT-MFARAG" duration="00:00:00.0013906" startTime="2025-08-19T21:40:23.1873369+03:00" endTime="2025-08-19T21:40:23.1873371+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="26e61534-7f5a-4e1e-9f4f-cd6718225aee">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: OK&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetUserRoles_Should_ReturnOkWithRoles_When_UserExists() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 216&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="cd0bc9a0-ec9c-4ca8-86c6-96fe61f67cbd" testId="107d4918-ea50-cd35-4086-dfaf81bc0b81" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_ReturnBadRequest_When_ParametersInvalid" computerName="LT-MFARAG" duration="00:00:00.0019733" startTime="2025-08-19T21:40:23.1696043+03:00" endTime="2025-08-19T21:40:23.1696043+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cd0bc9a0-ec9c-4ca8-86c6-96fe61f67cbd">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: BadRequest&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_ReturnBadRequest_When_ParametersInvalid() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 194&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="abca8e69-51ed-46a8-8193-527d6d194b64" testId="d3dd2e81-3f15-af1f-cd05-3279f3a704a6" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.GetRole_Should_ReturnOkWithRole_When_RoleExists" computerName="LT-MFARAG" duration="00:00:00.1658549" startTime="2025-08-19T21:40:25.3298525+03:00" endTime="2025-08-19T21:40:25.3298532+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="abca8e69-51ed-46a8-8193-527d6d194b64" />
+    <UnitTestResult executionId="7d874c5c-cdac-469d-ae36-68bb27edcccb" testId="905c7a96-a2ac-1218-cb16-34a301260cae" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetUserRoles_Should_ReturnEmptyArray_When_UserHasNoRoles" computerName="LT-MFARAG" duration="00:00:00.0059660" startTime="2025-08-19T21:40:23.1339269+03:00" endTime="2025-08-19T21:40:23.1339273+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7d874c5c-cdac-469d-ae36-68bb27edcccb">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: OK&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetUserRoles_Should_ReturnEmptyArray_When_UserHasNoRoles() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 258&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a20d748c-1116-4dd8-843d-b6698476092b" testId="8b9c8d82-90d0-63c7-81a0-1c1cafad2a8a" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_BeIdempotent_When_UserDoesNotHaveRole" computerName="LT-MFARAG" duration="00:00:00.0012702" startTime="2025-08-19T21:40:23.2136598+03:00" endTime="2025-08-19T21:40:23.2136600+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a20d748c-1116-4dd8-843d-b6698476092b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: OK&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_BeIdempotent_When_UserDoesNotHaveRole() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 175&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7e91cdaf-8e92-4861-9ff7-f43ac85ecd6e" testId="6ed9c2a9-0fad-7ef7-0bae-086f4c3ac012" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_ReturnBadRequest_When_UserDoesNotExist" computerName="LT-MFARAG" duration="00:00:00.0109488" startTime="2025-08-19T21:40:23.1619986+03:00" endTime="2025-08-19T21:40:23.1619987+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7e91cdaf-8e92-4861-9ff7-f43ac85ecd6e">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: BadRequest&#xD;
+Actual:   Conflict</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_ReturnBadRequest_When_UserDoesNotExist() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 83&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4936e291-d8e9-454a-9f09-5f7c8aadef31" testId="542a9015-9340-985b-c08c-69c407221a86" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetRoleUsers_Should_ReturnNotFound_When_RoleDoesNotExist" computerName="LT-MFARAG" duration="00:00:01.4113224" startTime="2025-08-19T21:40:22.7880928+03:00" endTime="2025-08-19T21:40:22.7881115+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4936e291-d8e9-454a-9f09-5f7c8aadef31" />
+    <UnitTestResult executionId="2f7e2bc0-fa86-43f7-9e87-7786c7cee4ae" testId="3ceb8355-828c-07ae-a93d-54f54a6a840b" testName="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnBadRequest_When_RoleDoesNotExist" computerName="LT-MFARAG" duration="00:00:00.0015493" startTime="2025-08-19T21:40:23.1789159+03:00" endTime="2025-08-19T21:40:23.1789161+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2f7e2bc0-fa86-43f7-9e87-7786c7cee4ae">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: BadRequest&#xD;
+Actual:   NotFound</Message>
+          <StackTrace>   at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnBadRequest_When_RoleDoesNotExist() in C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs:line 433&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ec8b4bfa-663c-4bdf-a422-c73d8d76a02a" testId="c9c8d966-6056-9bad-b801-4679278a3c7e" testName="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.CreateRole_Should_ReturnBadRequest_When_DataIsInvalid" computerName="LT-MFARAG" duration="00:00:00.1211963" startTime="2025-08-19T21:40:24.8649513+03:00" endTime="2025-08-19T21:40:24.8649515+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ec8b4bfa-663c-4bdf-a422-c73d8d76a02a" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetUserRoles_Should_ReturnEmptyArray_When_UserHasNoRoles" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="905c7a96-a2ac-1218-cb16-34a301260cae">
+      <Execution id="7d874c5c-cdac-469d-ae36-68bb27edcccb" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="GetUserRoles_Should_ReturnEmptyArray_When_UserHasNoRoles" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.DeleteRole_Should_ReturnNotFound_When_RoleDoesNotExist" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="ed1bedad-e215-445f-d3ac-7e765f46eb16">
+      <Execution id="1e8ee841-300b-4339-93e3-db064b460db2" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="DeleteRole_Should_ReturnNotFound_When_RoleDoesNotExist" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.GetRoles_Should_ReturnJsonContentType" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="0e3c5e6e-b57b-034c-1abf-2c0b372a279d">
+      <Execution id="88ecaf93-a1b4-4cb3-89f6-13f0f85789dd" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="GetRoles_Should_ReturnJsonContentType" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_ReturnOk_When_RemovalIsValid" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="6df58e22-b72e-074f-feda-1d0408619575">
+      <Execution id="8a6033b7-6709-4d46-8c4e-144565f9a625" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="RemoveRole_Should_ReturnOk_When_RemovalIsValid" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.GetRoles_Should_ReturnOkWithRoles_When_RequestIsValid" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="da187af2-cb1e-2129-a5a9-d89d7fcb760b">
+      <Execution id="eae2c31c-c0bf-4636-a578-95e2554e007c" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="GetRoles_Should_ReturnOkWithRoles_When_RequestIsValid" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveAllUserRoles_Should_ReturnBadRequest_When_UserDoesNotExist" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="46951c4a-acd5-c181-1b7e-c1fb20bcebb4">
+      <Execution id="3762a8cf-9e8f-4218-b6d3-5aca86fe5db4" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="RemoveAllUserRoles_Should_ReturnBadRequest_When_UserDoesNotExist" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetUserRoles_Should_ReturnOkWithRoles_When_UserExists" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="e7a79dd5-9315-b4fe-7be6-d234b861ed04">
+      <Execution id="26e61534-7f5a-4e1e-9f4f-cd6718225aee" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="GetUserRoles_Should_ReturnOkWithRoles_When_UserExists" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.API_Should_RequireAuthentication_When_TokenNotProvided" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="99fa4ad5-546b-93e2-6487-71034e2e7386">
+      <Execution id="f1e81f0a-17f1-4757-9bfc-3e2b718dd0e2" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="API_Should_RequireAuthentication_When_TokenNotProvided" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_ReturnBadRequest_When_UserDoesNotExist" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="6ed9c2a9-0fad-7ef7-0bae-086f4c3ac012">
+      <Execution id="7e91cdaf-8e92-4861-9ff7-f43ac85ecd6e" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="AssignRole_Should_ReturnBadRequest_When_UserDoesNotExist" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.API_Should_HandleMalformedRequests_Gracefully" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="de883fa4-46c0-b45a-e093-46e985247181">
+      <Execution id="dfc552c9-f3f0-49ae-a83e-7281147db9d7" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="API_Should_HandleMalformedRequests_Gracefully" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.DeleteRole_Should_ReturnBadRequest_When_RoleIsSystemRole" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="0152cd15-0025-e292-f9a4-27cb4c58044b">
+      <Execution id="92d2ea34-c71d-49e1-819b-dccaeb0c0f0f" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="DeleteRole_Should_ReturnBadRequest_When_RoleIsSystemRole" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_BeIdempotent_When_RoleAlreadyAssigned" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="8869649f-54d9-b9ed-db43-7205a39e05b9">
+      <Execution id="d2a43805-a62e-442c-b69c-4d2ab946daeb" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="AssignRole_Should_BeIdempotent_When_RoleAlreadyAssigned" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.API_Should_ReturnConsistentErrorFormat_When_ErrorOccurs" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="3c20e4b7-27af-fdae-792d-549b6db92fec">
+      <Execution id="28816fb8-f0b9-44f8-a075-794847e2089a" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="API_Should_ReturnConsistentErrorFormat_When_ErrorOccurs" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnOk_When_UpdateIsValid" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="77655e66-b6ca-91ac-455d-f9a18f1531bd">
+      <Execution id="c49708fd-3632-4023-94de-d95d33e56fd2" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="UpdateUserRoles_Should_ReturnOk_When_UpdateIsValid" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.CreateRole_Should_ReturnCreatedWithRole_When_DataIsValid" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="5d6b7347-b445-7984-3d1b-7aea13fbce19">
+      <Execution id="7affe1e5-4d98-4ea1-8172-536df7d424c4" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="CreateRole_Should_ReturnCreatedWithRole_When_DataIsValid" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.GetRole_Should_ReturnNotFound_When_RoleDoesNotExist" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="969c9040-ffb7-89da-9e07-72f32d1f05af">
+      <Execution id="b5347fa6-7765-4442-85d1-640e2a5f73c7" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="GetRole_Should_ReturnNotFound_When_RoleDoesNotExist" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_ReturnOk_When_AssignmentIsValid" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="0ea02773-084d-8be1-7fed-e0369d355a7e">
+      <Execution id="1cdb4946-5b13-4fdc-89f8-4e3206fb2a98" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="AssignRole_Should_ReturnOk_When_AssignmentIsValid" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UserHasRole_Should_ReturnTrue_When_UserHasRole" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="7be9a7ea-d231-9134-f328-adb6c201a43f">
+      <Execution id="9294b6b8-e474-44ff-969f-ed45d300b316" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="UserHasRole_Should_ReturnTrue_When_UserHasRole" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_ReturnBadRequest_When_ParametersInvalid" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="107d4918-ea50-cd35-4086-dfaf81bc0b81">
+      <Execution id="cd0bc9a0-ec9c-4ca8-86c6-96fe61f67cbd" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="RemoveRole_Should_ReturnBadRequest_When_ParametersInvalid" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.UpdateRole_Should_ReturnNotFound_When_RoleDoesNotExist" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="3850fa07-7313-623f-0025-b14ff53da709">
+      <Execution id="5f99ef9d-86ab-40e0-a980-5f70c1149ac0" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="UpdateRole_Should_ReturnNotFound_When_RoleDoesNotExist" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetRoleUsers_Should_ReturnNotFound_When_RoleDoesNotExist" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="542a9015-9340-985b-c08c-69c407221a86">
+      <Execution id="4936e291-d8e9-454a-9f09-5f7c8aadef31" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="GetRoleUsers_Should_ReturnNotFound_When_RoleDoesNotExist" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnBadRequest_When_UserDoesNotExist" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="d7e00e9e-70a7-0bbf-c5df-89d7d6cdb823">
+      <Execution id="b2d8c269-3599-4ccd-9868-0ae23cf2e9b4" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="UpdateUserRoles_Should_ReturnBadRequest_When_UserDoesNotExist" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_BeIdempotent_When_UserDoesNotHaveRole" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="8b9c8d82-90d0-63c7-81a0-1c1cafad2a8a">
+      <Execution id="a20d748c-1116-4dd8-843d-b6698476092b" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="RemoveRole_Should_BeIdempotent_When_UserDoesNotHaveRole" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.GetRole_Should_ReturnBadRequest_When_IdIsInvalid" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="8b635fd6-5f81-aa88-5229-00db62d80434">
+      <Execution id="d093f6a5-10d8-4515-b7d9-a0b533a2bcd0" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="GetRole_Should_ReturnBadRequest_When_IdIsInvalid" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetUserRoles_Should_ReturnNotFound_When_UserDoesNotExist" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="b397d526-40b0-fba5-e86a-45732017b9f1">
+      <Execution id="38db15c7-37ad-4feb-9ac7-f5d781d730e8" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="GetUserRoles_Should_ReturnNotFound_When_UserDoesNotExist" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_ReturnBadRequest_When_RoleDoesNotExist" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="5d7cdb27-2d2c-dffd-08ce-c30aa5d1df92">
+      <Execution id="aae4c7fc-1548-4983-9163-51d25872885f" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="AssignRole_Should_ReturnBadRequest_When_RoleDoesNotExist" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.UpdateRole_Should_ReturnOkWithUpdatedRole_When_DataIsValid" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="ba553e47-1ced-cb52-526e-a51d91ccdfc5">
+      <Execution id="d985b267-a55d-495b-8bc7-a85cb2480438" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="UpdateRole_Should_ReturnOkWithUpdatedRole_When_DataIsValid" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetRoleUsers_Should_ReturnOkWithUsers_When_RoleExists" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="0ec64111-e6b3-a477-675f-a42eefd4b66d">
+      <Execution id="d9b2b553-4600-433e-91ac-ba9213dcf2fb" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="GetRoleUsers_Should_ReturnOkWithUsers_When_RoleExists" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.GetRole_Should_ReturnOkWithRole_When_RoleExists" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="d3dd2e81-3f15-af1f-cd05-3279f3a704a6">
+      <Execution id="abca8e69-51ed-46a8-8193-527d6d194b64" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="GetRole_Should_ReturnOkWithRole_When_RoleExists" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.CreateRole_Should_ReturnConflict_When_RoleCodeExists" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="09a7204f-abcf-0b82-44bf-0b72d3f4ac97">
+      <Execution id="22fea657-5566-4bb5-a77d-9dee6ce6adcd" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="CreateRole_Should_ReturnConflict_When_RoleCodeExists" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.API_Should_ReturnConsistentErrorFormat_When_ErrorOccurs" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="457a2589-a60a-89d7-4a62-55d14a1adb3c">
+      <Execution id="7eb97e4a-36d8-4205-9a27-6022b560e92f" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="API_Should_ReturnConsistentErrorFormat_When_ErrorOccurs" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnBadRequest_When_RoleDoesNotExist" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="3ceb8355-828c-07ae-a93d-54f54a6a840b">
+      <Execution id="2f7e2bc0-fa86-43f7-9e87-7786c7cee4ae" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="UpdateUserRoles_Should_ReturnBadRequest_When_RoleDoesNotExist" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveAllUserRoles_Should_ReturnOkWithCount_When_UserExists" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="2cb87cc3-95a8-8769-c374-8bd4ef9debcb">
+      <Execution id="9170a36e-752a-48cc-8084-08296c6d2192" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="RemoveAllUserRoles_Should_ReturnOkWithCount_When_UserExists" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.DeleteRole_Should_ReturnNoContent_When_RoleExists" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="1b652d36-a107-49e2-c5c9-de6aa8e6d263">
+      <Execution id="49d933ee-5c82-431c-8e90-39de2d5c66c1" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="DeleteRole_Should_ReturnNoContent_When_RoleExists" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.CreateRole_Should_ReturnBadRequest_When_DataIsInvalid" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="c9c8d966-6056-9bad-b801-4679278a3c7e">
+      <Execution id="ec8b4bfa-663c-4bdf-a422-c73d8d76a02a" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests" name="CreateRole_Should_ReturnBadRequest_When_DataIsInvalid" />
+    </UnitTest>
+    <UnitTest name="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UserHasRole_Should_ReturnFalse_When_UserDoesNotHaveRole" storage="c:\projects\testcursor\backend\ikhtibar.tests\bin\debug\net8.0\ikhtibar.tests.dll" id="baa6b051-87f4-ec10-4fbd-673c9535f7e4">
+      <Execution id="abf82d26-d8c2-4d0a-8370-e996961816e1" />
+      <TestMethod codeBase="C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Ikhtibar.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests" name="UserHasRole_Should_ReturnFalse_When_UserDoesNotHaveRole" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="da187af2-cb1e-2129-a5a9-d89d7fcb760b" executionId="eae2c31c-c0bf-4636-a578-95e2554e007c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3c20e4b7-27af-fdae-792d-549b6db92fec" executionId="28816fb8-f0b9-44f8-a075-794847e2089a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="969c9040-ffb7-89da-9e07-72f32d1f05af" executionId="b5347fa6-7765-4442-85d1-640e2a5f73c7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8869649f-54d9-b9ed-db43-7205a39e05b9" executionId="d2a43805-a62e-442c-b69c-4d2ab946daeb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="99fa4ad5-546b-93e2-6487-71034e2e7386" executionId="f1e81f0a-17f1-4757-9bfc-3e2b718dd0e2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2cb87cc3-95a8-8769-c374-8bd4ef9debcb" executionId="9170a36e-752a-48cc-8084-08296c6d2192" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0ea02773-084d-8be1-7fed-e0369d355a7e" executionId="1cdb4946-5b13-4fdc-89f8-4e3206fb2a98" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ba553e47-1ced-cb52-526e-a51d91ccdfc5" executionId="d985b267-a55d-495b-8bc7-a85cb2480438" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7be9a7ea-d231-9134-f328-adb6c201a43f" executionId="9294b6b8-e474-44ff-969f-ed45d300b316" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3850fa07-7313-623f-0025-b14ff53da709" executionId="5f99ef9d-86ab-40e0-a980-5f70c1149ac0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="46951c4a-acd5-c181-1b7e-c1fb20bcebb4" executionId="3762a8cf-9e8f-4218-b6d3-5aca86fe5db4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b397d526-40b0-fba5-e86a-45732017b9f1" executionId="38db15c7-37ad-4feb-9ac7-f5d781d730e8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d7e00e9e-70a7-0bbf-c5df-89d7d6cdb823" executionId="b2d8c269-3599-4ccd-9868-0ae23cf2e9b4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1b652d36-a107-49e2-c5c9-de6aa8e6d263" executionId="49d933ee-5c82-431c-8e90-39de2d5c66c1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="baa6b051-87f4-ec10-4fbd-673c9535f7e4" executionId="abf82d26-d8c2-4d0a-8370-e996961816e1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="09a7204f-abcf-0b82-44bf-0b72d3f4ac97" executionId="22fea657-5566-4bb5-a77d-9dee6ce6adcd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="457a2589-a60a-89d7-4a62-55d14a1adb3c" executionId="7eb97e4a-36d8-4205-9a27-6022b560e92f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ed1bedad-e215-445f-d3ac-7e765f46eb16" executionId="1e8ee841-300b-4339-93e3-db064b460db2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8b635fd6-5f81-aa88-5229-00db62d80434" executionId="d093f6a5-10d8-4515-b7d9-a0b533a2bcd0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0ec64111-e6b3-a477-675f-a42eefd4b66d" executionId="d9b2b553-4600-433e-91ac-ba9213dcf2fb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5d7cdb27-2d2c-dffd-08ce-c30aa5d1df92" executionId="aae4c7fc-1548-4983-9163-51d25872885f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0e3c5e6e-b57b-034c-1abf-2c0b372a279d" executionId="88ecaf93-a1b4-4cb3-89f6-13f0f85789dd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6df58e22-b72e-074f-feda-1d0408619575" executionId="8a6033b7-6709-4d46-8c4e-144565f9a625" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0152cd15-0025-e292-f9a4-27cb4c58044b" executionId="92d2ea34-c71d-49e1-819b-dccaeb0c0f0f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5d6b7347-b445-7984-3d1b-7aea13fbce19" executionId="7affe1e5-4d98-4ea1-8172-536df7d424c4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="de883fa4-46c0-b45a-e093-46e985247181" executionId="dfc552c9-f3f0-49ae-a83e-7281147db9d7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="77655e66-b6ca-91ac-455d-f9a18f1531bd" executionId="c49708fd-3632-4023-94de-d95d33e56fd2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e7a79dd5-9315-b4fe-7be6-d234b861ed04" executionId="26e61534-7f5a-4e1e-9f4f-cd6718225aee" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="107d4918-ea50-cd35-4086-dfaf81bc0b81" executionId="cd0bc9a0-ec9c-4ca8-86c6-96fe61f67cbd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d3dd2e81-3f15-af1f-cd05-3279f3a704a6" executionId="abca8e69-51ed-46a8-8193-527d6d194b64" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="905c7a96-a2ac-1218-cb16-34a301260cae" executionId="7d874c5c-cdac-469d-ae36-68bb27edcccb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8b9c8d82-90d0-63c7-81a0-1c1cafad2a8a" executionId="a20d748c-1116-4dd8-843d-b6698476092b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6ed9c2a9-0fad-7ef7-0bae-086f4c3ac012" executionId="7e91cdaf-8e92-4861-9ff7-f43ac85ecd6e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="542a9015-9340-985b-c08c-69c407221a86" executionId="4936e291-d8e9-454a-9f09-5f7c8aadef31" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3ceb8355-828c-07ae-a93d-54f54a6a840b" executionId="2f7e2bc0-fa86-43f7-9e87-7786c7cee4ae" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c9c8d966-6056-9bad-b801-4679278a3c7e" executionId="ec8b4bfa-663c-4bdf-a422-c73d8d76a02a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="36" executed="36" passed="16" failed="20" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.0.1+5ebf84cd75 (64-bit .NET 8.0.19)&#xD;
+[xUnit.net 00:00:00.09]   Discovering: Ikhtibar.Tests&#xD;
+[xUnit.net 00:00:00.13]   Discovered:  Ikhtibar.Tests&#xD;
+[xUnit.net 00:00:00.14]   Starting:    Ikhtibar.Tests&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+info: Ikhtibar.API.Controllers.UserManagement.UserRolesController[0]&#xD;
+      Assigning role 1 to user 1&#xD;
+info: Ikhtibar.Core.Services.Implementations.UserRoleService[0]&#xD;
+      Assigning role 1 to user 1&#xD;
+info: Ikhtibar.Core.Services.Implementations.UserRoleService[0]&#xD;
+      User 1 already has role 1&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+[xUnit.net 00:00:01.94]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.94]       Expected: OK&#xD;
+[xUnit.net 00:00:01.94]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:01.94]       Stack Trace:&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+[xUnit.net 00:00:01.94]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(258,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetUserRoles_Should_ReturnEmptyArray_When_UserHasNoRoles()&#xD;
+[xUnit.net 00:00:01.94]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.94]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.94]       Expected: OK&#xD;
+[xUnit.net 00:00:01.94]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:01.94]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.94]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(286,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetRoleUsers_Should_ReturnOkWithUsers_When_RoleExists()&#xD;
+[xUnit.net 00:00:01.94]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.94]       Assert.True() Failure&#xD;
+[xUnit.net 00:00:01.94]       Expected: True&#xD;
+[xUnit.net 00:00:01.94]       Actual:   False&#xD;
+[xUnit.net 00:00:01.94]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.94]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(503,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.API_Should_RequireAuthentication_When_TokenNotProvided()&#xD;
+[xUnit.net 00:00:01.94]         --- End of stack trace from previous location ---&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+[xUnit.net 00:00:01.95]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.95]       Expected: OK&#xD;
+[xUnit.net 00:00:01.95]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:01.95]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.95]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(156,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_ReturnOk_When_RemovalIsValid()&#xD;
+[xUnit.net 00:00:01.95]         --- End of stack trace from previous location ---&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+[xUnit.net 00:00:01.96]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.96]       Expected: BadRequest&#xD;
+[xUnit.net 00:00:01.96]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:01.96]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.96]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(411,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnBadRequest_When_UserDoesNotExist()&#xD;
+[xUnit.net 00:00:01.96]         --- End of stack trace from previous location ---&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+info: Ikhtibar.API.Controllers.UserManagement.UserRolesController[0]&#xD;
+      Assigning role 1 to user 999&#xD;
+info: Ikhtibar.Core.Services.Implementations.UserRoleService[0]&#xD;
+      Assigning role 1 to user 999&#xD;
+fail: Ikhtibar.Core.Services.Implementations.UserRoleService[0]&#xD;
+      Error assigning role 1 to user 999&#xD;
+      System.InvalidOperationException: User with ID 999 not found&#xD;
+         at Ikhtibar.Core.Services.Implementations.UserRoleService.AssignRoleAsync(Int32 userId, Int32 roleId) in C:\Projects\testcursor\backend\Ikhtibar.Core\Services\Implementations\UserRoleService.cs:line 48&#xD;
+warn: Ikhtibar.API.Controllers.UserManagement.UserRolesController[0]&#xD;
+      Role assignment failed - business rule violation&#xD;
+      System.InvalidOperationException: User with ID 999 not found&#xD;
+         at Ikhtibar.Core.Services.Implementations.UserRoleService.AssignRoleAsync(Int32 userId, Int32 roleId) in C:\Projects\testcursor\backend\Ikhtibar.Core\Services\Implementations\UserRoleService.cs:line 48&#xD;
+         at Ikhtibar.API.Controllers.UserManagement.UserRolesController.AssignRoleToUserAsync(AssignRoleDto assignRoleDto) in c:\Projects\testcursor\backend\Ikhtibar.API\Controllers\UserManagement\UserRolesController.cs:line 114&#xD;
+[xUnit.net 00:00:01.97]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.97]       Expected: BadRequest&#xD;
+[xUnit.net 00:00:01.97]       Actual:   Conflict&#xD;
+[xUnit.net 00:00:01.97]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.97]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(83,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_ReturnBadRequest_When_UserDoesNotExist()&#xD;
+[xUnit.net 00:00:01.97]         --- End of stack trace from previous location ---&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+info: Ikhtibar.API.Controllers.UserManagement.UserRolesController[0]&#xD;
+      Assigning role 999 to user 1&#xD;
+info: Ikhtibar.Core.Services.Implementations.UserRoleService[0]&#xD;
+      Assigning role 999 to user 1&#xD;
+fail: Ikhtibar.Core.Services.Implementations.UserRoleService[0]&#xD;
+      Error assigning role 999 to user 1&#xD;
+      System.InvalidOperationException: Role with ID 999 not found&#xD;
+         at Ikhtibar.Core.Services.Implementations.UserRoleService.AssignRoleAsync(Int32 userId, Int32 roleId) in C:\Projects\testcursor\backend\Ikhtibar.Core\Services\Implementations\UserRoleService.cs:line 55&#xD;
+warn: Ikhtibar.API.Controllers.UserManagement.UserRolesController[0]&#xD;
+      Role assignment failed - business rule violation&#xD;
+      System.InvalidOperationException: Role with ID 999 not found&#xD;
+         at Ikhtibar.Core.Services.Implementations.UserRoleService.AssignRoleAsync(Int32 userId, Int32 roleId) in C:\Projects\testcursor\backend\Ikhtibar.Core\Services\Implementations\UserRoleService.cs:line 55&#xD;
+         at Ikhtibar.API.Controllers.UserManagement.UserRolesController.AssignRoleToUserAsync(AssignRoleDto assignRoleDto) in c:\Projects\testcursor\backend\Ikhtibar.API\Controllers\UserManagement\UserRolesController.cs:line 114&#xD;
+[xUnit.net 00:00:01.98]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.98]       Expected: BadRequest&#xD;
+[xUnit.net 00:00:01.98]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:01.98]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.98]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(194,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_ReturnBadRequest_When_ParametersInvalid()&#xD;
+[xUnit.net 00:00:01.98]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.99]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.99]       Expected: BadRequest&#xD;
+[xUnit.net 00:00:01.99]       Actual:   Conflict&#xD;
+[xUnit.net 00:00:01.99]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.99]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(108,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_ReturnBadRequest_When_RoleDoesNotExist()&#xD;
+[xUnit.net 00:00:01.99]         --- End of stack trace from previous location ---&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+[xUnit.net 00:00:01.99]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.99]       Expected: BadRequest&#xD;
+[xUnit.net 00:00:01.99]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:01.99]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.99]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(433,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnBadRequest_When_RoleDoesNotExist()&#xD;
+[xUnit.net 00:00:01.99]         --- End of stack trace from previous location ---&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+[xUnit.net 00:00:01.99]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.99]       Expected: OK&#xD;
+[xUnit.net 00:00:01.99]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:01.99]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.99]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(333,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UserHasRole_Should_ReturnTrue_When_UserHasRole()&#xD;
+[xUnit.net 00:00:01.99]         --- End of stack trace from previous location ---&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+info: Ikhtibar.API.Controllers.UserManagement.UserRolesController[0]&#xD;
+      Assigning role 2 to user 1&#xD;
+info: Ikhtibar.Core.Services.Implementations.UserRoleService[0]&#xD;
+      Assigning role 2 to user 1&#xD;
+info: Ikhtibar.Core.Services.Implementations.UserRoleService[0]&#xD;
+      User 1 already has role 2&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+[xUnit.net 00:00:01.99]       Assert.Equal() Failure: Values differ&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+[xUnit.net 00:00:01.99]       Expected: OK&#xD;
+[xUnit.net 00:00:02.00]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:02.00]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.00]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(216,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetUserRoles_Should_ReturnOkWithRoles_When_UserExists()&#xD;
+[xUnit.net 00:00:02.00]         --- End of stack trace from previous location ---&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+[xUnit.net 00:00:02.02]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.02]       Expected: OK&#xD;
+[xUnit.net 00:00:02.02]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:02.02]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.02]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(389,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnOk_When_UpdateIsValid()&#xD;
+[xUnit.net 00:00:02.02]         --- End of stack trace from previous location ---&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+[xUnit.net 00:00:02.02]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.02]       Expected: OK&#xD;
+[xUnit.net 00:00:02.02]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:02.02]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.02]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(455,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveAllUserRoles_Should_ReturnOkWithCount_When_UserExists()&#xD;
+[xUnit.net 00:00:02.02]         --- End of stack trace from previous location ---&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+[xUnit.net 00:00:02.02]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.02]       Expected: OK&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+[xUnit.net 00:00:02.02]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:02.02]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.02]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(175,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_BeIdempotent_When_UserDoesNotHaveRole()&#xD;
+[xUnit.net 00:00:02.02]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.02]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.02]       Expected: OK&#xD;
+[xUnit.net 00:00:02.02]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:02.02]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.02]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(358,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UserHasRole_Should_ReturnFalse_When_UserDoesNotHaveRole()&#xD;
+[xUnit.net 00:00:02.02]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.02]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.02]       Expected: BadRequest&#xD;
+[xUnit.net 00:00:02.02]       Actual:   NotFound&#xD;
+[xUnit.net 00:00:02.02]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.03]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\UserRolesControllerIntegrationTests.cs(478,0): at Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveAllUserRoles_Should_ReturnBadRequest_When_UserDoesNotExist()&#xD;
+[xUnit.net 00:00:02.03]         --- End of stack trace from previous location ---&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+info: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Creating new role with code: test-role&#xD;
+fail: Ikhtibar.Infrastructure.Repositories.RoleRepository[0]&#xD;
+      Error adding Role&#xD;
+      Microsoft.Data.SqlClient.SqlException (0x80131904): Invalid column name 'RolePermissions'.&#xD;
+      Invalid column name 'UserRoles'.&#xD;
+      Invalid column name 'Id'.&#xD;
+         at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)&#xD;
+         at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)&#xD;
+         at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)&#xD;
+         at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean&amp; dataReady)&#xD;
+         at Microsoft.Data.SqlClient.SqlDataReader.TryConsumeMetaData()&#xD;
+         at Microsoft.Data.SqlClient.SqlDataReader.get_MetaData()&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.FinishExecuteReader(SqlDataReader ds, RunBehavior runBehavior, String resetOptionsString, Boolean isInternal, Boolean forDescribeParameterEncryption, Boolean shouldCacheForAlwaysEncrypted)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.CompleteAsyncExecuteReader(Boolean isInternal, Boolean forDescribeParameterEncryption)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.InternalEndExecuteReader(IAsyncResult asyncResult, Boolean isInternal, String endMethod)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.EndExecuteReaderInternal(IAsyncResult asyncResult)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.EndExecuteReaderAsync(IAsyncResult asyncResult)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.&lt;&gt;c.&lt;InternalExecuteReaderAsync&gt;b__201_1(IAsyncResult asyncResult)&#xD;
+         at System.Threading.Tasks.TaskFactory`1.FromAsyncCoreLogic(IAsyncResult iar, Func`2 endFunction, Action`1 endAction, Task`1 promise, Boolean requiresSynchronization)&#xD;
+      --- End of stack trace from previous location ---&#xD;
+         at Dapper.SqlMapper.ExecuteScalarImplAsync[T](IDbConnection cnn, CommandDefinition command) in /_/Dapper/SqlMapper.Async.cs:line 1241&#xD;
+         at Ikhtibar.Infrastructure.Repositories.BaseRepository`1.AddAsync(T entity) in C:\Projects\testcursor\backend\Ikhtibar.Infrastructure\Repositories\BaseRepository.cs:line 138&#xD;
+      ClientConnectionId:4993eef2-e447-4cd2-8f65-97cd9fa50295&#xD;
+      Error Number:207,State:1,Class:16&#xD;
+fail: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Error creating role with code: test-role&#xD;
+      Microsoft.Data.SqlClient.SqlException (0x80131904): Invalid column name 'RolePermissions'.&#xD;
+      Invalid column name 'UserRoles'.&#xD;
+      Invalid column name 'Id'.&#xD;
+         at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)&#xD;
+         at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)&#xD;
+         at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)&#xD;
+         at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean&amp; dataReady)&#xD;
+         at Microsoft.Data.SqlClient.SqlDataReader.TryConsumeMetaData()&#xD;
+         at Microsoft.Data.SqlClient.SqlDataReader.get_MetaData()&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.FinishExecuteReader(SqlDataReader ds, RunBehavior runBehavior, String resetOptionsString, Boolean isInternal, Boolean forDescribeParameterEncryption, Boolean shouldCacheForAlwaysEncrypted)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.CompleteAsyncExecuteReader(Boolean isInternal, Boolean forDescribeParameterEncryption)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.InternalEndExecuteReader(IAsyncResult asyncResult, Boolean isInternal, String endMethod)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.EndExecuteReaderInternal(IAsyncResult asyncResult)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.EndExecuteReaderAsync(IAsyncResult asyncResult)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.&lt;&gt;c.&lt;InternalExecuteReaderAsync&gt;b__201_1(IAsyncResult asyncResult)&#xD;
+         at System.Threading.Tasks.TaskFactory`1.FromAsyncCoreLogic(IAsyncResult iar, Func`2 endFunction, Action`1 endAction, Task`1 promise, Boolean requiresSynchronization)&#xD;
+      --- End of stack trace from previous location ---&#xD;
+         at Dapper.SqlMapper.ExecuteScalarImplAsync[T](IDbConnection cnn, CommandDefinition command) in /_/Dapper/SqlMapper.Async.cs:line 1241&#xD;
+         at Ikhtibar.Infrastructure.Repositories.BaseRepository`1.AddAsync(T entity) in C:\Projects\testcursor\backend\Ikhtibar.Infrastructure\Repositories\BaseRepository.cs:line 138&#xD;
+         at Ikhtibar.Core.Services.Implementations.RoleService.CreateRoleAsync(CreateRoleDto createRoleDto) in C:\Projects\testcursor\backend\Ikhtibar.Core\Services\Implementations\RoleService.cs:line 58&#xD;
+      ClientConnectionId:4993eef2-e447-4cd2-8f65-97cd9fa50295&#xD;
+      Error Number:207,State:1,Class:16&#xD;
+fail: Ikhtibar.API.Controllers.RolesController[0]&#xD;
+      Error creating role&#xD;
+      Microsoft.Data.SqlClient.SqlException (0x80131904): Invalid column name 'RolePermissions'.&#xD;
+      Invalid column name 'UserRoles'.&#xD;
+      Invalid column name 'Id'.&#xD;
+         at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)&#xD;
+         at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)&#xD;
+         at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)&#xD;
+         at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean&amp; dataReady)&#xD;
+         at Microsoft.Data.SqlClient.SqlDataReader.TryConsumeMetaData()&#xD;
+         at Microsoft.Data.SqlClient.SqlDataReader.get_MetaData()&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.FinishExecuteReader(SqlDataReader ds, RunBehavior runBehavior, String resetOptionsString, Boolean isInternal, Boolean forDescribeParameterEncryption, Boolean shouldCacheForAlwaysEncrypted)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.CompleteAsyncExecuteReader(Boolean isInternal, Boolean forDescribeParameterEncryption)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.InternalEndExecuteReader(IAsyncResult asyncResult, Boolean isInternal, String endMethod)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.EndExecuteReaderInternal(IAsyncResult asyncResult)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.EndExecuteReaderAsync(IAsyncResult asyncResult)&#xD;
+         at Microsoft.Data.SqlClient.SqlCommand.&lt;&gt;c.&lt;InternalExecuteReaderAsync&gt;b__201_1(IAsyncResult asyncResult)&#xD;
+         at System.Threading.Tasks.TaskFactory`1.FromAsyncCoreLogic(IAsyncResult iar, Func`2 endFunction, Action`1 endAction, Task`1 promise, Boolean requiresSynchronization)&#xD;
+      --- End of stack trace from previous location ---&#xD;
+         at Dapper.SqlMapper.ExecuteScalarImplAsync[T](IDbConnection cnn, CommandDefinition command) in /_/Dapper/SqlMapper.Async.cs:line 1241&#xD;
+         at Ikhtibar.Infrastructure.Repositories.BaseRepository`1.AddAsync(T entity) in C:\Projects\testcursor\backend\Ikhtibar.Infrastructure\Repositories\BaseRepository.cs:line 138&#xD;
+         at Ikhtibar.Core.Services.Implementations.RoleService.CreateRoleAsync(CreateRoleDto createRoleDto) in C:\Projects\testcursor\backend\Ikhtibar.Core\Services\Implementations\RoleService.cs:line 58&#xD;
+         at Ikhtibar.API.Controllers.RolesController.CreateRole(CreateRoleDto createRoleDto) in c:\Projects\testcursor\backend\Ikhtibar.API\Controllers\RolesController.cs:line 131&#xD;
+      ClientConnectionId:4993eef2-e447-4cd2-8f65-97cd9fa50295&#xD;
+      Error Number:207,State:1,Class:16&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+[xUnit.net 00:00:02.27]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.27]       Expected: Created&#xD;
+[xUnit.net 00:00:02.27]       Actual:   InternalServerError&#xD;
+[xUnit.net 00:00:02.27]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.27]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\RolesControllerIntegrationTests.cs(174,0): at Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.CreateRole_Should_ReturnCreatedWithRole_When_DataIsValid()&#xD;
+[xUnit.net 00:00:02.27]         --- End of stack trace from previous location ---&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+info: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Updating role with ID: 1&#xD;
+fail: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Error updating role with ID: 1&#xD;
+      System.InvalidOperationException: Cannot update system role 'ADMIN'&#xD;
+         at Ikhtibar.Core.Services.Implementations.RoleService.UpdateRoleAsync(Int32 roleId, UpdateRoleDto updateRoleDto) in C:\Projects\testcursor\backend\Ikhtibar.Core\Services\Implementations\RoleService.cs:line 126&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+[xUnit.net 00:00:02.72]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.72]       Expected: OK&#xD;
+[xUnit.net 00:00:02.72]       Actual:   BadRequest&#xD;
+[xUnit.net 00:00:02.72]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.72]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\RolesControllerIntegrationTests.cs(265,0): at Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.UpdateRole_Should_ReturnOkWithUpdatedRole_When_DataIsValid()&#xD;
+[xUnit.net 00:00:02.72]         --- End of stack trace from previous location ---&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+info: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Deleting role with ID: 1&#xD;
+fail: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Error deleting role with ID: 1&#xD;
+      System.InvalidOperationException: Cannot delete system role 'ADMIN'&#xD;
+         at Ikhtibar.Core.Services.Implementations.RoleService.DeleteRoleAsync(Int32 roleId) in C:\Projects\testcursor\backend\Ikhtibar.Core\Services\Implementations\RoleService.cs:line 179&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+[xUnit.net 00:00:02.86]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.86]       Expected: NoContent&#xD;
+[xUnit.net 00:00:02.86]       Actual:   BadRequest&#xD;
+[xUnit.net 00:00:02.86]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.86]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\RolesControllerIntegrationTests.cs(320,0): at Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.DeleteRole_Should_ReturnNoContent_When_RoleExists()&#xD;
+[xUnit.net 00:00:02.86]         --- End of stack trace from previous location ---&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+info: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Updating role with ID: 999&#xD;
+fail: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Error updating role with ID: 999&#xD;
+      System.InvalidOperationException: Role with ID 999 not found&#xD;
+         at Ikhtibar.Core.Services.Implementations.RoleService.UpdateRoleAsync(Int32 roleId, UpdateRoleDto updateRoleDto) in C:\Projects\testcursor\backend\Ikhtibar.Core\Services\Implementations\RoleService.cs:line 120&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+[xUnit.net 00:00:02.97]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.97]       Expected: NotFound&#xD;
+[xUnit.net 00:00:02.97]       Actual:   BadRequest&#xD;
+[xUnit.net 00:00:02.97]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.97]         C:\Projects\testcursor\backend\Ikhtibar.Tests\API\Controllers\RolesControllerIntegrationTests.cs(298,0): at Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.UpdateRole_Should_ReturnNotFound_When_RoleDoesNotExist()&#xD;
+[xUnit.net 00:00:02.97]         --- End of stack trace from previous location ---&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+info: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Creating new role with code: admin&#xD;
+fail: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Error creating role with code: admin&#xD;
+      System.InvalidOperationException: Role code 'admin' is already in use&#xD;
+         at Ikhtibar.Core.Services.Implementations.RoleService.CreateRoleAsync(CreateRoleDto createRoleDto) in C:\Projects\testcursor\backend\Ikhtibar.Core\Services\Implementations\RoleService.cs:line 42&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+info: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Deleting role with ID: 999&#xD;
+warn: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Role with ID 999 not found for deletion&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+info: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Deleting role with ID: 1&#xD;
+fail: Ikhtibar.Core.Services.Implementations.RoleService[0]&#xD;
+      Error deleting role with ID: 1&#xD;
+      System.InvalidOperationException: Cannot delete system role 'ADMIN'&#xD;
+         at Ikhtibar.Core.Services.Implementations.RoleService.DeleteRoleAsync(Int32 roleId) in C:\Projects\testcursor\backend\Ikhtibar.Core\Services\Implementations\RoleService.cs:line 179&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Starting database initialization...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database 'IkhtibarDb' already exists.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executing InitializeDatabase.sql script...&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Found InitializeDatabase.sql at: C:\Projects\testcursor\backend\Ikhtibar.Tests\bin\Debug\net8.0\Data\InitializeDatabase.sql&#xD;
+dbug: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Executed batch successfully&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Data.sql script executed successfully.&#xD;
+info: Ikhtibar.Infrastructure.Services.DatabaseInitializationService[0]&#xD;
+      Database initialization completed successfully.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Ikhtibar.Tests.API.TestHelpers.TestDatabaseInitializerHostedService[0]&#xD;
+      Test DB adjustments applied&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Ikhtibar.Tests.API.TestHelpers.TestAuthHandler[8]&#xD;
+      AuthenticationScheme: Test was successfully authenticated.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+[xUnit.net 00:00:04.14]   Finished:    Ikhtibar.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.1325005+03:00">
+        <Text>[xUnit.net 00:00:01.94]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetUserRoles_Should_ReturnEmptyArray_When_UserHasNoRoles [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.1348162+03:00">
+        <Text>[xUnit.net 00:00:01.94]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetRoleUsers_Should_ReturnOkWithUsers_When_RoleExists [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.1351565+03:00">
+        <Text>[xUnit.net 00:00:01.94]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.API_Should_RequireAuthentication_When_TokenNotProvided [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.1463089+03:00">
+        <Text>[xUnit.net 00:00:01.95]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_ReturnOk_When_RemovalIsValid [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.1504082+03:00">
+        <Text>[xUnit.net 00:00:01.96]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnBadRequest_When_UserDoesNotExist [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.1618304+03:00">
+        <Text>[xUnit.net 00:00:01.97]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_ReturnBadRequest_When_UserDoesNotExist [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.1968114+03:00">
+        <Text>[xUnit.net 00:00:01.98]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_ReturnBadRequest_When_ParametersInvalid [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.1969128+03:00">
+        <Text>[xUnit.net 00:00:01.98]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.AssignRole_Should_ReturnBadRequest_When_RoleDoesNotExist [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.1970488+03:00">
+        <Text>[xUnit.net 00:00:01.99]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnBadRequest_When_RoleDoesNotExist [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.1971678+03:00">
+        <Text>[xUnit.net 00:00:01.99]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UserHasRole_Should_ReturnTrue_When_UserHasRole [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.1973935+03:00">
+        <Text>[xUnit.net 00:00:01.99]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.GetUserRoles_Should_ReturnOkWithRoles_When_UserExists [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.2102016+03:00">
+        <Text>[xUnit.net 00:00:02.02]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UpdateUserRoles_Should_ReturnOk_When_UpdateIsValid [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.2118631+03:00">
+        <Text>[xUnit.net 00:00:02.02]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveAllUserRoles_Should_ReturnOkWithCount_When_UserExists [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.2186605+03:00">
+        <Text>[xUnit.net 00:00:02.02]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveRole_Should_BeIdempotent_When_UserDoesNotHaveRole [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.2188451+03:00">
+        <Text>[xUnit.net 00:00:02.02]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.UserHasRole_Should_ReturnFalse_When_UserDoesNotHaveRole [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.2189384+03:00">
+        <Text>[xUnit.net 00:00:02.02]     Ikhtibar.Tests.API.Controllers.UserRolesControllerIntegrationTests.RemoveAllUserRoles_Should_ReturnBadRequest_When_UserDoesNotExist [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.4591055+03:00">
+        <Text>[xUnit.net 00:00:02.27]     Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.CreateRole_Should_ReturnCreatedWithRole_When_DataIsValid [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:23.9087756+03:00">
+        <Text>[xUnit.net 00:00:02.72]     Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.UpdateRole_Should_ReturnOkWithUpdatedRole_When_DataIsValid [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:24.0526910+03:00">
+        <Text>[xUnit.net 00:00:02.86]     Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.DeleteRole_Should_ReturnNoContent_When_RoleExists [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="LT-MFARAG" outcome="Error" timestamp="2025-08-19T21:40:24.1645534+03:00">
+        <Text>[xUnit.net 00:00:02.97]     Ikhtibar.Tests.API.Controllers.RolesControllerIntegrationTests.UpdateRole_Should_ReturnNotFound_When_RoleDoesNotExist [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

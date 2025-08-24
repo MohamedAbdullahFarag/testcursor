@@ -2,7 +2,7 @@
 // Notification system is being reworked and will be re-enabled later
 /*
 using Dapper;
-using Ikhtibar.Core.Entities;
+
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Infrastructure.Data;
 using Microsoft.Extensions.Logging;

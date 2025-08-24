@@ -82,7 +82,7 @@ public class AnalyticsDataSource
 
 public class PerformanceMetricsEntity : BaseEntity
 {
-    public Guid ExamSessionId { get; set; }
+    public int ExamSessionId { get; set; }
     public DateTime CalculatedAt { get; set; }
     public double AverageScore { get; set; }
     public double MedianScore { get; set; }
@@ -110,13 +110,13 @@ public class GradingAnalyticsEntity : BaseEntity
 public interface IAnalyticsDashboardService
 {
     Task<AnalyticsDashboardDto> CreateDashboardAsync(CreateDashboardDto dto);
-    Task<AnalyticsDashboardDto> UpdateDashboardAsync(Guid dashboardId, UpdateDashboardDto dto);
-    Task<AnalyticsDashboardDto> GetDashboardAsync(Guid dashboardId);
+    Task<AnalyticsDashboardDto> UpdateDashboardAsync(int dashboardId, UpdateDashboardDto dto);
+    Task<AnalyticsDashboardDto> GetDashboardAsync(int dashboardId);
     Task<List<AnalyticsDashboardDto>> GetUserDashboardsAsync();
-    Task<WidgetDataDto> GetWidgetDataAsync(Guid widgetId, Dictionary<string, object> filters);
-    Task<PerformanceMetricsDto> GetExamPerformanceAsync(Guid examSessionId);
+    Task<WidgetDataDto> GetWidgetDataAsync(int widgetId, Dictionary<string, object> filters);
+    Task<PerformanceMetricsDto> GetExamPerformanceAsync(int examSessionId);
     Task<GradingAnalyticsDto> GetGradingAnalyticsAsync(DateRange range);
-    Task<byte[]> ExportDashboardDataAsync(Guid dashboardId, string format);
+    Task<byte[]> ExportDashboardDataAsync(int dashboardId, string format);
 }
 
 public class AnalyticsDashboardService : IAnalyticsDashboardService
@@ -135,7 +135,7 @@ public class AnalyticsDashboardService : IAnalyticsDashboardService
 \`\`\`csharp
 public interface IAnalyticsDashboardRepository : IBaseRepository<AnalyticsDashboardEntity>
 {
-    Task<List<AnalyticsDashboardEntity>> GetUserDashboardsAsync(Guid userId);
+    Task<List<AnalyticsDashboardEntity>> GetUserDashboardsAsync(int userId);
     Task<WidgetData> GetWidgetDataAsync(AnalyticsWidget widget, Dictionary<string, object> filters);
     Task<List<PerformanceMetricsEntity>> GetPerformanceTrendAsync(DateRange range);
     Task<List<GradingAnalyticsEntity>> GetGradingAnalyticsAsync(DateRange range);
@@ -164,14 +164,14 @@ public class AnalyticsDashboardController : ControllerBase
     }
 
     [HttpGet("dashboards/{dashboardId}")]
-    public async Task<ActionResult<AnalyticsDashboardDto>> GetDashboard(Guid dashboardId)
+    public async Task<ActionResult<AnalyticsDashboardDto>> GetDashboard(int dashboardId)
     {
         // Implementation...
     }
 
     [HttpGet("widgets/{widgetId}/data")]
     public async Task<ActionResult<WidgetDataDto>> GetWidgetData(
-        Guid widgetId,
+        int widgetId,
         [FromQuery] Dictionary<string, object> filters)
     {
         // Implementation...
@@ -460,13 +460,13 @@ npm run test src/modules/analytics/components/AnalyticsDashboardComponent.test.t
 
 \`\`\`bash
 # Create dashboard
-curl -X POST http://localhost:5000/api/AnalyticsDashboard/dashboards -d '{dashboardData}'
+curl -X POST https://localhost:7001/api/AnalyticsDashboard/dashboards -d '{dashboardData}'
 
 # Get widget data
-curl -X GET http://localhost:5000/api/AnalyticsDashboard/widgets/{widgetId}/data
+curl -X GET https://localhost:7001/api/AnalyticsDashboard/widgets/{widgetId}/data
 
 # Export dashboard data
-curl -X GET http://localhost:5000/api/AnalyticsDashboard/dashboards/{dashboardId}/export
+curl -X GET https://localhost:7001/api/AnalyticsDashboard/dashboards/{dashboardId}/export
 \`\`\`
 
 ## 📋 Acceptance Criteria

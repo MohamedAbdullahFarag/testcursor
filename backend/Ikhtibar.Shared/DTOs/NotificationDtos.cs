@@ -111,7 +111,7 @@ public class CreateNotificationDto
     /// <summary>
     /// Template ID to use for rendering (optional)
     /// </summary>
-    public Guid? TemplateId { get; set; }
+    public int? TemplateId { get; set; }
 
     /// <summary>
     /// Variables for template substitution
@@ -176,7 +176,7 @@ public class NotificationDto
     /// <summary>
     /// Unique identifier for the notification
     /// </summary>
-    public Guid Id { get; set; }
+    public int id { get; set; }
 
     /// <summary>
     /// Target user ID
@@ -241,7 +241,7 @@ public class NotificationDto
     /// <summary>
     /// Template ID used for rendering
     /// </summary>
-    public Guid? TemplateId { get; set; }
+    public int? TemplateId { get; set; }
 
     /// <summary>
     /// Variables used for template substitution
@@ -316,7 +316,7 @@ public class BulkNotificationDto
     /// <summary>
     /// Template ID to use for rendering (optional)
     /// </summary>
-    public Guid? TemplateId { get; set; }
+    public int? TemplateId { get; set; }
 
     /// <summary>
     /// Variables for template substitution
@@ -344,7 +344,7 @@ public class MarkAsReadDto
     /// </summary>
     [Required]
     [MinLength(1)]
-    public List<Guid> NotificationIds { get; set; } = new();
+    public List<int> NotificationIds { get; set; } = new();
 }
 
 /// <summary>
@@ -355,7 +355,7 @@ public class NotificationDeliveryDto
     /// <summary>
     /// Notification ID
     /// </summary>
-    public Guid NotificationId { get; set; }
+    public int NotificationId { get; set; }
 
     /// <summary>
     /// Delivery channel

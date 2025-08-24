@@ -1,531 +1,212 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
+  TextField,
   Button,
-  Input,
-  Label,
-  Badge,
-  Alert,
-  AlertDescription,
-  Switch,
-} from 'mada-design-system';
-import { User, CreateUserRequest, UpdateUserRequest } from '../models/user.types';
-
-// ❌ DON'T: Mix form state with business logic
-// ❌ DON'T: Create components without proper typing
-// ❌ DON'T: Forget to handle loading and error states
-// ❌ DON'T: Skip input validation
-// ❌ DON'T: Ignore accessibility requirements
-
-export interface Role {
-  id: number;
-  name: string;
-  description?: string;
-}
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Checkbox,
+  Typography,
+  Paper,
+  Grid,
+  Chip
+} from '@mui/material';
+import { CreateUserRequest, UpdateUserRequest, User } from '../models/user.types';
 
 interface UserFormProps {
-  /** User to edit (null for create mode) */
-  user?: User | null;
-  /** Available roles for assignment */
-  availableRoles: Role[];
-  /** Loading state */
-  isLoading?: boolean;
-  /** Form submission callback */
-  onSubmit: (data: CreateUserRequest | UpdateUserRequest) => Promise<void>;
-  /** Cancel callback */
+  user?: User;
+  onSubmit: (data: CreateUserRequest | UpdateUserRequest) => void;
   onCancel: () => void;
-  /** Form mode */
-  mode: 'create' | 'edit';
+  loading?: boolean;
 }
 
-interface FormData {
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  password: string;
-  phoneNumber: string;
-  preferredLanguage: string;
-  isActive: boolean;
-  roles: string[];
-}
-
-interface FormErrors {
-  username?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  password?: string;
-  phoneNumber?: string;
-  roles?: string;
-  general?: string;
-}
-
-/**
- * UserForm component for creating and editing users
- * 
- * Features:
- * - Create and edit modes
- * - Form validation with real-time feedback
- * - Role selection with multi-select support
- * - Internationalization support
- * - Loading and error states
- * - Accessibility features
- * 
- * @param props - UserFormProps
- */
 export const UserForm: React.FC<UserFormProps> = ({
   user,
-  availableRoles,
-  isLoading = false,
   onSubmit,
   onCancel,
-  mode,
+  loading = false
 }) => {
-  const { t, i18n } = useTranslation('userManagement');
-  const isRtl = i18n.language === 'ar';
-
-  // Form state
-  const [formData, setFormData] = useState<FormData>({
-    username: user?.username || '',
-    email: user?.email || '',
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    password: '', // Always empty for security
-    phoneNumber: user?.phoneNumber || '',
-    preferredLanguage: user?.preferredLanguage || 'en',
-    isActive: user?.isActive ?? true,
-    roles: user?.roles || [],
+  const [formData, setFormData] = useState<CreateUserRequest | UpdateUserRequest>({
+    fullName: '',
+    email: '',
+    password: '',
+    roles: [],
+    ...(user && { id: user.id, isActive: user.isActive })
   });
 
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Update form when user prop changes
+  // Available roles (this would typically come from a service)
+  const availableRoles = ['admin', 'user', 'teacher', 'student', 'reviewer'];
+
   useEffect(() => {
     if (user) {
       setFormData({
-        username: user.username || '',
-        email: user.email || '',
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        password: '', // Always empty for security
-        phoneNumber: user.phoneNumber || '',
-        preferredLanguage: user.preferredLanguage || 'en',
-        isActive: user.isActive ?? true,
-        roles: user.roles || [],
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        password: '', // Don't populate password for editing
+        roles: user.roles,
+        isActive: user.isActive
       });
     }
   }, [user]);
 
-  /**
-   * Validates form data
-   * @param data - Form data to validate
-   * @returns Validation errors
-   */
-  const validateForm = (data: FormData): FormErrors => {
-    const newErrors: FormErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
 
-    // Username validation
-    if (!data.username.trim()) {
-      newErrors.username = t('form.errors.usernameRequired');
-    } else if (data.username.trim().length < 3) {
-      newErrors.username = t('form.errors.usernameTooShort');
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
     }
 
-    // Email validation
-    if (!data.email.trim()) {
-      newErrors.email = t('form.errors.emailRequired');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-      newErrors.email = t('form.errors.emailInvalid');
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
     }
 
-    // First name validation
-    if (!data.firstName.trim()) {
-      newErrors.firstName = t('form.errors.firstNameRequired');
-    } else if (data.firstName.trim().length < 2) {
-      newErrors.firstName = t('form.errors.firstNameTooShort');
+    if (!user && !formData.password) {
+      newErrors.password = 'Password is required for new users';
     }
 
-    // Last name validation
-    if (!data.lastName.trim()) {
-      newErrors.lastName = t('form.errors.lastNameRequired');
-    } else if (data.lastName.trim().length < 2) {
-      newErrors.lastName = t('form.errors.lastNameTooShort');
+    if (formData.password && formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
     }
 
-    // Password validation (only for create mode)
-    if (mode === 'create') {
-      if (!data.password) {
-        newErrors.password = t('form.errors.passwordRequired');
-      } else if (data.password.length < 8) {
-        newErrors.password = t('form.errors.passwordTooShort');
-      }
+    if (formData.roles.length === 0) {
+      newErrors.roles = 'At least one role is required';
     }
 
-    // Phone validation (optional but must be valid if provided)
-    if (data.phoneNumber.trim() && !/^\+?[\d\s\-\(\)]+$/.test(data.phoneNumber)) {
-      newErrors.phoneNumber = t('form.errors.phoneInvalid');
-    }
-
-    // Role validation
-    if (data.roles.length === 0) {
-      newErrors.roles = t('form.errors.roleRequired');
-    }
-
-    return newErrors;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  /**
-   * Handles input field changes
-   */
-  const handleInputChange = (field: keyof FormData, value: string | boolean | string[]) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-
-    // Clear field error when user starts typing
-    if (errors[field as keyof FormErrors]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: undefined,
-      }));
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateForm()) {
+      onSubmit(formData);
     }
   };
 
-  /**
-   * Handles role selection
-   */
-  const handleRoleToggle = (roleName: string) => {
-    const newRoles = formData.roles.includes(roleName)
-      ? formData.roles.filter(name => name !== roleName)
-      : [...formData.roles, roleName];
-    
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const handleRoleToggle = (role: string) => {
+    const newRoles = formData.roles.includes(role)
+      ? formData.roles.filter(r => r !== role)
+      : [...formData.roles, role];
     handleInputChange('roles', newRoles);
   };
 
-  /**
-   * Handles form submission
-   */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate form
-    const validationErrors = validateForm(formData);
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    setIsSubmitting(true);
-    setErrors({});
-
-    try {
-      // Prepare data for submission
-      const submitData = mode === 'create' 
-        ? {
-            username: formData.username.trim(),
-            email: formData.email.trim(),
-            firstName: formData.firstName.trim(),
-            lastName: formData.lastName.trim(),
-            password: formData.password,
-            phoneNumber: formData.phoneNumber.trim() || undefined,
-            preferredLanguage: formData.preferredLanguage,
-            roles: formData.roles,
-            isActive: formData.isActive,
-          } as CreateUserRequest
-        : {
-            id: user!.id,
-            username: formData.username.trim(),
-            email: formData.email.trim(),
-            firstName: formData.firstName.trim(),
-            lastName: formData.lastName.trim(),
-            phoneNumber: formData.phoneNumber.trim() || undefined,
-            preferredLanguage: formData.preferredLanguage,
-            roles: formData.roles,
-            isActive: formData.isActive,
-          } as UpdateUserRequest;
-
-      await onSubmit(submitData);
-    } catch (error) {
-      setErrors({
-        general: error instanceof Error ? error.message : t('form.errors.submitFailed'),
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  /**
-   * Gets the selected roles for display
-   */
-  const getSelectedRoles = () => {
-    return availableRoles.filter(role => formData.roles.includes(role.name));
-  };
-
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <span>👤</span>
-          {mode === 'create' ? t('form.createTitle') : t('form.editTitle')}
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* General Error */}
-          {errors.general && (
-            <Alert variant="default">
-              <span>⚠️</span>
-              <AlertDescription>{errors.general}</AlertDescription>
-            </Alert>
-          )}
+    <Paper sx={{ p: 3 }}>
+      <Typography variant="h6" gutterBottom>
+        {user ? 'Edit User' : 'Create User'}
+      </Typography>
 
-          {/* Basic Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t('form.sections.basicInfo')}</h3>
-            
-            {/* Username */}
-            <div className="space-y-2">
-              <Label htmlFor="username" className="required">
-                {t('form.fields.username')}
-              </Label>
-              <Input
-                id="username"
-                value={formData.username}
-                onChange={(e) => handleInputChange('username', e.target.value)}
-                placeholder={t('form.placeholders.username')}
-                disabled={isLoading || isSubmitting}
-                className={errors.username ? 'border-red-500' : ''}
-                dir={isRtl ? 'rtl' : 'ltr'}
-              />
-              {errors.username && (
-                <p className="text-sm text-red-600">{errors.username}</p>
-              )}
-            </div>
+      <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Full Name"
+              value={formData.fullName}
+              onChange={(e) => handleInputChange('fullName', e.target.value)}
+              error={!!errors.fullName}
+              helperText={errors.fullName}
+              required
+            />
+          </Grid>
 
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="required">
-                {t('form.fields.email')}
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder={t('form.placeholders.email')}
-                disabled={isLoading || isSubmitting}
-                className={errors.email ? 'border-red-500' : ''}
-                dir={isRtl ? 'rtl' : 'ltr'}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              error={!!errors.email}
+              helperText={errors.email}
+              required
+            />
+          </Grid>
 
-            {/* Password (only for create mode) */}
-            {mode === 'create' && (
-              <div className="space-y-2">
-                <Label htmlFor="password" className="required">
-                  {t('form.fields.password')}
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  placeholder={t('form.placeholders.password')}
-                  disabled={isLoading || isSubmitting}
-                  className={errors.password ? 'border-red-500' : ''}
-                />
-                {errors.password && (
-                  <p className="text-sm text-red-600">{errors.password}</p>
-                )}
-              </div>
-            )}
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              error={!!errors.password}
+              helperText={errors.password || (user ? 'Leave blank to keep current password' : '')}
+              required={!user}
+            />
+          </Grid>
 
-            {/* Name Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* First Name */}
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="required">
-                  {t('form.fields.firstName')}
-                </Label>
-                <Input
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  placeholder={t('form.placeholders.firstName')}
-                  disabled={isLoading || isSubmitting}
-                  className={errors.firstName ? 'border-red-500' : ''}
-                  dir={isRtl ? 'rtl' : 'ltr'}
-                />
-                {errors.firstName && (
-                  <p className="text-sm text-red-600">{errors.firstName}</p>
-                )}
-              </div>
-
-              {/* Last Name */}
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="required">
-                  {t('form.fields.lastName')}
-                </Label>
-                <Input
-                  id="lastName"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  placeholder={t('form.placeholders.lastName')}
-                  disabled={isLoading || isSubmitting}
-                  className={errors.lastName ? 'border-red-500' : ''}
-                  dir={isRtl ? 'rtl' : 'ltr'}
-                />
-                {errors.lastName && (
-                  <p className="text-sm text-red-600">{errors.lastName}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Phone Number */}
-            <div className="space-y-2">
-              <Label htmlFor="phoneNumber">
-                {t('form.fields.phoneNumber')}
-              </Label>
-              <Input
-                id="phoneNumber"
-                type="tel"
-                value={formData.phoneNumber}
-                onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                placeholder={t('form.placeholders.phoneNumber')}
-                disabled={isLoading || isSubmitting}
-                className={errors.phoneNumber ? 'border-red-500' : ''}
-                dir="ltr" // Phone numbers are always LTR
-              />
-              {errors.phoneNumber && (
-                <p className="text-sm text-red-600">{errors.phoneNumber}</p>
-              )}
-            </div>
-
-            {/* Preferred Language */}
-            <div className="space-y-2">
-              <Label htmlFor="preferredLanguage">
-                {t('form.fields.preferredLanguage')}
-              </Label>
-              <select
-                id="preferredLanguage"
-                value={formData.preferredLanguage}
-                onChange={(e) => handleInputChange('preferredLanguage', e.target.value)}
-                disabled={isLoading || isSubmitting}
-                className="w-full px-3 py-2 border rounded-md"
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={formData.isActive ?? true}
+                onChange={(e) => handleInputChange('isActive', e.target.value)}
+                label="Status"
               >
-                <option value="en">English</option>
-                <option value="ar">العربية</option>
-              </select>
-            </div>
-          </div>
+                <MenuItem value={true}>Active</MenuItem>
+                <MenuItem value={false}>Inactive</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
 
-          {/* Role Assignment */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t('form.sections.roles')}</h3>
-            
-            <div className="space-y-2">
-              <Label className="required">{t('form.fields.roles')}</Label>
-              <div className="border rounded-md p-3 min-h-[60px] bg-background">
-                {availableRoles.length === 0 ? (
-                  <p className="text-sm text-gray-500">{t('form.noRolesAvailable')}</p>
-                ) : (
-                  <div className="space-y-2">
-                    {availableRoles.map((role) => (
-                      <div
-                        key={role.id}
-                        className="flex items-center justify-between p-2 border rounded hover:bg-gray-50"
-                      >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            id={`role-${role.id}`}
-                            checked={formData.roles.includes(role.name)}
-                            onChange={() => handleRoleToggle(role.name)}
-                            disabled={isLoading || isSubmitting}
-                            className="h-4 w-4"
-                          />
-                          <Label htmlFor={`role-${role.id}`} className="cursor-pointer">
-                            {role.name}
-                          </Label>
-                        </div>
-                        {role.description && (
-                          <span className="text-sm text-gray-500">{role.description}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {errors.roles && (
-                <p className="text-sm text-red-600">{errors.roles}</p>
-              )}
-              
-              {/* Selected Roles Summary */}
-              {getSelectedRoles().length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {getSelectedRoles().map((role) => (
-                    <Badge key={role.id} variant="default">
-                      {role.name}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" gutterBottom>
+              Roles *
+            </Typography>
+            <Box display="flex" gap={1} flexWrap="wrap">
+              {availableRoles.map((role) => (
+                <Chip
+                  key={role}
+                  label={role}
+                  onClick={() => handleRoleToggle(role)}
+                  color={formData.roles.includes(role) ? 'primary' : 'default'}
+                  variant={formData.roles.includes(role) ? 'filled' : 'outlined'}
+                  clickable
+                />
+              ))}
+            </Box>
+            {errors.roles && (
+              <Typography color="error" variant="caption">
+                {errors.roles}
+              </Typography>
+            )}
+          </Grid>
+        </Grid>
 
-          {/* Status */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t('form.sections.status')}</h3>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label htmlFor="isActive">{t('form.fields.isActive')}</Label>
-                <p className="text-sm text-gray-500">{t('form.descriptions.isActive')}</p>
-              </div>
-              <Switch
-                id="isActive"
-                checked={formData.isActive}
-                onCheckedChange={(checked) => handleInputChange('isActive', checked)}
-                disabled={isLoading || isSubmitting}
-              />
-            </div>
-          </div>
-
-          {/* Form Actions */}
-          <div className="flex gap-3 pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isLoading || isSubmitting}
-              className="flex-1 sm:flex-none"
-            >
-              {t('form.actions.cancel')}
-            </Button>
-            <Button
-              type="submit"
-              disabled={isLoading || isSubmitting}
-              className="flex-1 sm:flex-none"
-            >
-              {isSubmitting && <span className="mr-2">⏳</span>}
-              {mode === 'create' ? t('form.actions.create') : t('form.actions.save')}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        <Box display="flex" gap={2} sx={{ mt: 3 }}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={loading}
+          >
+            {loading ? 'Saving...' : (user ? 'Update User' : 'Create User')}
+          </Button>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+        </Box>
+      </Box>
+    </Paper>
   );
 };
-
-export default UserForm;

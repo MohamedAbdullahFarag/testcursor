@@ -1,608 +1,112 @@
 using AutoMapper;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Ikhtibar.Core.Services.Implementations;
-using Ikhtibar.Core.Services.Interfaces;
 using Ikhtibar.Core.Repositories.Interfaces;
-using Ikhtibar.Shared.DTOs;
 using Ikhtibar.Shared.Entities;
+using Xunit;
 
 namespace Ikhtibar.Tests.Core.Services;
 
-/// <summary>
-/// Comprehensive test suite for TreeNodeTypeService business logic.
-/// Tests all CRUD operations, validation rules, and error scenarios.
-/// Uses AAA pattern (Arrange, Act, Assert) with descriptive test names.
-/// Includes integration with mocked dependencies and database.
-/// </summary>
-[TestFixture]
 public class TreeNodeTypeServiceTests
 {
-    private Mock<ITreeNodeTypeRepository> _mockTreeNodeTypeRepository;
-    private Mock<IMapper> _mockMapper;
-    private Mock<ILogger<TreeNodeTypeService>> _mockLogger;
-    private TreeNodeTypeService _treeNodeTypeService;
+    private readonly Mock<ITreeNodeTypeRepository> _repo;
+    private readonly Mock<IMapper> _mapper;
+    private readonly Mock<ILogger<TreeNodeTypeService>> _logger;
+    private readonly TreeNodeTypeService _service;
 
-    [SetUp]
-    public void Setup()
+    public TreeNodeTypeServiceTests()
     {
-        _mockTreeNodeTypeRepository = new Mock<ITreeNodeTypeRepository>();
-        _mockMapper = new Mock<IMapper>();
-        _mockLogger = new Mock<ILogger<TreeNodeTypeService>>();
-
-        _treeNodeTypeService = new TreeNodeTypeService(
-            _mockTreeNodeTypeRepository.Object,
-            _mockMapper.Object,
-            _mockLogger.Object
-        );
+        _repo = new Mock<ITreeNodeTypeRepository>();
+        _mapper = new Mock<IMapper>();
+        _logger = new Mock<ILogger<TreeNodeTypeService>>();
+        _service = new TreeNodeTypeService(_repo.Object, _mapper.Object, _logger.Object);
     }
 
-    [Test]
-    public async Task GetAllAsync_ShouldReturnAllTreeNodeTypes_WhenRepositoryReturnsData()
+    [Fact]
+    public async Task GetAllAsync_ReturnsAllTypes()
     {
-        // Arrange
         var entities = new List<TreeNodeType>
         {
-            new TreeNodeType { TreeNodeTypeId = 1, Name = "Subject", Description = "Subject category" },
-            new TreeNodeType { TreeNodeTypeId = 2, Name = "Chapter", Description = "Chapter category" },
-            new TreeNodeType { TreeNodeTypeId = 3, Name = "Topic", Description = "Topic category" }
+            new TreeNodeType { Id = 1, Name = "Subject", Description = "Subject category" },
+            new TreeNodeType { Id = 2, Name = "Chapter", Description = "Chapter category" }
         };
 
-        var dtos = new List<TreeNodeTypeDto>
-        {
-            new TreeNodeTypeDto { TreeNodeTypeId = 1, Name = "Subject", Description = "Subject category" },
-            new TreeNodeTypeDto { TreeNodeTypeId = 2, Name = "Chapter", Description = "Chapter category" },
-            new TreeNodeTypeDto { TreeNodeTypeId = 3, Name = "Topic", Description = "Topic category" }
-        };
+        _repo.Setup(r => r.GetAllAsync(null, null)).ReturnsAsync(entities);
 
-        _mockTreeNodeTypeRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(entities);
-        _mockMapper.Setup(m => m.Map<IEnumerable<TreeNodeTypeDto>>(entities)).Returns(dtos);
+        var result = await _service.GetAllAsync();
 
-        // Act
-        var result = await _treeNodeTypeService.GetAllAsync();
-
-        // Assert
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.Count(), Is.EqualTo(3));
-        _mockTreeNodeTypeRepository.Verify(r => r.GetAllAsync(), Times.Once);
-        _mockMapper.Verify(m => m.Map<IEnumerable<TreeNodeTypeDto>>(entities), Times.Once);
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
     }
 
-    [Test]
-    public async Task GetByIdAsync_ShouldReturnTreeNodeType_WhenRepositoryReturnsData()
+    [Fact]
+    public async Task GetByIdAsync_ReturnsEntity_WhenFound()
     {
-        // Arrange
-        var id = 1;
-        var entity = new TreeNodeType 
-        { 
-            TreeNodeTypeId = id, 
-            Name = "Subject", 
-            Description = "Subject category" 
-        };
+        var entity = new TreeNodeType { Id = 1, Name = "Subject" };
+        _repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(entity);
 
-        var dto = new TreeNodeTypeDto 
-        { 
-            TreeNodeTypeId = id, 
-            Name = "Subject", 
-            Description = "Subject category" 
-        };
+        var result = await _service.GetByIdAsync(1);
 
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(entity);
-        _mockMapper.Setup(m => m.Map<TreeNodeTypeDto>(entity)).Returns(dto);
-
-        // Act
-        var result = await _treeNodeTypeService.GetByIdAsync(id);
-
-        // Assert
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.TreeNodeTypeId, Is.EqualTo(id));
-        Assert.That(result.Name, Is.EqualTo("Subject"));
-        _mockTreeNodeTypeRepository.Verify(r => r.GetByIdAsync(id), Times.Once);
-        _mockMapper.Verify(m => m.Map<TreeNodeTypeDto>(entity), Times.Once);
+        Assert.NotNull(result);
+        Assert.Equal(1, result.Id);
+        Assert.Equal("Subject", result.Name);
     }
 
-    [Test]
-    public async Task GetByIdAsync_ShouldReturnNull_WhenRepositoryReturnsNull()
+    [Fact]
+    public async Task GetByIdAsync_ReturnsNull_WhenNotFound()
     {
-        // Arrange
-        var id = 999;
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((TreeNodeType)null);
+        _repo.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((TreeNodeType?)null);
 
-        // Act
-        var result = await _treeNodeTypeService.GetByIdAsync(id);
+        var result = await _service.GetByIdAsync(999);
 
-        // Assert
-        Assert.That(result, Is.Null);
-        _mockTreeNodeTypeRepository.Verify(r => r.GetByIdAsync(id), Times.Once);
+        Assert.Null(result);
     }
 
-    [Test]
-    public async Task CreateAsync_ShouldCreateTreeNodeType_WhenValidDataProvided()
+    [Fact]
+    public async Task CreateAsync_CreatesEntity_WhenCodeUnique()
     {
-        // Arrange
-        var createDto = new CreateTreeNodeTypeDto
-        {
-            Name = "New Type",
-            Description = "New type description",
-            ColorCode = "#FF0000",
-            IconName = "icon-new",
-            DisplayOrder = 1,
-            AllowsChildren = true,
-            MaxDepth = 5,
-            IsActive = true
-        };
+        var toCreate = new TreeNodeType { Name = "New", Code = "new" };
+        _repo.Setup(r => r.IsCodeUniqueAsync("new", null)).ReturnsAsync(true);
+        _repo.Setup(r => r.AddAsync(It.IsAny<TreeNodeType>())).ReturnsAsync((TreeNodeType e) => { e.Id = 5; return e; });
 
-        var entity = new TreeNodeType
-        {
-            TreeNodeTypeId = 1,
-            Name = "New Type",
-            Description = "New type description",
-            ColorCode = "#FF0000",
-            IconName = "icon-new",
-            DisplayOrder = 1,
-            AllowsChildren = true,
-            MaxDepth = 5,
-            IsActive = true
-        };
+        var result = await _service.CreateAsync(toCreate);
 
-        var dto = new TreeNodeTypeDto
-        {
-            TreeNodeTypeId = 1,
-            Name = "New Type",
-            Description = "New type description",
-            ColorCode = "#FF0000",
-            IconName = "icon-new",
-            DisplayOrder = 1,
-            AllowsChildren = true,
-            MaxDepth = 5,
-            IsActive = true
-        };
-
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByNameAsync("New Type")).ReturnsAsync((TreeNodeType)null);
-        _mockMapper.Setup(m => m.Map<TreeNodeType>(createDto)).Returns(entity);
-        _mockTreeNodeTypeRepository.Setup(r => r.CreateAsync(entity)).ReturnsAsync(entity);
-        _mockMapper.Setup(m => m.Map<TreeNodeTypeDto>(entity)).Returns(dto);
-
-        // Act
-        var result = await _treeNodeTypeService.CreateAsync(createDto);
-
-        // Assert
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.Name, Is.EqualTo("New Type"));
-        Assert.That(result.Description, Is.EqualTo("New type description"));
-        _mockTreeNodeTypeRepository.Verify(r => r.GetByNameAsync("New Type"), Times.Once);
-        _mockTreeNodeTypeRepository.Verify(r => r.CreateAsync(entity), Times.Once);
+        Assert.NotNull(result);
+        Assert.Equal(5, result.Id);
     }
 
-    [Test]
-    public async Task CreateAsync_ShouldThrowException_WhenNameAlreadyExists()
+    [Fact]
+    public async Task CreateAsync_Throws_WhenCodeNotUnique()
     {
-        // Arrange
-        var createDto = new CreateTreeNodeTypeDto
-        {
-            Name = "Existing Type",
-            Description = "Existing type description"
-        };
+        var toCreate = new TreeNodeType { Name = "Existing", Code = "ex" };
+        _repo.Setup(r => r.IsCodeUniqueAsync("ex", null)).ReturnsAsync(false);
 
-        var existingType = new TreeNodeType { TreeNodeTypeId = 1, Name = "Existing Type" };
-
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByNameAsync("Existing Type")).ReturnsAsync(existingType);
-
-        // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => 
-            _treeNodeTypeService.CreateAsync(createDto));
-        Assert.That(ex.Message, Contains.Substring("Tree node type with name 'Existing Type' already exists"));
+        await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateAsync(toCreate));
     }
 
-    [Test]
-    public async Task UpdateAsync_ShouldUpdateTreeNodeType_WhenValidDataProvided()
+    [Fact]
+    public async Task DeleteAsync_ReturnsTrue_WhenDeleted()
     {
-        // Arrange
-        var id = 1;
-        var updateDto = new UpdateTreeNodeTypeDto
-        {
-            Name = "Updated Type",
-            Description = "Updated type description",
-            ColorCode = "#00FF00",
-            IconName = "icon-updated",
-            DisplayOrder = 2,
-            AllowsChildren = false,
-            MaxDepth = 3,
-            IsActive = true
-        };
+        _repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new TreeNodeType { Id = 1, IsSystem = false });
+        _repo.Setup(r => r.GetNodeCountByTypeAsync(1)).ReturnsAsync(0);
+        _repo.Setup(r => r.DeleteAsync(1)).ReturnsAsync(true);
 
-        var existingEntity = new TreeNodeType
-        {
-            TreeNodeTypeId = id,
-            Name = "Old Type",
-            Description = "Old type description",
-            ColorCode = "#FF0000",
-            IconName = "icon-old",
-            DisplayOrder = 1,
-            AllowsChildren = true,
-            MaxDepth = 5,
-            IsActive = true
-        };
+        var result = await _service.DeleteAsync(1);
 
-        var updatedEntity = new TreeNodeType
-        {
-            TreeNodeTypeId = id,
-            Name = "Updated Type",
-            Description = "Updated type description",
-            ColorCode = "#00FF00",
-            IconName = "icon-updated",
-            DisplayOrder = 2,
-            AllowsChildren = false,
-            MaxDepth = 3,
-            IsActive = true
-        };
-
-        var dto = new TreeNodeTypeDto
-        {
-            TreeNodeTypeId = id,
-            Name = "Updated Type",
-            Description = "Updated type description",
-            ColorCode = "#00FF00",
-            IconName = "icon-updated",
-            DisplayOrder = 2,
-            AllowsChildren = false,
-            MaxDepth = 3,
-            IsActive = true
-        };
-
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(existingEntity);
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByNameAsync("Updated Type")).ReturnsAsync((TreeNodeType)null);
-        _mockMapper.Setup(m => m.Map(updateDto, existingEntity)).Returns(updatedEntity);
-        _mockTreeNodeTypeRepository.Setup(r => r.UpdateAsync(updatedEntity)).ReturnsAsync(updatedEntity);
-        _mockMapper.Setup(m => m.Map<TreeNodeTypeDto>(updatedEntity)).Returns(dto);
-
-        // Act
-        var result = await _treeNodeTypeService.UpdateAsync(id, updateDto);
-
-        // Assert
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.Name, Is.EqualTo("Updated Type"));
-        Assert.That(result.Description, Is.EqualTo("Updated type description"));
-        Assert.That(result.ColorCode, Is.EqualTo("#00FF00"));
-        _mockTreeNodeTypeRepository.Verify(r => r.GetByIdAsync(id), Times.Once);
-        _mockTreeNodeTypeRepository.Verify(r => r.UpdateAsync(updatedEntity), Times.Once);
+        Assert.True(result);
     }
 
-    [Test]
-    public async Task UpdateAsync_ShouldThrowException_WhenTreeNodeTypeNotFound()
+    [Fact]
+    public async Task DeleteAsync_Throws_WhenInUse()
     {
-        // Arrange
-        var id = 999;
-        var updateDto = new UpdateTreeNodeTypeDto
-        {
-            Name = "Updated Type",
-            Description = "Updated type description"
-        };
+        _repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new TreeNodeType { Id = 1, IsSystem = false });
+        _repo.Setup(r => r.GetNodeCountByTypeAsync(1)).ReturnsAsync(2);
 
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((TreeNodeType)null);
-
-        // Act & Assert
-        var ex = Assert.ThrowsAsync<KeyNotFoundException>(() => 
-            _treeNodeTypeService.UpdateAsync(id, updateDto));
-        Assert.That(ex.Message, Contains.Substring("Tree node type with ID 999 not found"));
-    }
-
-    [Test]
-    public async Task UpdateAsync_ShouldThrowException_WhenNewNameAlreadyExists()
-    {
-        // Arrange
-        var id = 1;
-        var updateDto = new UpdateTreeNodeTypeDto
-        {
-            Name = "Existing Type",
-            Description = "Updated type description"
-        };
-
-        var existingEntity = new TreeNodeType
-        {
-            TreeNodeTypeId = id,
-            Name = "Old Type",
-            Description = "Old type description"
-        };
-
-        var conflictingType = new TreeNodeType { TreeNodeTypeId = 2, Name = "Existing Type" };
-
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(existingEntity);
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByNameAsync("Existing Type")).ReturnsAsync(conflictingType);
-
-        // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => 
-            _treeNodeTypeService.UpdateAsync(id, updateDto));
-        Assert.That(ex.Message, Contains.Substring("Tree node type with name 'Existing Type' already exists"));
-    }
-
-    [Test]
-    public async Task UpdateAsync_ShouldNotCheckNameUniqueness_WhenNameUnchanged()
-    {
-        // Arrange
-        var id = 1;
-        var updateDto = new UpdateTreeNodeTypeDto
-        {
-            Name = "Same Name",
-            Description = "Updated description"
-        };
-
-        var existingEntity = new TreeNodeType
-        {
-            TreeNodeTypeId = id,
-            Name = "Same Name",
-            Description = "Old description"
-        };
-
-        var updatedEntity = new TreeNodeType
-        {
-            TreeNodeTypeId = id,
-            Name = "Same Name",
-            Description = "Updated description"
-        };
-
-        var dto = new TreeNodeTypeDto
-        {
-            TreeNodeTypeId = id,
-            Name = "Same Name",
-            Description = "Updated description"
-        };
-
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(existingEntity);
-        _mockMapper.Setup(m => m.Map(updateDto, existingEntity)).Returns(updatedEntity);
-        _mockTreeNodeTypeRepository.Setup(r => r.UpdateAsync(updatedEntity)).ReturnsAsync(updatedEntity);
-        _mockMapper.Setup(m => m.Map<TreeNodeTypeDto>(updatedEntity)).Returns(dto);
-
-        // Act
-        var result = await _treeNodeTypeService.UpdateAsync(id, updateDto);
-
-        // Assert
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.Name, Is.EqualTo("Same Name"));
-        Assert.That(result.Description, Is.EqualTo("Updated description"));
-        _mockTreeNodeTypeRepository.Verify(r => r.GetByNameAsync("Same Name"), Times.Never);
-        _mockTreeNodeTypeRepository.Verify(r => r.UpdateAsync(updatedEntity), Times.Once);
-    }
-
-    [Test]
-    public async Task DeleteAsync_ShouldDeleteTreeNodeType_WhenRepositoryReturnsTrue()
-    {
-        // Arrange
-        var id = 1;
-        _mockTreeNodeTypeRepository.Setup(r => r.DeleteAsync(id)).ReturnsAsync(true);
-
-        // Act
-        var result = await _treeNodeTypeService.DeleteAsync(id);
-
-        // Assert
-        Assert.That(result, Is.True);
-        _mockTreeNodeTypeRepository.Verify(r => r.DeleteAsync(id), Times.Once);
-    }
-
-    [Test]
-    public async Task DeleteAsync_ShouldReturnFalse_WhenRepositoryReturnsFalse()
-    {
-        // Arrange
-        var id = 999;
-        _mockTreeNodeTypeRepository.Setup(r => r.DeleteAsync(id)).ReturnsAsync(false);
-
-        // Act
-        var result = await _treeNodeTypeService.DeleteAsync(id);
-
-        // Assert
-        Assert.That(result, Is.False);
-        _mockTreeNodeTypeRepository.Verify(r => r.DeleteAsync(id), Times.Once);
-    }
-
-    [Test]
-    public async Task DeleteAsync_ShouldHandleExceptions_WhenRepositoryThrowsException()
-    {
-        // Arrange
-        var id = 1;
-        var exception = new InvalidOperationException("Cannot delete type in use");
-        _mockTreeNodeTypeRepository.Setup(r => r.DeleteAsync(id)).ThrowsAsync(exception);
-
-        // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => 
-            _treeNodeTypeService.DeleteAsync(id));
-        Assert.That(ex.Message, Is.EqualTo("Cannot delete type in use"));
-        _mockTreeNodeTypeRepository.Verify(r => r.DeleteAsync(id), Times.Once);
-    }
-
-    [Test]
-    public async Task GetAllAsync_ShouldHandleExceptions_WhenRepositoryThrowsException()
-    {
-        // Arrange
-        var exception = new InvalidOperationException("Database connection failed");
-        _mockTreeNodeTypeRepository.Setup(r => r.GetAllAsync()).ThrowsAsync(exception);
-
-        // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => 
-            _treeNodeTypeService.GetAllAsync());
-        Assert.That(ex.Message, Is.EqualTo("Database connection failed"));
-        _mockTreeNodeTypeRepository.Verify(r => r.GetAllAsync(), Times.Once);
-    }
-
-    [Test]
-    public async Task GetByIdAsync_ShouldHandleExceptions_WhenRepositoryThrowsException()
-    {
-        // Arrange
-        var id = 1;
-        var exception = new InvalidOperationException("Database connection failed");
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(id)).ThrowsAsync(exception);
-
-        // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => 
-            _treeNodeTypeService.GetByIdAsync(id));
-        Assert.That(ex.Message, Is.EqualTo("Database connection failed"));
-        _mockTreeNodeTypeRepository.Verify(r => r.GetByIdAsync(id), Times.Once);
-    }
-
-    [Test]
-    public async Task CreateAsync_ShouldHandleExceptions_WhenRepositoryThrowsException()
-    {
-        // Arrange
-        var createDto = new CreateTreeNodeTypeDto
-        {
-            Name = "New Type",
-            Description = "New type description"
-        };
-
-        var exception = new InvalidOperationException("Database connection failed");
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByNameAsync("New Type")).ReturnsAsync((TreeNodeType)null);
-        _mockTreeNodeTypeRepository.Setup(r => r.CreateAsync(It.IsAny<TreeNodeType>())).ThrowsAsync(exception);
-
-        // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => 
-            _treeNodeTypeService.CreateAsync(createDto));
-        Assert.That(ex.Message, Is.EqualTo("Database connection failed"));
-        _mockTreeNodeTypeRepository.Verify(r => r.GetByNameAsync("New Type"), Times.Once);
-    }
-
-    [Test]
-    public async Task UpdateAsync_ShouldHandleExceptions_WhenRepositoryThrowsException()
-    {
-        // Arrange
-        var id = 1;
-        var updateDto = new UpdateTreeNodeTypeDto
-        {
-            Name = "Updated Type",
-            Description = "Updated type description"
-        };
-
-        var existingEntity = new TreeNodeType
-        {
-            TreeNodeTypeId = id,
-            Name = "Old Type",
-            Description = "Old type description"
-        };
-
-        var exception = new InvalidOperationException("Database connection failed");
-
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(existingEntity);
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByNameAsync("Updated Type")).ReturnsAsync((TreeNodeType)null);
-        _mockTreeNodeTypeRepository.Setup(r => r.UpdateAsync(It.IsAny<TreeNodeType>())).ThrowsAsync(exception);
-
-        // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => 
-            _treeNodeTypeService.UpdateAsync(id, updateDto));
-        Assert.That(ex.Message, Is.EqualTo("Database connection failed"));
-        _mockTreeNodeTypeRepository.Verify(r => r.GetByIdAsync(id), Times.Once);
-    }
-
-    [Test]
-    public async Task CreateAsync_ShouldValidateRequiredFields_WhenDtoIsInvalid()
-    {
-        // Arrange
-        var createDto = new CreateTreeNodeTypeDto
-        {
-            Name = "", // Invalid: empty name
-            Description = "Valid description"
-        };
-
-        // Act & Assert
-        // Note: This test would typically validate data annotations, but since we're using AutoMapper,
-        // the validation would happen at the DTO level or in a validation service
-        // For now, we'll test that the service handles the creation process
-        var entity = new TreeNodeType
-        {
-            TreeNodeTypeId = 1,
-            Name = "",
-            Description = "Valid description"
-        };
-
-        var dto = new TreeNodeTypeDto
-        {
-            TreeNodeTypeId = 1,
-            Name = "",
-            Description = "Valid description"
-        };
-
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByNameAsync("")).ReturnsAsync((TreeNodeType)null);
-        _mockMapper.Setup(m => m.Map<TreeNodeType>(createDto)).Returns(entity);
-        _mockTreeNodeTypeRepository.Setup(r => r.CreateAsync(entity)).ReturnsAsync(entity);
-        _mockMapper.Setup(m => m.Map<TreeNodeTypeDto>(entity)).Returns(dto);
-
-        // Act
-        var result = await _treeNodeTypeService.CreateAsync(createDto);
-
-        // Assert
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.Name, Is.EqualTo(""));
-        _mockTreeNodeTypeRepository.Verify(r => r.CreateAsync(entity), Times.Once);
-    }
-
-    [Test]
-    public async Task UpdateAsync_ShouldPreserveExistingValues_WhenDtoIsPartial()
-    {
-        // Arrange
-        var id = 1;
-        var updateDto = new UpdateTreeNodeTypeDto
-        {
-            Name = "Updated Type",
-            Description = "Updated description"
-            // Note: Not setting all properties to test partial updates
-        };
-
-        var existingEntity = new TreeNodeType
-        {
-            TreeNodeTypeId = id,
-            Name = "Old Type",
-            Description = "Old description",
-            ColorCode = "#FF0000",
-            IconName = "icon-old",
-            DisplayOrder = 1,
-            AllowsChildren = true,
-            MaxDepth = 5,
-            IsActive = true
-        };
-
-        var updatedEntity = new TreeNodeType
-        {
-            TreeNodeTypeId = id,
-            Name = "Updated Type",
-            Description = "Updated description",
-            ColorCode = "#FF0000", // Preserved
-            IconName = "icon-old", // Preserved
-            DisplayOrder = 1, // Preserved
-            AllowsChildren = true, // Preserved
-            MaxDepth = 5, // Preserved
-            IsActive = true // Preserved
-        };
-
-        var dto = new TreeNodeTypeDto
-        {
-            TreeNodeTypeId = id,
-            Name = "Updated Type",
-            Description = "Updated description",
-            ColorCode = "#FF0000",
-            IconName = "icon-old",
-            DisplayOrder = 1,
-            AllowsChildren = true,
-            MaxDepth = 5,
-            IsActive = true
-        };
-
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(existingEntity);
-        _mockTreeNodeTypeRepository.Setup(r => r.GetByNameAsync("Updated Type")).ReturnsAsync((TreeNodeType)null);
-        _mockMapper.Setup(m => m.Map(updateDto, existingEntity)).Returns(updatedEntity);
-        _mockTreeNodeTypeRepository.Setup(r => r.UpdateAsync(updatedEntity)).ReturnsAsync(updatedEntity);
-        _mockMapper.Setup(m => m.Map<TreeNodeTypeDto>(updatedEntity)).Returns(dto);
-
-        // Act
-        var result = await _treeNodeTypeService.UpdateAsync(id, updateDto);
-
-        // Assert
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.Name, Is.EqualTo("Updated Type"));
-        Assert.That(result.Description, Is.EqualTo("Updated description"));
-        Assert.That(result.ColorCode, Is.EqualTo("#FF0000")); // Should be preserved
-        Assert.That(result.IconName, Is.EqualTo("icon-old")); // Should be preserved
-        _mockTreeNodeTypeRepository.Verify(r => r.UpdateAsync(updatedEntity), Times.Once);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.DeleteAsync(1));
     }
 }

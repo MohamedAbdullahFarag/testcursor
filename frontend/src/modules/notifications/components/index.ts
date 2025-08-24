@@ -3,13 +3,13 @@
  * Central export point for all notification components
  */
 
-export { NotificationCenter } from './NotificationCenter';
-export { NotificationBell } from './NotificationBell';
+// Notification Components
 export { NotificationList } from './NotificationList';
-export { NotificationItem } from './NotificationItem';
+export { NotificationPreferences } from './NotificationPreferences';
+export { NotificationTemplateManager } from './NotificationTemplateManager';
+export { NotificationModal } from './NotificationModal';
+export { NotificationToast } from './NotificationToast';
+export { NotificationSystem } from './NotificationSystem';
 
-// Re-export as default exports for convenience
-export { default as NotificationCenterDefault } from './NotificationCenter';
-export { default as NotificationBellDefault } from './NotificationBell';
-export { default as NotificationListDefault } from './NotificationList';
-export { default as NotificationItemDefault } from './NotificationItem';
+// Re-export types for convenience
+export type { Notification, NotificationTemplate, NotificationPreferenceDto } from '../types';

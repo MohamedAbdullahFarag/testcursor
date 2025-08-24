@@ -1,6 +1,8 @@
 // Authentication Types and Models
 // Following Single Responsibility Principle - only type definitions here
 
+import type { ApiError } from '@/shared/models/api'
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -17,30 +19,20 @@ export interface AuthResult {
   };
 }
 
-export interface AuthState {
-  user: AuthResult['user'] | null;
-  accessToken: string | null;
-  refreshToken: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-}
-
-export interface LoginCredentials {
+export interface User {
+  id: string;
+  fullName: string;
   email: string;
-  password: string;
+  roles: string[];
 }
 
 export interface AuthContextType {
-  user: AuthResult['user'] | null;
+  user: User | null;
   accessToken: string | null;
-  isAuthenticated: boolean;
+  login: (credentials: LoginRequest) => Promise<void>;
+  logout: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  logout: () => Promise<void>;
-  refreshToken: () => Promise<void>;
-  clearError: () => void;
 }
 
 // Route Protection Types

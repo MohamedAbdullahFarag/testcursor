@@ -1,0 +1,272 @@
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
+using System;
+using System.Threading.Tasks;
+using Xunit.Framework;
+using Ikhtibar.API.Middleware;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Shared.Models;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Entities;
+
+namespace Ikhtibar.Tests.Auth;
+
+/// <summary>
+/// Tests for RefreshTokenMiddleware
+/// </summary>
+[TestFixture]
+public class RefreshTokenMiddlewareTests
+{
+    private Mock<ILogger<RefreshTokenMiddleware>> _mockLogger;
+    private Mock<IOptions<AuthSettings>> _mockAuthSettings;
+    private Mock<IAuthenticationService> _mockAuthenticationService;
+    private RefreshTokenMiddleware _middleware;
+    private RequestDelegate _next;
+    private AuthSettings _authSettings;
+
+    [SetUp]
+    public void Setup()
+    {
+        _mockLogger = new Mock<ILogger<RefreshTokenMiddleware>>();
+        _mockAuthSettings = new Mock<IOptions<AuthSettings>>();
+        _mockAuthenticationService = new Mock<IAuthenticationService>();
+        
+        _authSettings = new AuthSettings
+        {
+            JwtSecretKey = "test-secret-key-must-be-at-least-32-characters-long",
+            JwtIssuer = "test-issuer",
+            JwtAudience = "test-audience",
+            AccessTokenExpirationMinutes = 15,
+            RefreshTokenExpirationDays = 30,
+            UseHttpOnlyCookies = false,
+            RefreshTokenCookieName = "refresh_token",
+            RequireHttps = false,
+            EnableTokenRotation = true
+        };
+        
+        _mockAuthSettings.Setup(x => x.Value).Returns(_authSettings);
+        
+        _next = (ctx) => Task.CompletedTask;
+        _middleware = new RefreshTokenMiddleware(_next, _mockLogger.Object, _mockAuthSettings.Object);
+    }
+
+    [Test]
+    public async Task InvokeAsync_WithNoTokenExpiredHeader_CallsNextMiddleware()
+    {
+        // Arrange
+        var context = new DefaultHttpContext();
+        var nextCalled = false;
+        
+        RequestDelegate next = (ctx) => {
+            nextCalled = true;
+            return Task.CompletedTask;
+        };
+        
+        var middleware = new RefreshTokenMiddleware(next, _mockLogger.Object, _mockAuthSettings.Object);
+        
+        // Act
+        await middleware.InvokeAsync(context);
+        
+        // Assert
+        Assert.That(nextCalled, Is.True);
+    }
+
+    [Test]
+    public async Task InvokeAsync_WithTokenExpiredHeaderAndNoRefreshToken_ReturnsUnauthorized()
+    {
+        // Arrange
+        var context = new DefaultHttpContext();
+        context.Request.Headers["Token-Expired"] = "true";
+        
+        // Act
+        await _middleware.InvokeAsync(context);
+        
+        // Assert
+        Assert.That(context.Response.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized));
+        Assert.That(context.Response.Headers.ContainsKey("Token-Refresh-Required"), Is.True);
+        Assert.That(context.Response.Headers["Token-Refresh-Required"], Is.EqualTo("true"));
+    }
+
+    [Test]
+    public async Task InvokeAsync_WithTokenExpiredHeaderAndValidRefreshToken_RefreshesToken()
+    {
+        // Arrange
+        var context = new DefaultHttpContext();
+        context.Request.Headers["Token-Expired"] = "true";
+        context.Request.Headers["X-Refresh-Token"] = "valid-refresh-token";
+        
+        var authResult = new AuthResultDto
+        {
+            Success = true,
+            AccessToken = "new-access-token",
+            RefreshTokens = "new-refresh-token",
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+        };
+        
+        _mockAuthenticationService.Setup(x => x.RefreshTokenAsync("valid-refresh-token"))
+            .ReturnsAsync(authResult);
+        
+        // Setup service provider
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton(_mockAuthenticationService.Object);
+        var serviceProvider = serviceCollection.BuildServiceProvider();
+        context.RequestServices = serviceProvider;
+        
+        // Act
+        await _middleware.InvokeAsync(context);
+        
+        // Assert
+        Assert.That(context.Response.Headers.ContainsKey("New-Access-Token"), Is.True);
+        Assert.That(context.Response.Headers["New-Access-Token"], Is.EqualTo("new-access-token"));
+        Assert.That(context.Response.Headers.ContainsKey("New-Refresh-Token"), Is.True);
+        Assert.That(context.Response.Headers["New-Refresh-Token"], Is.EqualTo("new-refresh-token"));
+        Assert.That(context.Response.Headers.ContainsKey("Token-Expires-At"), Is.True);
+        
+        _mockAuthenticationService.Verify(x => x.RefreshTokenAsync("valid-refresh-token"), Times.Once);
+    }
+
+    [Test]
+    public async Task InvokeAsync_WithTokenExpiredHeaderAndFailedRefresh_ReturnsUnauthorized()
+    {
+        // Arrange
+        var context = new DefaultHttpContext();
+        context.Request.Headers["Token-Expired"] = "true";
+        context.Request.Headers["X-Refresh-Token"] = "invalid-refresh-token";
+        
+        var authResult = new AuthResultDto
+        {
+            Success = false,
+            ErrorMessage = "Invalid refresh token"
+        };
+        
+        _mockAuthenticationService.Setup(x => x.RefreshTokenAsync("invalid-refresh-token"))
+            .ReturnsAsync(authResult);
+        
+        // Setup service provider
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton(_mockAuthenticationService.Object);
+        var serviceProvider = serviceCollection.BuildServiceProvider();
+        context.RequestServices = serviceProvider;
+        
+        // Act
+        await _middleware.InvokeAsync(context);
+        
+        // Assert
+        Assert.That(context.Response.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized));
+        Assert.That(context.Response.Headers.ContainsKey("Token-Refresh-Required"), Is.True);
+        Assert.That(context.Response.Headers["Token-Refresh-Required"], Is.EqualTo("true"));
+        
+        _mockAuthenticationService.Verify(x => x.RefreshTokenAsync("invalid-refresh-token"), Times.Once);
+    }
+
+    [Test]
+    public async Task InvokeAsync_WithCookieBasedRefreshToken_RefreshesToken()
+    {
+        // Arrange
+        _authSettings.UseHttpOnlyCookies = true;
+        var context = new DefaultHttpContext();
+        context.Request.Headers["Token-Expired"] = "true";
+        context.Request.Cookies = new RequestCookieCollection(new Dictionary<string, string>
+        {
+            [_authSettings.RefreshTokenCookieName] = "cookie-refresh-token"
+        });
+        
+        var authResult = new AuthResultDto
+        {
+            Success = true,
+            AccessToken = "new-access-token",
+            RefreshTokens = "new-refresh-token",
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+        };
+        
+        _mockAuthenticationService.Setup(x => x.RefreshTokenAsync("cookie-refresh-token"))
+            .ReturnsAsync(authResult);
+        
+        // Setup service provider
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton(_mockAuthenticationService.Object);
+        var serviceProvider = serviceCollection.BuildServiceProvider();
+        context.RequestServices = serviceProvider;
+        
+        // Act
+        await _middleware.InvokeAsync(context);
+        
+        // Assert
+        Assert.That(context.Response.Headers.ContainsKey("New-Access-Token"), Is.True);
+        Assert.That(context.Response.Headers["New-Access-Token"], Is.EqualTo("new-access-token"));
+        
+        _mockAuthenticationService.Verify(x => x.RefreshTokenAsync("cookie-refresh-token"), Times.Once);
+    }
+
+    [Test]
+    public async Task InvokeAsync_WithHttpOnlyCookiesEnabled_SetsCookieInResponse()
+    {
+        // Arrange
+        _authSettings.UseHttpOnlyCookies = true;
+        var context = new DefaultHttpContext();
+        context.Request.Headers["Token-Expired"] = "true";
+        context.Request.Headers["X-Refresh-Token"] = "valid-refresh-token";
+        context.Request.Scheme = "https";
+        
+        var authResult = new AuthResultDto
+        {
+            Success = true,
+            AccessToken = "new-access-token",
+            RefreshTokens = "new-refresh-token",
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+        };
+        
+        _mockAuthenticationService.Setup(x => x.RefreshTokenAsync("valid-refresh-token"))
+            .ReturnsAsync(authResult);
+        
+        // Setup service provider
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton(_mockAuthenticationService.Object);
+        var serviceProvider = serviceCollection.BuildServiceProvider();
+        context.RequestServices = serviceProvider;
+        
+        // Act
+        await _middleware.InvokeAsync(context);
+        
+        // Assert
+        Assert.That(context.Response.Headers.ContainsKey("Set-Cookie"), Is.True);
+        var setCookieHeader = context.Response.Headers["Set-Cookie"].ToString();
+        Assert.That(setCookieHeader, Does.Contain(_authSettings.RefreshTokenCookieName));
+        Assert.That(setCookieHeader, Does.Contain("new-refresh-token"));
+        Assert.That(setCookieHeader, Does.Contain("HttpOnly"));
+        Assert.That(setCookieHeader, Does.Contain("Secure"));
+        
+        _mockAuthenticationService.Verify(x => x.RefreshTokenAsync("valid-refresh-token"), Times.Once);
+    }
+
+    [Test]
+    public async Task InvokeAsync_WithAuthenticationServiceException_ReturnsUnauthorized()
+    {
+        // Arrange
+        var context = new DefaultHttpContext();
+        context.Request.Headers["Token-Expired"] = "true";
+        context.Request.Headers["X-Refresh-Token"] = "valid-refresh-token";
+        
+        _mockAuthenticationService.Setup(x => x.RefreshTokenAsync("valid-refresh-token"))
+            .ThrowsAsync(new Exception("Authentication service error"));
+        
+        // Setup service provider
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton(_mockAuthenticationService.Object);
+        var serviceProvider = serviceCollection.BuildServiceProvider();
+        context.RequestServices = serviceProvider;
+        
+        // Act
+        await _middleware.InvokeAsync(context);
+        
+        // Assert
+        Assert.That(context.Response.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized));
+        Assert.That(context.Response.Headers.ContainsKey("Token-Refresh-Required"), Is.True);
+        Assert.That(context.Response.Headers["Token-Refresh-Required"], Is.EqualTo("true"));
+        
+        _mockAuthenticationService.Verify(x => x.RefreshTokenAsync("valid-refresh-token"), Times.Once);
+    }
+}

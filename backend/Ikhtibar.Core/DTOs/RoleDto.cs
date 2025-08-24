@@ -44,5 +44,5 @@ public class RoleDto
     /// <summary>
     /// When the role was last updated
     /// </summary>
-    public DateTime UpdatedAt { get; set; }
+    public DateTime ModifiedAt { get; set; }
 }

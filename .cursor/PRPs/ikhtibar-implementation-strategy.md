@@ -17,7 +17,7 @@
 - Login attempt tracking and account lockout
 - Password policy enforcement
 - Security headers and CORS configuration
-- RefreshToken entity and repository implementation
+- RefreshTokens entity and repository implementation
 - Token rotation security mechanisms
 
 **Prerequisites**:
@@ -28,13 +28,13 @@
 **Validation Commands**:
 ```bash
 # Authentication validation
-curl -X POST http://localhost:5000/api/auth/login -H "Content-Type: application/json" -d '{"email":"admin@example.com","password":"Test123!"}'
-curl -X GET http://localhost:5000/api/auth/profile -H "Authorization: Bearer {token}"
-curl -X POST http://localhost:5000/api/auth/refresh -H "Content-Type: application/json" -d '{"refreshToken":"{refresh_token}"}'
+curl -X POST https://localhost:7001/api/auth/login -H "Content-Type: application/json" -d '{"email":"admin@example.com","password":"Test123!"}'
+curl -X GET https://localhost:7001/api/auth/profile -H "Authorization: Bearer {token}"
+curl -X POST https://localhost:7001/api/auth/refresh -H "Content-Type: application/json" -d '{"refreshToken":"{refresh_token}"}'
 
 # Authorization validation
-curl -X GET http://localhost:5000/api/admin/users -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/admin/users -H "Authorization: Bearer {student_token}" # Should return 403
+curl -X GET https://localhost:7001/api/admin/users -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/admin/users -H "Authorization: Bearer {student_token}" # Should return 403
 ```
 
 **Success Criteria**:
@@ -79,14 +79,14 @@ curl -X GET http://localhost:5000/api/admin/users -H "Authorization: Bearer {stu
 **Validation Commands**:
 ```bash
 # Role management API validation
-curl -X GET http://localhost:5000/api/roles -H "Authorization: Bearer {admin_token}"
-curl -X POST http://localhost:5000/api/roles -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Instructor","permissions":[1,2,3]}'
-curl -X PUT http://localhost:5000/api/roles/2 -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Senior Instructor","permissions":[1,2,3,4]}'
-curl -X DELETE http://localhost:5000/api/roles/3 -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/roles -H "Authorization: Bearer {admin_token}"
+curl -X POST https://localhost:7001/api/roles -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Instructor","permissions":[1,2,3]}'
+curl -X PUT https://localhost:7001/api/roles/2 -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Senior Instructor","permissions":[1,2,3,4]}'
+curl -X DELETE https://localhost:7001/api/roles/3 -H "Authorization: Bearer {admin_token}"
 
 # User-role management
-curl -X POST http://localhost:5000/api/users/2/roles -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"roleIds":[1,2]}'
-curl -X GET http://localhost:5000/api/users/2/roles -H "Authorization: Bearer {admin_token}"
+curl -X POST https://localhost:7001/api/users/2/roles -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"roleIds":[1,2]}'
+curl -X GET https://localhost:7001/api/users/2/roles -H "Authorization: Bearer {admin_token}"
 ```
 
 **Success Criteria**:
@@ -132,13 +132,13 @@ curl -X GET http://localhost:5000/api/users/2/roles -H "Authorization: Bearer {a
 **Validation Commands**:
 ```bash
 # Generate audit events
-curl -X POST http://localhost:5000/api/users -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"email":"audit@example.com","firstName":"Audit","lastName":"Test","password":"Test123!"}'
+curl -X POST https://localhost:7001/api/users -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"email":"audit@example.com","firstName":"Audit","lastName":"Test","password":"Test123!"}'
 
 # Check audit logs
-curl -X GET http://localhost:5000/api/audit-logs -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/audit-logs?action=create_user -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/audit-logs?userId=1 -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/audit-logs/export -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/audit-logs -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/audit-logs?action=create_user -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/audit-logs?userId=1 -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/audit-logs/export -H "Authorization: Bearer {admin_token}"
 ```
 
 **Success Criteria**:
@@ -185,14 +185,14 @@ curl -X GET http://localhost:5000/api/audit-logs/export -H "Authorization: Beare
 **Validation Commands**:
 ```bash
 # Create notification template
-curl -X POST http://localhost:5000/api/notification-templates -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"exam_reminder","subject":"Upcoming Exam Reminder","body":"Dear {{user.firstName}}, this is a reminder about your upcoming exam: {{exam.title}} scheduled for {{exam.dateTime}}."}'
+curl -X POST https://localhost:7001/api/notification-templates -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"exam_reminder","subject":"Upcoming Exam Reminder","body":"Dear {{user.firstName}}, this is a reminder about your upcoming exam: {{exam.title}} scheduled for {{exam.dateTime}}."}'
 
 # Send notification
-curl -X POST http://localhost:5000/api/notifications -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"userId":2,"templateId":1,"channel":"email","data":{"exam":{"title":"Math Final","dateTime":"2023-06-15T10:00:00"}}}'
+curl -X POST https://localhost:7001/api/notifications -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"userId":2,"templateId":1,"channel":"email","data":{"exam":{"title":"Math Final","dateTime":"2023-06-15T10:00:00"}}}'
 
 # Get user notifications
-curl -X GET http://localhost:5000/api/users/2/notifications -H "Authorization: Bearer {admin_token}"
-curl -X PUT http://localhost:5000/api/notifications/1/read -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/users/2/notifications -H "Authorization: Bearer {admin_token}"
+curl -X PUT https://localhost:7001/api/notifications/1/read -H "Authorization: Bearer {admin_token}"
 ```
 
 **Success Criteria**:
@@ -240,18 +240,18 @@ curl -X PUT http://localhost:5000/api/notifications/1/read -H "Authorization: Be
 **Validation Commands**:
 ```bash
 # Create node types
-curl -X POST http://localhost:5000/api/tree-node-types -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Subject","description":"Top-level subject category"}'
-curl -X POST http://localhost:5000/api/tree-node-types -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Topic","description":"Subject topic category"}'
+curl -X POST https://localhost:7001/api/tree-node-types -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Subject","description":"Top-level subject category"}'
+curl -X POST https://localhost:7001/api/tree-node-types -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Topic","description":"Subject topic category"}'
 
 # Create tree nodes
-curl -X POST http://localhost:5000/api/tree-nodes -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Mathematics","typeId":1,"parentId":null}'
-curl -X POST http://localhost:5000/api/tree-nodes -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Algebra","typeId":2,"parentId":1}'
-curl -X POST http://localhost:5000/api/tree-nodes -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Geometry","typeId":2,"parentId":1}'
+curl -X POST https://localhost:7001/api/tree-nodes -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Mathematics","typeId":1,"parentId":null}'
+curl -X POST https://localhost:7001/api/tree-nodes -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Algebra","typeId":2,"parentId":1}'
+curl -X POST https://localhost:7001/api/tree-nodes -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Geometry","typeId":2,"parentId":1}'
 
 # Get tree structure
-curl -X GET http://localhost:5000/api/tree-nodes -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/tree-nodes/1/children -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/tree-nodes?search=alg -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/tree-nodes -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/tree-nodes/1/children -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/tree-nodes?search=alg -H "Authorization: Bearer {admin_token}"
 ```
 
 **Success Criteria**:
@@ -301,16 +301,16 @@ curl -X GET http://localhost:5000/api/tree-nodes?search=alg -H "Authorization: B
 **Validation Commands**:
 ```bash
 # Upload media
-curl -X POST http://localhost:5000/api/media -F "file=@test.jpg" -F "typeId=1" -F "description=Test image" -H "Authorization: Bearer {admin_token}"
+curl -X POST https://localhost:7001/api/media -F "file=@test.jpg" -F "typeId=1" -F "description=Test image" -H "Authorization: Bearer {admin_token}"
 
 # Get media
-curl -X GET http://localhost:5000/api/media -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/media/1 -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/media?type=image -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/media?search=test -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/media -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/media/1 -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/media?type=image -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/media?search=test -H "Authorization: Bearer {admin_token}"
 
 # Delete media
-curl -X DELETE http://localhost:5000/api/media/1 -H "Authorization: Bearer {admin_token}"
+curl -X DELETE https://localhost:7001/api/media/1 -H "Authorization: Bearer {admin_token}"
 ```
 
 **Success Criteria**:
@@ -365,20 +365,20 @@ curl -X DELETE http://localhost:5000/api/media/1 -H "Authorization: Bearer {admi
 **Validation Commands**:
 ```bash
 # Create question types
-curl -X POST http://localhost:5000/api/question-types -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Multiple Choice","description":"Question with multiple options"}'
-curl -X POST http://localhost:5000/api/question-types -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Essay","description":"Open-ended question requiring written response"}'
+curl -X POST https://localhost:7001/api/question-types -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Multiple Choice","description":"Question with multiple options"}'
+curl -X POST https://localhost:7001/api/question-types -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Essay","description":"Open-ended question requiring written response"}'
 
 # Create questions
-curl -X POST http://localhost:5000/api/questions -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"text":"What is 2+2?","typeId":1,"difficultyId":1,"treeNodeId":2,"answers":[{"text":"3","isCorrect":false},{"text":"4","isCorrect":true},{"text":"5","isCorrect":false}]}'
-curl -X POST http://localhost:5000/api/questions -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"text":"Explain the water cycle.","typeId":2,"difficultyId":2,"treeNodeId":3,"rubric":"Clear explanation of evaporation, condensation, and precipitation"}'
+curl -X POST https://localhost:7001/api/questions -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"text":"What is 2+2?","typeId":1,"difficultyId":1,"treeNodeId":2,"answers":[{"text":"3","isCorrect":false},{"text":"4","isCorrect":true},{"text":"5","isCorrect":false}]}'
+curl -X POST https://localhost:7001/api/questions -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"text":"Explain the water cycle.","typeId":2,"difficultyId":2,"treeNodeId":3,"rubric":"Clear explanation of evaporation, condensation, and precipitation"}'
 
 # Get questions
-curl -X GET http://localhost:5000/api/questions -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/questions/1 -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/questions?type=1 -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/questions?difficulty=2 -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/questions?treeNodeId=2 -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/questions?search=water -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/questions -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/questions/1 -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/questions?type=1 -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/questions?difficulty=2 -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/questions?treeNodeId=2 -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/questions?search=water -H "Authorization: Bearer {admin_token}"
 ```
 
 **Success Criteria**:
@@ -430,20 +430,20 @@ curl -X GET http://localhost:5000/api/questions?search=water -H "Authorization: 
 **Validation Commands**:
 ```bash
 # Create question statuses
-curl -X POST http://localhost:5000/api/question-statuses -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Draft","description":"Initial state"}'
-curl -X POST http://localhost:5000/api/question-statuses -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"In Review","description":"Being reviewed"}'
-curl -X POST http://localhost:5000/api/question-statuses -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Approved","description":"Ready for use"}'
-curl -X POST http://localhost:5000/api/question-statuses -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Rejected","description":"Failed review"}'
+curl -X POST https://localhost:7001/api/question-statuses -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Draft","description":"Initial state"}'
+curl -X POST https://localhost:7001/api/question-statuses -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"In Review","description":"Being reviewed"}'
+curl -X POST https://localhost:7001/api/question-statuses -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Approved","description":"Ready for use"}'
+curl -X POST https://localhost:7001/api/question-statuses -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Rejected","description":"Failed review"}'
 
 # Update question status
-curl -X PUT http://localhost:5000/api/questions/1/status -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"statusId":2,"assignedReviewerId":3}'
-curl -X PUT http://localhost:5000/api/questions/1/review -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"statusId":3,"feedback":"Good question, approved for use"}'
-curl -X PUT http://localhost:5000/api/questions/2/review -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"statusId":4,"feedback":"Question is too vague, please revise"}'
+curl -X PUT https://localhost:7001/api/questions/1/status -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"statusId":2,"assignedReviewerId":3}'
+curl -X PUT https://localhost:7001/api/questions/1/review -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"statusId":3,"feedback":"Good question, approved for use"}'
+curl -X PUT https://localhost:7001/api/questions/2/review -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"statusId":4,"feedback":"Question is too vague, please revise"}'
 
 # Get questions by status
-curl -X GET http://localhost:5000/api/questions?status=2 -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/reviews?assignedTo=3 -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/reviews/metrics -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/questions?status=2 -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/reviews?assignedTo=3 -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/reviews/metrics -H "Authorization: Bearer {admin_token}"
 ```
 
 **Success Criteria**:
@@ -499,23 +499,23 @@ curl -X GET http://localhost:5000/api/reviews/metrics -H "Authorization: Bearer 
 **Validation Commands**:
 ```bash
 # Create exam
-curl -X POST http://localhost:5000/api/exams -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"title":"Math Final Exam","description":"Comprehensive math exam","timeLimit":120,"passingScore":70,"instructions":"Answer all questions","treeNodeId":1}'
+curl -X POST https://localhost:7001/api/exams -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"title":"Math Final Exam","description":"Comprehensive math exam","timeLimit":120,"passingScore":70,"instructions":"Answer all questions","treeNodeId":1}'
 
 # Add sections
-curl -X POST http://localhost:5000/api/exams/1/sections -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"title":"Multiple Choice","instructions":"Select the best answer","orderIndex":1}'
-curl -X POST http://localhost:5000/api/exams/1/sections -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"title":"Essay Questions","instructions":"Write complete answers","orderIndex":2}'
+curl -X POST https://localhost:7001/api/exams/1/sections -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"title":"Multiple Choice","instructions":"Select the best answer","orderIndex":1}'
+curl -X POST https://localhost:7001/api/exams/1/sections -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"title":"Essay Questions","instructions":"Write complete answers","orderIndex":2}'
 
 # Add questions to sections
-curl -X POST http://localhost:5000/api/exams/1/sections/1/questions -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"questionId":1,"orderIndex":1,"points":10}'
-curl -X POST http://localhost:5000/api/exams/1/sections/1/questions -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"questionId":2,"orderIndex":2,"points":10}'
-curl -X POST http://localhost:5000/api/exams/1/sections/2/questions -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"questionId":3,"orderIndex":1,"points":20}'
+curl -X POST https://localhost:7001/api/exams/1/sections/1/questions -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"questionId":1,"orderIndex":1,"points":10}'
+curl -X POST https://localhost:7001/api/exams/1/sections/1/questions -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"questionId":2,"orderIndex":2,"points":10}'
+curl -X POST https://localhost:7001/api/exams/1/sections/2/questions -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"questionId":3,"orderIndex":1,"points":20}'
 
 # Get exam data
-curl -X GET http://localhost:5000/api/exams -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/exams/1 -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/exams/1/sections -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/exams/1/questions -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/exams/1/preview -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/exams -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/exams/1 -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/exams/1/sections -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/exams/1/questions -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/exams/1/preview -H "Authorization: Bearer {admin_token}"
 ```
 
 **Success Criteria**:
@@ -570,21 +570,21 @@ curl -X GET http://localhost:5000/api/exams/1/preview -H "Authorization: Bearer 
 **Validation Commands**:
 ```bash
 # Create student group
-curl -X POST http://localhost:5000/api/student-groups -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Math 101","description":"First-year math students"}'
-curl -X POST http://localhost:5000/api/student-groups/1/students -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"studentIds":[10,11,12,13,14]}'
+curl -X POST https://localhost:7001/api/student-groups -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"name":"Math 101","description":"First-year math students"}'
+curl -X POST https://localhost:7001/api/student-groups/1/students -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"studentIds":[10,11,12,13,14]}'
 
 # Schedule exam
-curl -X POST http://localhost:5000/api/exam-schedules -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"examId":1,"title":"Math Final - Spring 2023","startDate":"2023-06-15T09:00:00","endDate":"2023-06-15T17:00:00","durationMinutes":120,"accessCode":"MATH101","attemptLimit":1}'
+curl -X POST https://localhost:7001/api/exam-schedules -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"examId":1,"title":"Math Final - Spring 2023","startDate":"2023-06-15T09:00:00","endDate":"2023-06-15T17:00:00","durationMinutes":120,"accessCode":"MATH101","attemptLimit":1}'
 
 # Assign exam to groups/students
-curl -X POST http://localhost:5000/api/exam-schedules/1/groups -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"groupIds":[1]}'
-curl -X POST http://localhost:5000/api/exam-schedules/1/students -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"studentIds":[15,16]}'
+curl -X POST https://localhost:7001/api/exam-schedules/1/groups -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"groupIds":[1]}'
+curl -X POST https://localhost:7001/api/exam-schedules/1/students -H "Content-Type: application/json" -H "Authorization: Bearer {admin_token}" -d '{"studentIds":[15,16]}'
 
 # Get schedule data
-curl -X GET http://localhost:5000/api/exam-schedules -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/exam-schedules/1 -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/exam-schedules/1/students -H "Authorization: Bearer {admin_token}"
-curl -X GET http://localhost:5000/api/students/10/exam-schedules -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/exam-schedules -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/exam-schedules/1 -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/exam-schedules/1/students -H "Authorization: Bearer {admin_token}"
+curl -X GET https://localhost:7001/api/students/10/exam-schedules -H "Authorization: Bearer {admin_token}"
 ```
 
 **Success Criteria**:

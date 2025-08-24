@@ -1,64 +1,40 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../modules/auth/hooks/useAuth';
+import { CircularProgress, Box } from '@mui/material';
 
 interface PrivateRouteProps {
-  children: React.ReactNode;
-  requiredRoles?: string[];
+  children: React.ReactElement;
+  redirectTo?: string;
 }
 
 export const PrivateRoute: React.FC<PrivateRouteProps> = ({ 
   children, 
-  requiredRoles 
+  redirectTo = '/login' 
 }) => {
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { accessToken, isLoading } = useAuth();
   const location = useLocation();
 
-  // Show loading state while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <svg className="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span className="text-lg text-gray-600">Loading...</span>
-        </div>
-      </div>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+      >
+        <CircularProgress />
+      </Box>
     );
   }
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  if (!accessToken) {
+    // Redirect to login page with the current location as state
+    // This allows us to redirect back after successful login
+    return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // Check role requirements if specified
-  if (requiredRoles && user) {
-    const hasRequiredRole = requiredRoles.some(role => 
-      user.roles.includes(role)
-    );
-    
-    if (!hasRequiredRole) {
-      return (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
-            <p className="text-gray-600 mb-4">
-              You don't have permission to access this page.
-            </p>
-            <p className="text-sm text-gray-500">
-              Required roles: {requiredRoles.join(', ')}
-            </p>
-          </div>
-        </div>
-      );
-    }
-  }
-
-  // User is authenticated and has required roles (if any)
-  return <>{children}</>;
+  return children;
 };
 
 /**

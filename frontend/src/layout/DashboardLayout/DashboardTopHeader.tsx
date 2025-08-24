@@ -50,12 +50,12 @@ const DashboardTopHeader = () => {
                     <p
                         className="hidden items-center justify-center rounded-full bg-primary-container px-[6px] py-[2px] text-[10px] text-primary xl:flex"
                         data-testid="trialVersionTest">
-                        {strings.shared.trialVersion}
+                        {strings.common?.trialVersion || 'Beta version'}
                     </p>
                 </Stack>
                 <SearchInput
                     type="onButton"
-                    placeholder={strings.shared.srachForRequiredService}
+                    placeholder={strings.common?.srachForRequiredService || 'Search for the required service'}
                     onSearch={onSearch}
                     value={searchText}
                     className="hidden xl:inline-flex"
@@ -93,7 +93,7 @@ const DashboardTopHeader = () => {
                             <div className="p-space-02">
                                 <Logout className="text-primary" />
                             </div>
-                            <span className="inline-block flex-grow text-right text-body-01">{strings.auth.logout}</span>
+                            <span className="inline-block flex-grow text-right text-body-01">{strings.logout?.title || 'Logout'}</span>
                             <div className="p-space-02">
                                 <ChevronLeft className="ltr:rotate-180" />
                             </div>

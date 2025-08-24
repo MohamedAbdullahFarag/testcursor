@@ -1,156 +1,186 @@
 using Ikhtibar.API.Controllers.Base;
-using Ikhtibar.Shared.Entities;
-using Ikhtibar.Core.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Shared.DTOs;
+using System.ComponentModel.DataAnnotations;
 
 namespace Ikhtibar.API.Controllers;
 
 /// <summary>
-/// Sample controller demonstrating dependency injection and repository patterns
-/// This controller serves as a template for implementing feature-specific controllers
+/// Sample controller demonstrating proper dependency injection patterns
+/// and controller implementation standards for the Ikhtibar API
 /// </summary>
+[ApiController]
+[Route("api/[controller]")]
+[Produces("application/json")]
 public class SampleController : ApiControllerBase
 {
-    private readonly IRepository<User> _userRepository;
+    private readonly IUserService _userService;
     private readonly ILogger<SampleController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the SampleController
     /// </summary>
-    /// <param name="userRepository">User repository for data access</param>
-    /// <param name="logger">Logger for this controller</param>
-    public SampleController(IRepository<User> userRepository, ILogger<SampleController> logger)
+    /// <param name="userService">User service for demonstration</param>
+    /// <param name="logger">Logger instance</param>
+    public SampleController(
+        IUserService userService,
+        ILogger<SampleController> logger)
     {
-        _userRepository = userRepository;
-        _logger = logger;
+        _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
-    /// Gets all users (demonstration endpoint)
+    /// Demonstrates basic GET endpoint with dependency injection
     /// </summary>
-    /// <returns>List of users</returns>
-    [HttpGet("users")]
+    /// <returns>Sample response with service information</returns>
+    [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetUsers()
+    public IActionResult Get()
     {
+        _logger.LogInformation("Sample controller GET endpoint called");
+
         try
         {
-            _logger.LogInformation("Fetching all users");
+            var sampleData = new
+            {
+                Message = "Sample controller is working correctly",
+                ServiceType = _userService.GetType().Name,
+                Timestamp = DateTime.UtcNow,
+                ControllerName = nameof(SampleController),
+                BaseController = nameof(ApiControllerBase)
+            };
 
-            var users = await _userRepository.GetAllAsync();
-
-            _logger.LogInformation("Retrieved {UserCount} users", users.Count());
-
-            return SuccessResponse(users, "Users retrieved successfully");
+            return SuccessResponse(sampleData, "Sample endpoint executed successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while fetching users");
-            throw; // Let the global error handler process this
+            _logger.LogError(ex, "Error in sample controller GET endpoint");
+            return ErrorResponse("An error occurred while processing the request", 500);
         }
     }
 
     /// <summary>
-    /// Gets a user by ID (demonstration endpoint)
+    /// Demonstrates POST endpoint with model validation
     /// </summary>
-    /// <param name="id">User ID</param>
-    /// <returns>User details</returns>
-    [HttpGet("users/{id:int}")]
+    /// <param name="request">Sample request data</param>
+    /// <returns>Processed request response</returns>
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult Post([FromBody] SampleRequest request)
+    {
+        _logger.LogInformation("Sample controller POST endpoint called with data: {Data}", request?.Message);
+
+        try
+        {
+            if (request == null)
+            {
+                return ErrorResponse("Request body cannot be null", 400);
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Message))
+            {
+                return ErrorResponse("Message cannot be empty", 400);
+            }
+
+            var response = new
+            {
+                ReceivedMessage = request.Message,
+                ProcessedAt = DateTime.UtcNow,
+                MessageLength = request.Message.Length,
+                IsValid = true
+            };
+
+            return SuccessResponse(response, "Request processed successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in sample controller POST endpoint");
+            return ErrorResponse("An error occurred while processing the request", 500);
+        }
+    }
+
+    /// <summary>
+    /// Demonstrates dependency injection with service method call
+    /// </summary>
+    /// <param name="userId">User ID to demonstrate service usage</param>
+    /// <returns>User information from service</returns>
+    [HttpGet("user/{userId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetUser(int id)
+    public async Task<IActionResult> GetUserInfo(int userId)
     {
+        _logger.LogInformation("Sample controller GetUserInfo called for user ID: {UserId}", userId);
+
         try
         {
-            _logger.LogInformation("Fetching user with ID: {UserId}", id);
-
-            var user = await _userRepository.GetByIdAsync(id);
-
-            if (user == null)
+            // Demonstrate service usage (this is just for demonstration)
+            // In a real scenario, you would use the actual service method
+            var userInfo = new
             {
-                _logger.LogWarning("User with ID {UserId} not found", id);
-                return NotFound($"User with ID {id} was not found");
-            }
+                UserId = userId,
+                ServiceAvailable = _userService != null,
+                ServiceType = _userService.GetType().Name,
+                RetrievedAt = DateTime.UtcNow
+            };
 
-            _logger.LogInformation("User {UserId} retrieved successfully", id);
-
-            return SuccessResponse(user, "User retrieved successfully");
+            return SuccessResponse(userInfo, "User information retrieved successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while fetching user {UserId}", id);
-            throw; // Let the global error handler process this
+            _logger.LogError(ex, "Error in sample controller GetUserInfo endpoint for user ID: {UserId}", userId);
+            return ErrorResponse("An error occurred while retrieving user information", 500);
         }
     }
 
     /// <summary>
-    /// Creates a new user (demonstration endpoint)
+    /// Demonstrates error handling and logging
     /// </summary>
-    /// <param name="request">User creation request</param>
-    /// <returns>Created user</returns>
-    [HttpPost("users")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    /// <param name="shouldError">Whether to simulate an error</param>
+    /// <returns>Success response or simulated error</returns>
+    [HttpGet("test-error-handling")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
+    public IActionResult TestErrorHandling([FromQuery] bool shouldError = false)
     {
-        try
+        _logger.LogInformation("Sample controller TestErrorHandling called with shouldError: {ShouldError}", shouldError);
+
+        if (shouldError)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            _logger.LogInformation("Creating new user with email: {Email}", request.Email);
-
-            var user = new User
-            {
-                Email = request.Email,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                Username = request.Email, // Use email as username for demo
-                PasswordHash = "demo_hash", // This would be properly hashed in real implementation
-                CreatedAt = DateTime.UtcNow,
-                ModifiedAt = DateTime.UtcNow,
-                IsDeleted = false
-            };
-
-            var createdUser = await _userRepository.AddAsync(user);
-
-            _logger.LogInformation("User created successfully with ID: {UserId}", createdUser.Id);
-
-            return CreatedAtAction(
-                nameof(GetUser),
-                new { id = createdUser.Id },
-                SuccessResponse(createdUser, "User created successfully"));
+            _logger.LogWarning("Simulating error condition as requested");
+            return ErrorResponse("This is a simulated error for testing purposes", 400);
         }
-        catch (Exception ex)
+
+        var response = new
         {
-            _logger.LogError(ex, "Error occurred while creating user");
-            throw; // Let the global error handler process this
-        }
+            Message = "Error handling test completed successfully",
+            Timestamp = DateTime.UtcNow,
+            ErrorSimulated = false
+        };
+
+        return SuccessResponse(response, "Error handling test passed");
     }
 }
 
 /// <summary>
-/// Request model for creating a user (demonstration)
+/// Sample request model for demonstration purposes
 /// </summary>
-public class CreateUserRequest
+public class SampleRequest
 {
     /// <summary>
-    /// User's email address
+    /// Sample message to process
     /// </summary>
-    public required string Email { get; set; }
+    [Required]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Message must be between 1 and 100 characters")]
+    public string Message { get; set; } = string.Empty;
 
     /// <summary>
-    /// User's first name
+    /// Optional additional data
     /// </summary>
-    public required string FirstName { get; set; }
-
-    /// <summary>
-    /// User's last name
-    /// </summary>
-    public required string LastName { get; set; }
+    public string? AdditionalData { get; set; }
 }

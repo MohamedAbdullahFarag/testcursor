@@ -1,5 +1,5 @@
 using Dapper;
-using Ikhtibar.Core.Entities;
+
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
@@ -12,7 +12,7 @@ namespace Ikhtibar.Infrastructure.Repositories;
 /// </summary>
 public class RoleRepository : BaseRepository<Role>, IRoleRepository
 {
-    private readonly ILogger<RoleRepository> _logger;
+    private new readonly ILogger<RoleRepository> _logger;
 
     public RoleRepository(IDbConnectionFactory connectionFactory, ILogger<RoleRepository> logger)
         : base(connectionFactory, logger, "Roles", "RoleId")
@@ -198,6 +198,38 @@ public class RoleRepository : BaseRepository<Role>, IRoleRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting all roles");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Check if role code is in use
+    /// </summary>
+    public async Task<bool> IsRoleCodeInUseAsync(string code, int? excludeRoleId = null)
+    {
+        return await CodeExistsAsync(code, excludeRoleId);
+    }
+
+    /// <summary>
+    /// Create a new role
+    /// </summary>
+    public async Task<Role> CreateAsync(Role role)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                INSERT INTO Roles (Code, Name, Description, IsActive, IsSystemRole, CreatedAt, ModifiedAt)
+                VALUES (@Code, @Name, @Description, @IsActive, @IsSystemRole, GETUTCDATE(), GETUTCDATE());
+                SELECT CAST(SCOPE_IDENTITY() as int);";
+
+            var roleId = await connection.ExecuteScalarAsync<int>(sql, role);
+            role.RoleId = roleId;
+            return role;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating role: {Role}", role);
             throw;
         }
     }

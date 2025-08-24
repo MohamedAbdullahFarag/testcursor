@@ -14,7 +14,7 @@ public class CreateNotificationPreferenceDto
     /// User ID for the preferences
     /// </summary>
     [Required]
-    public Guid UserId { get; set; }
+    public int userId { get; set; }
 
     /// <summary>
     /// Type of notification
@@ -109,7 +109,7 @@ public class NotificationPreferenceDto
     /// <summary>
     /// Unique identifier for the preference
     /// </summary>
-    public Guid Id { get; set; }
+    public int id { get; set; }
 
     /// <summary>
     /// User ID for the preferences
@@ -176,7 +176,7 @@ public class BulkUpdatePreferencesDto
     /// User ID for the preferences
     /// </summary>
     [Required]
-    public Guid UserId { get; set; }
+    public int userId { get; set; }
 
     /// <summary>
     /// List of preference updates to apply
@@ -231,7 +231,7 @@ public class UserPreferenceSummaryDto
     /// <summary>
     /// User ID
     /// </summary>
-    public Guid UserId { get; set; }
+    public int userId { get; set; }
 
     /// <summary>
     /// User's timezone identifier
@@ -309,7 +309,7 @@ public class CheckPreferencesDto
     /// User ID to check preferences for
     /// </summary>
     [Required]
-    public Guid UserId { get; set; }
+    public int userId { get; set; }
 
     /// <summary>
     /// Type of notification to check
@@ -381,7 +381,7 @@ public class GlobalPreferencesDto
     /// User ID for the global preferences
     /// </summary>
     [Required]
-    public Guid UserId { get; set; }
+    public int userId { get; set; }
 
     /// <summary>
     /// User's timezone identifier
@@ -425,13 +425,13 @@ public class CopyPreferencesDto
     /// Source user ID to copy preferences from
     /// </summary>
     [Required]
-    public Guid SourceUserId { get; set; }
+    public int SourceUserId { get; set; }
 
     /// <summary>
     /// Target user ID to copy preferences to
     /// </summary>
     [Required]
-    public Guid TargetUserId { get; set; }
+    public int TargetUserId { get; set; }
 
     /// <summary>
     /// Whether to overwrite existing preferences for the target user
@@ -457,7 +457,7 @@ public class ExportPreferencesDto
     /// <summary>
     /// User IDs to export preferences for (if empty, exports all users)
     /// </summary>
-    public List<Guid> UserIds { get; set; } = new();
+    public List<int> UserIds { get; set; } = new();
 
     /// <summary>
     /// Export format

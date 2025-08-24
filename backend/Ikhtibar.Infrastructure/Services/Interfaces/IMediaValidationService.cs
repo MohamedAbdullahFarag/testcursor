@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using MediaType = Ikhtibar.Core.Entities.MediaType;
 
 namespace Ikhtibar.Infrastructure.Services.Interfaces;
 
@@ -22,7 +21,7 @@ public interface IMediaValidationService
     /// <summary>
     /// Checks if file size is within limits
     /// </summary>
-    bool IsFileSizeValid(long fileSizeBytes, MediaType mediaType);
+    bool IsFileSizeValid(long fileSizeBytes, Shared.Enums.MediaType mediaType);
 
     /// <summary>
     /// Performs virus scanning on file (if configured)

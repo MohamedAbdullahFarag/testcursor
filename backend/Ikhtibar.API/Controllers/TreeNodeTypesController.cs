@@ -69,7 +69,7 @@ public class TreeNodeTypesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving tree node type {TreeNodeTypeId}", id);
+            _logger.LogError(ex, "Error retrieving tree node type {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the tree node type");
         }
     }
@@ -124,7 +124,7 @@ public class TreeNodeTypesController : ControllerBase
             var treeNodeType = await _treeNodeTypeService.CreateTreeNodeTypeAsync(createDto);
             return CreatedAtAction(
                 nameof(GetTreeNodeType),
-                new { id = treeNodeType.TreeNodeTypeId },
+                new { id = treeNodeType.Id },
                 treeNodeType);
         }
         catch (InvalidOperationException ex)
@@ -175,7 +175,7 @@ public class TreeNodeTypesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating tree node type {TreeNodeTypeId}", id);
+            _logger.LogError(ex, "Error updating tree node type {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the tree node type");
         }
     }
@@ -209,7 +209,7 @@ public class TreeNodeTypesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting tree node type {TreeNodeTypeId}", id);
+            _logger.LogError(ex, "Error deleting tree node type {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the tree node type");
         }
     }
@@ -232,7 +232,7 @@ public class TreeNodeTypesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking if tree node type exists {TreeNodeTypeId}", id);
+            _logger.LogError(ex, "Error checking if tree node type exists {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while checking tree node type existence");
         }
     }
@@ -262,7 +262,7 @@ public class TreeNodeTypesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving tree nodes by type {TreeNodeTypeId}", id);
+            _logger.LogError(ex, "Error retrieving tree nodes by type {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving tree nodes");
         }
     }

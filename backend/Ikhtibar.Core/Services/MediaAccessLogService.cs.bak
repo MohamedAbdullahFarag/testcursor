@@ -9,12 +9,12 @@ namespace Ikhtibar.Core.Services;
 public interface IMediaAccessLogService
 {
     Task<PagedResult<MediaAccessLogDto>> GetAccessLogsAsync(int page = 1, int pageSize = 20);
-    Task<MediaAccessLogDto?> GetAccessLogByIdAsync(Guid id);
+    Task<MediaAccessLogDto?> GetAccessLogByIdAsync(int id);
     Task<MediaAccessLogDto> CreateAccessLogAsync(CreateMediaAccessLogDto createDto);
-    Task<bool> DeleteAccessLogAsync(Guid id);
-    Task<IEnumerable<MediaAccessLogDto>> GetAccessLogsByMediaFileIdAsync(Guid mediaFileId);
-    Task<IEnumerable<MediaAccessLogDto>> GetAccessLogsByUserIdAsync(Guid userId);
-    Task<bool> DeleteAccessLogsByMediaFileIdAsync(Guid mediaFileId);
+    Task<bool> DeleteAccessLogAsync(int id);
+    Task<IEnumerable<MediaAccessLogDto>> GetAccessLogsByMediaFileIdAsync(int mediaFileId);
+    Task<IEnumerable<MediaAccessLogDto>> GetAccessLogsByUserIdAsync(int userId);
+    Task<bool> DeleteAccessLogsByMediaFileIdAsync(int mediaFileId);
 }
 
 public class MediaAccessLogService : IMediaAccessLogService
@@ -65,7 +65,7 @@ public class MediaAccessLogService : IMediaAccessLogService
         }
     }
 
-    public async Task<MediaAccessLogDto?> GetAccessLogByIdAsync(Guid id)
+    public async Task<MediaAccessLogDto?> GetAccessLogByIdAsync(int id)
     {
         using var scope = _logger.BeginScope("Getting access log by ID: {LogId}", id);
         
@@ -98,8 +98,8 @@ public class MediaAccessLogService : IMediaAccessLogService
         
         try
         {
-            var log = _mapper.Map<Ikhtibar.Core.Entities.MediaAccessLog>(createDto);
-            log.Id = Guid.NewGuid();
+            var log = _mapper.Map<Ikhtibar.Shared.Entities.MediaAccessLog>(createDto);
+            log.Id = int.Newint();
             log.CreatedAt = DateTime.UtcNow;
 
             var createdLog = await _repository.AddAsync(log);
@@ -118,7 +118,7 @@ public class MediaAccessLogService : IMediaAccessLogService
         }
     }
 
-    public async Task<bool> DeleteAccessLogAsync(Guid id)
+    public async Task<bool> DeleteAccessLogAsync(int id)
     {
         using var scope = _logger.BeginScope("Deleting access log: {LogId}", id);
         
@@ -151,7 +151,7 @@ public class MediaAccessLogService : IMediaAccessLogService
         }
     }
 
-    public async Task<IEnumerable<MediaAccessLogDto>> GetAccessLogsByMediaFileIdAsync(Guid mediaFileId)
+    public async Task<IEnumerable<MediaAccessLogDto>> GetAccessLogsByMediaFileIdAsync(int mediaFileId)
     {
         using var scope = _logger.BeginScope("Getting access logs for media file: {MediaFileId}", mediaFileId);
         
@@ -172,7 +172,7 @@ public class MediaAccessLogService : IMediaAccessLogService
         }
     }
 
-    public async Task<IEnumerable<MediaAccessLogDto>> GetAccessLogsByUserIdAsync(Guid userId)
+    public async Task<IEnumerable<MediaAccessLogDto>> GetAccessLogsByUserIdAsync(int userId)
     {
         using var scope = _logger.BeginScope("Getting access logs for user: {UserId}", userId);
         
@@ -193,7 +193,7 @@ public class MediaAccessLogService : IMediaAccessLogService
         }
     }
 
-    public async Task<bool> DeleteAccessLogsByMediaFileIdAsync(Guid mediaFileId)
+    public async Task<bool> DeleteAccessLogsByMediaFileIdAsync(int mediaFileId)
     {
         using var scope = _logger.BeginScope("Deleting all access logs for media file: {MediaFileId}", mediaFileId);
         

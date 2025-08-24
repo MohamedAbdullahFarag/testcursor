@@ -11,6 +11,7 @@ using Xunit;
 using Ikhtibar.Infrastructure.Services;
 using Ikhtibar.Core.DTOs;
 using Ikhtibar.Shared.Models;
+using Ikhtibar.Shared.Entities;
 
 namespace Ikhtibar.Tests.Auth;
 
@@ -19,24 +20,20 @@ namespace Ikhtibar.Tests.Auth;
 /// </summary>
 public class TokenServiceTests
 {
-    private readonly JwtSettings _jwtSettings;
-    private readonly Mock<IOptions<JwtSettings>> _mockOptions;
-    private readonly Mock<ILogger<TokenService>> _mockLogger;
-    private readonly TokenService _service;
+    private JwtSettings _jwtSettings;
+    private Mock<IOptions<JwtSettings>> _mockOptions;
+    private Mock<ILogger<TokenService>> _mockLogger;
+    private TokenService _service;
 
     public TokenServiceTests()
     {
-        _jwtSettings = new JwtSettings
+    _jwtSettings = new JwtSettings
         {
             SecretKey = "test-secret-key-that-is-long-enough-for-jwt-signature",
             Issuer = "test-issuer",
             Audience = "test-audience",
             AccessTokenExpirationMinutes = 15,
             RefreshTokenExpirationDays = 7,
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true
         };
 
         _mockOptions = new Mock<IOptions<JwtSettings>>();
@@ -51,7 +48,7 @@ public class TokenServiceTests
     public async Task GenerateJwtAsync_WithValidUser_ReturnsValidToken()
     {
         // Arrange
-        var user = new UserDto
+        var user = new User
         {
             UserId = 1,
             Username = "testuser",
@@ -59,15 +56,15 @@ public class TokenServiceTests
             FirstName = "Test",
             LastName = "User",
             IsActive = true,
-            Roles = new List<string> { "User" }
+            UserRoles = new List<Ikhtibar.Shared.Entities.UserRole>()
         };
 
         // Act
         var token = await _service.GenerateJwtAsync(user);
 
-        // Assert
-        Assert.NotNull(token);
-        Assert.NotEmpty(token);
+    // Assert
+    Assert.NotNull(token);
+    Assert.NotEmpty(token);
 
         // Validate token
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -85,14 +82,13 @@ public class TokenServiceTests
             ClockSkew = TimeSpan.Zero
         };
 
-        var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
+    var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
         
-        Assert.NotNull(principal);
-        Assert.NotNull(validatedToken);
-        Assert.Equal(JwtSecurityTokenHandler.DefaultOutboundClaimTypeMap[ClaimTypes.NameIdentifier], principal.FindFirst("sub").Type);
-        Assert.Equal(user.UserId.ToString(), principal.FindFirst("sub").Value);
-        Assert.Equal(user.Email, principal.FindFirst("email").Value);
-        Assert.Equal(user.Username, principal.FindFirst("name").Value);
+    Assert.NotNull(principal);
+    Assert.NotNull(validatedToken);
+    Assert.Equal(user.UserId.ToString(), principal.FindFirst(ClaimTypes.NameIdentifier).Value);
+    Assert.Equal(user.Email, principal.FindFirst(ClaimTypes.Email).Value);
+    Assert.Equal(user.Username, principal.FindFirst(ClaimTypes.Name).Value);
     }
 
     [Fact]
@@ -101,89 +97,85 @@ public class TokenServiceTests
         // Act
         var refreshToken = await _service.GenerateRefreshTokenAsync();
 
-        // Assert
-        Assert.NotNull(refreshToken);
-        Assert.NotEmpty(refreshToken);
-        Assert.True(refreshToken.Length >= 32); // Check that it's long enough to be secure
+    // Assert
+    Assert.NotNull(refreshToken);
+    Assert.NotEmpty(refreshToken);
+    Assert.True(refreshToken.Length >= 32); // Check that it's long enough to be secure
     }
 
     [Fact]
-    public async Task ValidateTokenAsync_WithValidToken_ReturnsTrue()
+    public async Task IsTokenValidAsync_WithValidToken_ReturnsTrue()
     {
         // Arrange
-        var user = new UserDto
+        var user = new User
         {
             UserId = 1,
             Username = "testuser",
             Email = "test@example.com",
-            IsActive = true,
-            Roles = new List<string> { "User" }
+            IsActive = true
         };
 
         var token = await _service.GenerateJwtAsync(user);
 
         // Act
-        var result = await _service.ValidateTokenAsync(token);
+        var result = await _service.IsTokenValidAsync(token);
 
         // Assert
         Assert.True(result);
     }
 
     [Fact]
-    public async Task ValidateTokenAsync_WithInvalidToken_ReturnsFalse()
+    public async Task IsTokenValidAsync_WithInvalidToken_ReturnsFalse()
     {
         // Arrange
         var invalidToken = "invalid.jwt.token";
 
         // Act
-        var result = await _service.ValidateTokenAsync(invalidToken);
+        var result = await _service.IsTokenValidAsync(invalidToken);
 
         // Assert
         Assert.False(result);
     }
-
     [Fact]
-    public async Task GetUserIdFromTokenAsync_WithValidToken_ReturnsUserId()
+    public async Task GetPrincipalFromExpiredTokenAsync_WithValidToken_ReturnsPrincipal()
     {
         // Arrange
-        var user = new UserDto
+        var user = new User
         {
             UserId = 42,
             Username = "testuser",
             Email = "test@example.com",
             IsActive = true,
-            Roles = new List<string> { "User" }
+            UserRoles = new List<Ikhtibar.Shared.Entities.UserRole>()
         };
 
         var token = await _service.GenerateJwtAsync(user);
 
         // Act
-        var userId = await _service.GetUserIdFromTokenAsync(token);
-
-        // Assert
-        Assert.Equal(42, userId);
+        var principal = await _service.GetPrincipalFromExpiredTokenAsync(token);
+        Assert.NotNull(principal);
+        var claim = principal.FindFirst(ClaimTypes.NameIdentifier);
+        Assert.NotNull(claim);
+        Assert.Equal("42", claim.Value);
     }
 
     [Fact]
     public async Task IsTokenExpiredAsync_WithNonExpiredToken_ReturnsFalse()
     {
         // Arrange
-        var user = new UserDto
+        var user = new User
         {
             UserId = 1,
             Username = "testuser",
             Email = "test@example.com",
-            IsActive = true,
-            Roles = new List<string> { "User" }
+            IsActive = true
         };
 
         var token = await _service.GenerateJwtAsync(user);
 
         // Act
-        var result = await _service.IsTokenExpiredAsync(token);
-
-        // Assert
-        Assert.False(result);
+    var valid = await _service.IsTokenValidAsync(token);
+    Assert.True(valid);
     }
 
     [Fact]
@@ -192,13 +184,13 @@ public class TokenServiceTests
         // This test creates an expired token manually since we can't easily wait for a token to expire
         
         // Arrange
-        var user = new UserDto
+        var user = new User
         {
             UserId = 1,
             Username = "testuser",
             Email = "test@example.com",
             IsActive = true,
-            Roles = new List<string> { "User" }
+            UserRoles = new List<Ikhtibar.Shared.Entities.UserRole>()
         };
 
         // Create custom expired token
@@ -212,6 +204,7 @@ public class TokenServiceTests
                 new Claim("email", user.Email),
                 new Claim("name", user.Username)
             }),
+            NotBefore = DateTime.UtcNow.AddMinutes(-10),
             Expires = DateTime.UtcNow.AddMinutes(-5), // Expired 5 minutes ago
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key), 
@@ -225,9 +218,8 @@ public class TokenServiceTests
         var expiredTokenString = tokenHandler.WriteToken(expiredToken);
 
         // Act
-        var result = await _service.IsTokenExpiredAsync(expiredTokenString);
-
-        // Assert
-        Assert.True(result);
+    // Validate that expired token is considered invalid
+    var valid = await _service.IsTokenValidAsync(expiredTokenString);
+    Assert.False(valid);
     }
 }

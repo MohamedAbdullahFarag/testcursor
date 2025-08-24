@@ -13,7 +13,7 @@ public interface IMediaFileService
     /// <summary>
     /// Retrieves a media file by its unique identifier
     /// </summary>
-    Task<MediaFileDto?> GetByIdAsync(Guid id);
+    Task<MediaFileDto?> GetByIdAsync(int id);
 
     /// <summary>
     /// Searches media files with filtering and pagination
@@ -28,12 +28,12 @@ public interface IMediaFileService
     /// <summary>
     /// Updates an existing media file record
     /// </summary>
-    Task<MediaFileDto> UpdateAsync(Guid id, UpdateMediaFileDto updateDto);
+    Task<MediaFileDto> UpdateAsync(int id, UpdateMediaFileDto updateDto);
 
     /// <summary>
     /// Soft deletes a media file record
     /// </summary>
-    Task<bool> DeleteAsync(Guid id);
+    Task<bool> DeleteAsync(int id);
 
     /// <summary>
     /// Gets all media files
@@ -43,7 +43,7 @@ public interface IMediaFileService
     /// <summary>
     /// Gets media files by category
     /// </summary>
-    Task<List<MediaFileDto>> GetByCategoryAsync(Guid categoryId);
+    Task<List<MediaFileDto>> GetByCategoryAsync(int categoryId);
 
     /// <summary>
     /// Gets media files by type
@@ -53,12 +53,12 @@ public interface IMediaFileService
     /// <summary>
     /// Updates media file status
     /// </summary>
-    Task<bool> UpdateStatusAsync(Guid id, MediaFileStatus status);
+    Task<bool> UpdateStatusAsync(int id, MediaFileStatus status);
 
     /// <summary>
     /// Gets media files by user
     /// </summary>
-    Task<List<MediaFileDto>> GetByUserAsync(Guid userId);
+    Task<List<MediaFileDto>> GetByUserAsync(int userId);
 }
 
 /// <summary>
@@ -68,11 +68,11 @@ public interface IMediaFileService
 public interface IMediaCategoryService
 {
     // Category CRUD operations
-    Task<MediaCategoryDto> GetByIdAsync(Guid id);
+    Task<MediaCategoryDto> GetByIdAsync(int id);
     Task<List<MediaCategoryDto>> GetAllAsync();
     Task<MediaCategoryDto> CreateAsync(MediaCategoryDto createDto);
-    Task<MediaCategoryDto> UpdateAsync(Guid id, MediaCategoryDto updateDto);
-    Task<bool> DeleteAsync(Guid id);
+    Task<MediaCategoryDto> UpdateAsync(int id, MediaCategoryDto updateDto);
+    Task<bool> DeleteAsync(int id);
 }
 
 /// <summary>
@@ -82,10 +82,10 @@ public interface IMediaCategoryService
 public interface IMediaMetadataService
 {
     // Metadata CRUD operations
-    Task<List<MediaMetadataDto>> GetByMediaFileIdAsync(Guid mediaFileId);
+    Task<List<MediaMetadataDto>> GetByMediaFileIdAsync(int mediaFileId);
     Task<MediaMetadataDto> CreateAsync(MediaMetadataDto createDto);
-    Task<MediaMetadataDto> UpdateAsync(Guid id, MediaMetadataDto updateDto);
-    Task<bool> DeleteAsync(Guid id);
+    Task<MediaMetadataDto> UpdateAsync(int id, MediaMetadataDto updateDto);
+    Task<bool> DeleteAsync(int id);
 }
 
 /// <summary>
@@ -95,10 +95,10 @@ public interface IMediaMetadataService
 public interface IMediaThumbnailService
 {
     // Thumbnail CRUD operations
-    Task<List<MediaThumbnailDto>> GetByMediaFileIdAsync(Guid mediaFileId);
-    Task<MediaThumbnailDto?> GetByIdAsync(Guid id);
+    Task<List<MediaThumbnailDto>> GetByMediaFileIdAsync(int mediaFileId);
+    Task<MediaThumbnailDto?> GetByIdAsync(int id);
     Task<MediaThumbnailDto> CreateAsync(MediaThumbnailDto createDto);
-    Task<bool> DeleteAsync(Guid id);
+    Task<bool> DeleteAsync(int id);
 }
 
 /// <summary>
@@ -109,8 +109,8 @@ public interface IMediaAccessLogService
 {
     // Access logging
     Task<MediaAccessLogDto> LogAccessAsync(MediaAccessLogDto logDto);
-    Task<List<MediaAccessLogDto>> GetByMediaFileIdAsync(Guid mediaFileId);
-    Task<List<MediaAccessLogDto>> GetByUserIdAsync(Guid userId);
+    Task<List<MediaAccessLogDto>> GetByMediaFileIdAsync(int mediaFileId);
+    Task<List<MediaAccessLogDto>> GetByUserIdAsync(int userId);
 }
 
 /// <summary>
@@ -120,11 +120,11 @@ public interface IMediaAccessLogService
 public interface IMediaCollectionService
 {
     // Collection CRUD operations
-    Task<MediaCollectionDto> GetByIdAsync(Guid id);
+    Task<MediaCollectionDto> GetByIdAsync(int id);
     Task<List<MediaCollectionDto>> GetAllAsync();
     Task<MediaCollectionDto> CreateAsync(MediaCollectionDto createDto);
-    Task<MediaCollectionDto> UpdateAsync(Guid id, MediaCollectionDto updateDto);
-    Task<bool> DeleteAsync(Guid id);
+    Task<MediaCollectionDto> UpdateAsync(int id, MediaCollectionDto updateDto);
+    Task<bool> DeleteAsync(int id);
 }
 
 /// <summary>
@@ -134,9 +134,9 @@ public interface IMediaCollectionService
 public interface IMediaProcessingJobService
 {
     // Job CRUD operations
-    Task<MediaProcessingJobDto> GetByIdAsync(Guid id);
-    Task<List<MediaProcessingJobDto>> GetByMediaFileIdAsync(Guid mediaFileId);
+    Task<MediaProcessingJobDto> GetByIdAsync(int id);
+    Task<List<MediaProcessingJobDto>> GetByMediaFileIdAsync(int mediaFileId);
     Task<MediaProcessingJobDto> CreateAsync(MediaProcessingJobDto createDto);
-    Task<MediaProcessingJobDto> UpdateAsync(Guid id, MediaProcessingJobDto updateDto);
-    Task<bool> DeleteAsync(Guid id);
+    Task<MediaProcessingJobDto> UpdateAsync(int id, MediaProcessingJobDto updateDto);
+    Task<bool> DeleteAsync(int id);
 }

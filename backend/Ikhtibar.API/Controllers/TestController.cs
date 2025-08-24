@@ -106,31 +106,39 @@ public class TestController : ControllerBase
     {
         try
         {
-            // Create a simple UserDto for token generation
-            var testUser = new UserDto
+            // Get a test user from the database
+            var users = await _userService.GetAllUsersAsync();
+            var testUser = users?.FirstOrDefault();
+            
+            if (testUser == null)
             {
-                UserId = 1,
-                Username = "testuser",
-                Email = "test@example.com",
-                FirstName = "Test",
-                LastName = "User",
-                IsActive = true,
-                EmailVerified = true,
-                Roles = new List<string> { "User" }
+                return Ok(new { 
+                    success = false,
+                    message = "No test users found in database"
+                });
+            }
+
+            // Convert UserDto to User entity for token generation
+            var userEntity = new Ikhtibar.Shared.Entities.User
+            {
+                UserId = testUser.UserId,
+                Email = testUser.Email,
+                FirstName = testUser.FirstName,
+                LastName = testUser.LastName,
+                IsActive = testUser.IsActive,
+                EmailVerified = testUser.EmailVerified,
+                CreatedAt = testUser.CreatedAt,
+                ModifiedAt = testUser.ModifiedAt
             };
 
             // Generate JWT token
-            var token = await _tokenService.GenerateJwtAsync(testUser);
+            var token = await _tokenService.GenerateJwtAsync(userEntity);
             
             return Ok(new { 
                 success = true,
                 message = "JWT token generated successfully",
                 token = token,
-                user = new {
-                    userId = testUser.UserId,
-                    email = testUser.Email,
-                    username = testUser.Username
-                }
+                user = testUser
             });
         }
         catch (Exception ex)

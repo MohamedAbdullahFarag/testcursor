@@ -1,0 +1,367 @@
+{
+  "media": {
+    "title": "Media Management",
+    "description": "Upload, organize, and manage your media files including images, videos, audio, and documents",
+    
+    "viewMode": {
+      "grid": "Grid View",
+      "list": "List View",
+      "gallery": "Gallery View",
+      "timeline": "Timeline View"
+    },
+    
+    "actions": {
+      "upload": "Upload Media",
+      "manageCategories": "Manage Categories",
+      "manageCollections": "Manage Collections",
+      "select": "Select {{count}} Item(s)",
+      "edit": "Edit",
+      "delete": "Delete",
+      "download": "Download",
+      "preview": "Preview",
+      "share": "Share",
+      "move": "Move",
+      "copy": "Copy",
+      "rename": "Rename",
+      "duplicate": "Duplicate",
+      "archive": "Archive",
+      "restore": "Restore",
+      "bulkEdit": "Bulk Edit",
+      "bulkDelete": "Bulk Delete",
+      "bulkMove": "Bulk Move",
+      "bulkCopy": "Bulk Copy"
+    },
+    
+    "stats": {
+      "images": "Images",
+      "videos": "Videos",
+      "audio": "Audio",
+      "documents": "Documents",
+      "total": "Total Files",
+      "size": "Total Size",
+      "recentUploads": "Recent Uploads",
+      "processingJobs": "Processing Jobs",
+      "failedJobs": "Failed Jobs",
+      "completedJobs": "Completed Jobs"
+    },
+    
+    "filters": {
+      "title": "Filters",
+      "mediaType": "Media Type",
+      "status": "Status",
+      "category": "Category",
+      "collection": "Collection",
+      "uploadedBy": "Uploaded By",
+      "dateRange": "Date Range",
+      "fileSize": "File Size",
+      "tags": "Tags",
+      "apply": "Apply Filters",
+      "clear": "Clear Filters",
+      "reset": "Reset to Defaults",
+      "activeFilters": "Active Filters",
+      "noActiveFilters": "No active filters"
+    },
+    
+    "search": {
+      "placeholder": "Search media files...",
+      "advancedSearch": "Advanced Search",
+      "searchBy": "Search by",
+      "fileName": "File Name",
+      "content": "Content",
+      "metadata": "Metadata",
+      "tags": "Tags",
+      "searchResults": "Search Results",
+      "noResults": "No results found",
+      "searchHistory": "Search History",
+      "recentSearches": "Recent Searches",
+      "clearHistory": "Clear History",
+      "suggestions": "Suggestions"
+    },
+    
+    "upload": {
+      "title": "Upload Media",
+      "dragAndDrop": "Drag and drop files here, or click to browse",
+      "browseFiles": "Browse Files",
+      "supportedFormats": "Supported formats",
+      "fileSizeLimit": "File size limit",
+      "uploadProgress": "Upload Progress",
+      "uploading": "Uploading...",
+      "processing": "Processing...",
+      "completed": "Completed",
+      "failed": "Failed",
+      "retry": "Retry",
+      "cancel": "Cancel",
+      "close": "Close",
+      "uploadSuccess": "Files uploaded successfully",
+      "uploadError": "Upload failed",
+      "validationError": "Validation failed",
+      "fileTooLarge": "File is too large",
+      "unsupportedFormat": "Unsupported file format",
+      "virusDetected": "Virus detected in file",
+      "duplicateFile": "File already exists"
+    },
+    
+    "categories": {
+      "title": "Categories",
+      "addCategory": "Add Category",
+      "editCategory": "Edit Category",
+      "deleteCategory": "Delete Category",
+      "categoryName": "Category Name",
+      "description": "Description",
+      "parentCategory": "Parent Category",
+      "sortOrder": "Sort Order",
+      "isActive": "Active",
+      "mediaCount": "Media Count",
+      "noCategories": "No categories found",
+      "createFirstCategory": "Create your first category",
+      "categoryCreated": "Category created successfully",
+      "categoryUpdated": "Category updated successfully",
+      "categoryDeleted": "Category deleted successfully",
+      "confirmDelete": "Are you sure you want to delete this category?",
+      "hasSubcategories": "This category has subcategories",
+      "hasMedia": "This category contains media files"
+    },
+    
+    "collections": {
+      "title": "Collections",
+      "addCollection": "Add Collection",
+      "editCollection": "Edit Collection",
+      "deleteCollection": "Delete Collection",
+      "collectionName": "Collection Name",
+      "description": "Description",
+      "collectionType": "Collection Type",
+      "isPublic": "Public",
+      "coverImage": "Cover Image",
+      "itemCount": "Item Count",
+      "noCollections": "No collections found",
+      "createFirstCollection": "Create your first collection",
+      "collectionCreated": "Collection created successfully",
+      "collectionUpdated": "Collection updated successfully",
+      "collectionDeleted": "Collection deleted successfully",
+      "confirmDelete": "Are you sure you want to delete this collection?",
+      "hasItems": "This collection contains media items",
+      "addMedia": "Add Media",
+      "removeMedia": "Remove Media",
+      "reorderItems": "Reorder Items"
+    },
+    
+    "mediaFile": {
+      "fileName": "File Name",
+      "originalFileName": "Original Name",
+      "fileSize": "File Size",
+      "mimeType": "MIME Type",
+      "mediaType": "Media Type",
+      "status": "Status",
+      "uploadedBy": "Uploaded By",
+      "uploadedAt": "Uploaded At",
+      "modifiedAt": "Modified At",
+      "category": "Category",
+      "collection": "Collection",
+      "metadata": "Metadata",
+      "thumbnails": "Thumbnails",
+      "accessLogs": "Access Logs",
+      "processingJobs": "Processing Jobs",
+      "noThumbnails": "No thumbnails available",
+      "noMetadata": "No metadata available",
+      "noAccessLogs": "No access logs available",
+      "noProcessingJobs": "No processing jobs available"
+    },
+    
+    "status": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "ready": "Ready",
+      "failed": "Failed",
+      "deleted": "Deleted"
+    },
+    
+    "mediaType": {
+      "image": "Image",
+      "video": "Video",
+      "audio": "Audio",
+      "document": "Document",
+      "archive": "Archive",
+      "other": "Other"
+    },
+    
+    "collectionType": {
+      "album": "Album",
+      "playlist": "Playlist",
+      "gallery": "Gallery",
+      "portfolio": "Portfolio",
+      "archive": "Archive"
+    },
+    
+    "thumbnailSize": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large",
+      "extraLarge": "Extra Large",
+      "custom": "Custom"
+    },
+    
+    "processingJob": {
+      "title": "Processing Jobs",
+      "jobType": "Job Type",
+      "priority": "Priority",
+      "progress": "Progress",
+      "attempts": "Attempts",
+      "startedAt": "Started At",
+      "completedAt": "Completed At",
+      "errorMessage": "Error Message",
+      "retry": "Retry",
+      "cancel": "Cancel",
+      "reset": "Reset",
+      "noJobs": "No processing jobs found",
+      "jobQueued": "Job queued successfully",
+      "jobCancelled": "Job cancelled successfully",
+      "jobRetried": "Job retried successfully"
+    },
+    
+    "jobType": {
+      "thumbnailGeneration": "Thumbnail Generation",
+      "videoTranscoding": "Video Transcoding",
+      "audioTranscoding": "Audio Transcoding",
+      "imageOptimization": "Image Optimization",
+      "metadataExtraction": "Metadata Extraction",
+      "virusScan": "Virus Scan"
+    },
+    
+    "jobStatus": {
+      "queued": "Queued",
+      "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    
+    "accessAction": {
+      "view": "View",
+      "download": "Download",
+      "edit": "Edit",
+      "delete": "Delete",
+      "share": "Share"
+    },
+    
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page",
+      "of": "of",
+      "showing": "Showing",
+      "to": "to",
+      "ofTotal": "of {{total}} results",
+      "itemsPerPage": "Items per page"
+    },
+    
+    "sorting": {
+      "sortBy": "Sort by",
+      "sortOrder": "Sort order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "fileName": "File Name",
+      "fileSize": "File Size",
+      "uploadDate": "Upload Date",
+      "modifiedDate": "Modified Date",
+      "mediaType": "Media Type",
+      "status": "Status"
+    },
+    
+    "bulkActions": {
+      "title": "Bulk Actions",
+      "selectedItems": "{{count}} item(s) selected",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "moveToCategory": "Move to Category",
+      "addToCollection": "Add to Collection",
+      "changeStatus": "Change Status",
+      "deleteSelected": "Delete Selected",
+      "downloadSelected": "Download Selected",
+      "shareSelected": "Share Selected"
+    },
+    
+    "errors": {
+      "general": "An error occurred",
+      "network": "Network error",
+      "unauthorized": "Unauthorized access",
+      "forbidden": "Access forbidden",
+      "notFound": "Resource not found",
+      "serverError": "Server error",
+      "validation": "Validation error",
+      "fileNotFound": "File not found",
+      "categoryNotFound": "Category not found",
+      "collectionNotFound": "Collection not found",
+      "uploadFailed": "Upload failed",
+      "deleteFailed": "Delete failed",
+      "updateFailed": "Update failed",
+      "searchFailed": "Search failed"
+    },
+    
+    "success": {
+      "upload": "Files uploaded successfully",
+      "delete": "Files deleted successfully",
+      "update": "Files updated successfully",
+      "categoryCreated": "Category created successfully",
+      "categoryUpdated": "Category updated successfully",
+      "categoryDeleted": "Category deleted successfully",
+      "collectionCreated": "Collection created successfully",
+      "collectionUpdated": "Collection updated successfully",
+      "collectionDeleted": "Collection deleted successfully"
+    },
+    
+    "confirmations": {
+      "deleteFile": "Are you sure you want to delete this file?",
+      "deleteFiles": "Are you sure you want to delete {{count}} files?",
+      "deleteCategory": "Are you sure you want to delete this category?",
+      "deleteCollection": "Are you sure you want to delete this collection?",
+      "cancelJob": "Are you sure you want to cancel this job?",
+      "retryJob": "Are you sure you want to retry this job?",
+      "resetJob": "Are you sure you want to reset this job?",
+      "clearHistory": "Are you sure you want to clear search history?",
+      "clearFilters": "Are you sure you want to clear all filters?"
+    },
+    
+    "tooltips": {
+      "upload": "Upload new media files",
+      "search": "Search media files",
+      "filter": "Apply filters",
+      "viewMode": "Change view mode",
+      "refresh": "Refresh data",
+      "help": "Get help",
+      "settings": "Settings",
+      "preview": "Preview media file",
+      "download": "Download media file",
+      "edit": "Edit media file",
+      "delete": "Delete media file",
+      "share": "Share media file",
+      "move": "Move to different category",
+      "copy": "Copy to different location"
+    },
+    
+    "placeholders": {
+      "search": "Search media files...",
+      "fileName": "Enter file name",
+      "categoryName": "Enter category name",
+      "collectionName": "Enter collection name",
+      "description": "Enter description",
+      "tags": "Enter tags (comma separated)",
+      "selectCategory": "Select category",
+      "selectCollection": "Select collection",
+      "selectMediaType": "Select media type",
+      "selectStatus": "Select status"
+    },
+    
+    "validation": {
+      "required": "This field is required",
+      "minLength": "Minimum length is {{min}} characters",
+      "maxLength": "Maximum length is {{max}} characters",
+      "invalidFormat": "Invalid format",
+      "fileTooLarge": "File size exceeds maximum limit",
+      "unsupportedType": "File type not supported",
+      "duplicateName": "Name already exists",
+      "invalidDate": "Invalid date format",
+      "invalidNumber": "Invalid number format"
+    }
+  }
+}
+

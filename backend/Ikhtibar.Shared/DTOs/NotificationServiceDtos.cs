@@ -96,7 +96,7 @@ public class SendToUsersDto
     /// <summary>
     /// Template ID to use (optional)
     /// </summary>
-    public Guid? TemplateId { get; set; }
+    public int? TemplateId { get; set; }
 
     /// <summary>
     /// Template variables (if using template)
@@ -540,7 +540,7 @@ public class ExportTemplatesDto
     /// <summary>
     /// Template IDs to export (null for all)
     /// </summary>
-    public List<Guid>? TemplateIds { get; set; }
+    public List<int>? TemplateIds { get; set; }
 
     /// <summary>
     /// Notification types to include

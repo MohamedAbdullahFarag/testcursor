@@ -15,7 +15,7 @@ public class NotificationHistory : BaseEntity
     /// Associated notification ID
     /// </summary>
     [Required]
-    public Guid NotificationId { get; set; }
+    public int NotificationId { get; set; }
 
     /// <summary>
     /// Delivery channel (Email, SMS, Push, etc.)

@@ -68,7 +68,7 @@ public interface IDomainEvent
     /// Unique identifier for the event instance.
     /// Used for tracking and deduplication purposes.
     /// </summary>
-    Guid EventId { get; }
+    int EventId { get; }
 
     /// <summary>
     /// Timestamp when the event was created.

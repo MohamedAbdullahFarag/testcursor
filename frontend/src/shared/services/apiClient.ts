@@ -289,7 +289,18 @@ class ApiClient {
      * GET request
      */
     async get<T>(url: string, config?: ApiRequestConfig): Promise<ApiResponse<T>> {
-        const response = await this.instance.get<ApiResponse<T>>(url, config)
+        const axiosConfig: any = {}
+        if (config?.params) {
+            axiosConfig.params = config.params
+        }
+        if (config?.responseType) {
+            axiosConfig.responseType = config.responseType
+        }
+        if (config?.signal) {
+            axiosConfig.signal = config.signal
+        }
+        
+        const response = await this.instance.get<ApiResponse<T>>(url, axiosConfig)
         return response.data
     }
 
@@ -297,7 +308,18 @@ class ApiClient {
      * POST request
      */
     async post<T, D = unknown>(url: string, data?: D, config?: ApiRequestConfig): Promise<ApiResponse<T>> {
-        const response = await this.instance.post<ApiResponse<T>>(url, data, config)
+        const axiosConfig: any = {}
+        if (config?.params) {
+            axiosConfig.params = config.params
+        }
+        if (config?.responseType) {
+            axiosConfig.responseType = config.responseType
+        }
+        if (config?.signal) {
+            axiosConfig.signal = config.signal
+        }
+        
+        const response = await this.instance.post<ApiResponse<T>>(url, data, axiosConfig)
         return response.data
     }
 
@@ -390,7 +412,7 @@ class ApiClient {
 
 // Create and export default API client instance
 const apiConfig: ApiClientConfig = {
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://localhost:7001',
     timeout: 30000, // 30 seconds
     retries: 3,
 }

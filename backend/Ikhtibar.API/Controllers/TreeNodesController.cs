@@ -89,7 +89,7 @@ public class TreeNodesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving tree node {TreeNodeId}", id);
+            _logger.LogError(ex, "Error retrieving tree node {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the tree node");
         }
     }
@@ -147,7 +147,7 @@ public class TreeNodesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving children for tree node {TreeNodeId}", id);
+            _logger.LogError(ex, "Error retrieving children for tree node {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving child tree nodes");
         }
     }
@@ -177,7 +177,7 @@ public class TreeNodesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving ancestors for tree node {TreeNodeId}", id);
+            _logger.LogError(ex, "Error retrieving ancestors for tree node {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving ancestor tree nodes");
         }
     }
@@ -207,7 +207,7 @@ public class TreeNodesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving descendants for tree node {TreeNodeId}", id);
+            _logger.LogError(ex, "Error retrieving descendants for tree node {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving descendant tree nodes");
         }
     }
@@ -242,7 +242,7 @@ public class TreeNodesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving tree structure for node {TreeNodeId}", id);
+            _logger.LogError(ex, "Error retrieving tree structure for node {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the tree structure");
         }
     }
@@ -315,7 +315,7 @@ public class TreeNodesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving statistics for tree node {TreeNodeId}", id);
+            _logger.LogError(ex, "Error retrieving statistics for tree node {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving tree node statistics");
         }
     }
@@ -343,7 +343,7 @@ public class TreeNodesController : ControllerBase
             var treeNode = await _treeNodeService.CreateTreeNodeAsync(createDto);
             return CreatedAtAction(
                 nameof(GetTreeNode),
-                new { id = treeNode.TreeNodeId },
+                new { id = treeNode.Id },
                 treeNode);
         }
         catch (KeyNotFoundException ex)
@@ -399,7 +399,7 @@ public class TreeNodesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating tree node {TreeNodeId}", id);
+            _logger.LogError(ex, "Error updating tree node {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the tree node");
         }
     }
@@ -440,7 +440,7 @@ public class TreeNodesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error moving tree node {TreeNodeId}", id);
+            _logger.LogError(ex, "Error moving tree node {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while moving the tree node");
         }
     }
@@ -514,7 +514,7 @@ public class TreeNodesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting tree node {TreeNodeId}", id);
+            _logger.LogError(ex, "Error deleting tree node {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the tree node");
         }
     }
@@ -537,7 +537,7 @@ public class TreeNodesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking if tree node exists {TreeNodeId}", id);
+            _logger.LogError(ex, "Error checking if tree node exists {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while checking tree node existence");
         }
     }
@@ -567,7 +567,7 @@ public class TreeNodesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking if tree node has children {TreeNodeId}", id);
+            _logger.LogError(ex, "Error checking if tree node has children {Id}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while checking tree node children");
         }
     }

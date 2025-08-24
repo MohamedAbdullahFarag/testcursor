@@ -15,7 +15,7 @@ namespace Ikhtibar.Shared.DTOs
         /// <summary>
         /// Notification ID associated with this job.
         /// </summary>
-        public Guid NotificationId { get; set; }
+        public int NotificationId { get; set; }
 
         /// <summary>
         /// Scheduled execution time for the job.

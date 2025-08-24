@@ -1,4 +1,4 @@
-import { authEn } from '@/modules/auth/locales/en'
+import authEn from '@/modules/auth/locales/en'
 import { contentManagmentEn } from '@/modules/content-managment/locales/en'
 import { customerExperienceEn } from '@/modules/customerExperience/locale/en'
 import { dashboardEn } from '@/modules/dashboard/locales/en'

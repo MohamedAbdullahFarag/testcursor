@@ -1,0 +1,64 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Ikhtibar.Shared.Entities;
+
+/// <summary>
+/// Notification history entity for tracking delivery attempts and status
+/// Provides audit trail for all notification delivery attempts
+/// </summary>
+[Table("NotificationHistory")]
+public class NotificationHistory : BaseEntity
+{
+    [Required]
+    public int NotificationId { get; set; }
+
+    [Required]
+    public NotificationChannel Channel { get; set; }
+
+    [Required]
+    public NotificationDeliveryStatus Status { get; set; }
+
+    [Required]
+    public DateTime AttemptedAt { get; set; }
+
+    public DateTime? DeliveredAt { get; set; }
+
+    [MaxLength(1000)]
+    public string? ErrorMessage { get; set; }
+
+    [MaxLength(500)]
+    public string? ExternalId { get; set; }
+
+    [MaxLength(2000)]
+    public string? ResponseData { get; set; }
+
+    // Navigation properties
+    public virtual Notification Notification { get; set; } = null!;
+}
+
+/// <summary>
+/// Notification channels supported by the system
+/// </summary>
+public enum NotificationChannel
+{
+    Email = 1,
+    SMS = 2,
+    InApp = 3,
+    Push = 4,
+    WhatsApp = 5
+}
+
+/// <summary>
+/// Notification delivery status tracking
+/// </summary>
+public enum NotificationDeliveryStatus
+{
+    Pending = 1,
+    Sent = 2,
+    Delivered = 3,
+    Failed = 4,
+    Bounced = 5,
+    Opened = 6,
+    Clicked = 7
+}

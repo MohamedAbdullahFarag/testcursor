@@ -6,7 +6,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// Repository interface for UserRole entity operations
 /// Following SRP: ONLY UserRole data operations
 /// </summary>
-public interface IUserRoleRepository : IRepository<UserRole>
+public interface IUserRoleRepository : IBaseRepository<UserRole>
 {
     /// <summary>
     /// Assign a role to a user

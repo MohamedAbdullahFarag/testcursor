@@ -3,7 +3,20 @@ import { pathNames } from '@/shared/constants/pathNames'
 import { strings } from '@/shared/locales'
 import classNames from 'classnames'
 import { Dashboard, ExpandLess } from 'google-material-icons/filled'
-import { BorderColor, Close, LibraryBooks, Settings } from 'google-material-icons/outlined'
+import { 
+    BorderColor, 
+    Close, 
+    LibraryBooks, 
+    Settings, 
+    People, 
+    Shield, 
+    History, 
+    Support, 
+    Image, 
+    QuestionAnswer,
+    Assessment,
+    Notifications
+} from 'google-material-icons/outlined'
 import {
     accessibilityTools,
     Button,
@@ -27,35 +40,210 @@ import { NavLink } from 'react-router-dom'
 const navigations = [
     {
         label: strings.sideBar.dashboard,
-        href: pathNames.dasbhaord,
+        href: pathNames.dashboard,
         icon: <Dashboard className="size-space-05" />,
     },
     {
-        label: strings.sideBar.contentManagement,
+        label: 'Content Management',
         href: pathNames.contentManagment,
         icon: <BorderColor className="size-space-05" />,
         subLinks: [
             {
-                label: 'ادارة مزايا',
+                label: 'Content Features',
                 icon: <LibraryBooks className="size-[20px]" />,
                 href: pathNames.contentManagment,
             },
         ],
     },
     {
-        label: strings.sideBar.platformManagement,
+        label: 'Platform Management',
         href: pathNames.userManagement,
         icon: <Settings className="size-space-05" />,
         subLinks: [
             {
                 label: strings.sideBar.userManagement,
-                icon: <LibraryBooks className="size-[20px]" />,
+                icon: <People className="size-[20px]" />,
                 href: pathNames.userManagement,
             },
             {
                 label: strings.sideBar.roleManagement,
-                icon: <LibraryBooks className="size-[20px]" />,
+                icon: <Shield className="size-[20px]" />,
                 href: pathNames.roleManagement,
+            },
+        ],
+    },
+    {
+        label: 'Audit & Compliance',
+        href: pathNames.auditLogs,
+        icon: <History className="size-space-05" />,
+        subLinks: [
+            {
+                label: 'Audit Logs',
+                icon: <History className="size-[20px]" />,
+                href: pathNames.auditLogs,
+            },
+        ],
+    },
+    {
+        label: 'Support System',
+        href: pathNames.support,
+        icon: <Support className="size-space-05" />,
+        subLinks: [
+            {
+                label: 'Support Dashboard',
+                icon: <Support className="size-[20px]" />,
+                href: pathNames.support,
+            },
+        ],
+    },
+    {
+        label: 'Media Management',
+        href: pathNames.mediaManagement,
+        icon: <Image className="size-space-05" />,
+        subLinks: [
+            {
+                label: 'Media Library',
+                icon: <Image className="size-[20px]" />,
+                href: pathNames.mediaManagement,
+            },
+            {
+                label: 'Collections',
+                icon: <LibraryBooks className="size-[20px]" />,
+                href: pathNames.mediaCollections,
+            },
+        ],
+    },
+    {
+        label: 'Question Bank',
+        href: pathNames.questionBank,
+        icon: <QuestionAnswer className="size-space-05" />,
+        subLinks: [
+            {
+                label: 'Question Tree',
+                icon: <Assessment className="size-[20px]" />,
+                href: pathNames.questionBankTree,
+            },
+            {
+                label: 'Categories',
+                icon: <LibraryBooks className="size-[20px]" />,
+                href: pathNames.questionBankCategories,
+            },
+        ],
+    },
+    {
+        label: 'Notifications',
+        href: pathNames.notifications,
+        icon: <Notifications className="size-space-05" />,
+        subLinks: [
+            {
+                label: 'Notification Center',
+                icon: <Notifications className="size-[20px]" />,
+                href: pathNames.notifications,
+            },
+            {
+                label: 'Preferences',
+                icon: <Settings className="size-[20px]" />,
+                href: pathNames.notificationPreferences,
+            },
+        ],
+    },
+    {
+        label: 'System',
+        href: pathNames.system,
+        icon: <Settings className="size-space-05" />,
+        subLinks: [
+            {
+                label: 'System Settings',
+                icon: <Settings className="size-[20px]" />,
+                href: pathNames.systemSettings,
+            },
+            {
+                label: 'API Documentation',
+                icon: <LibraryBooks className="size-[20px]" />,
+                href: pathNames.systemApiDocs,
+            },
+            {
+                label: 'System Health',
+                icon: <Assessment className="size-[20px]" />,
+                href: pathNames.systemHealth,
+            },
+        ],
+    },
+    {
+        label: 'Analytics',
+        href: pathNames.analytics,
+        icon: <Assessment className="size-space-05" />,
+        subLinks: [
+            {
+                label: 'Dashboard Analytics',
+                icon: <Assessment className="size-[20px]" />,
+                href: pathNames.analyticsDashboard,
+            },
+            {
+                label: 'User Analytics',
+                icon: <People className="size-[20px]" />,
+                href: pathNames.analyticsUsers,
+            },
+            {
+                label: 'Content Analytics',
+                icon: <LibraryBooks className="size-[20px]" />,
+                href: pathNames.analyticsContent,
+            },
+        ],
+    },
+    {
+        label: 'Customer Experience',
+        href: pathNames.customerExperience,
+        icon: <People className="size-space-05" />,
+        subLinks: [
+            {
+                label: 'Surveys',
+                icon: <Assessment className="size-[20px]" />,
+                href: pathNames.customerExperienceSurveys,
+            },
+            {
+                label: 'Feedback',
+                icon: <Support className="size-[20px]" />,
+                href: pathNames.customerExperienceFeedback,
+            },
+        ],
+    },
+    {
+        label: 'E-Participation',
+        href: pathNames.eParticipation,
+        icon: <People className="size-space-05" />,
+        subLinks: [
+            {
+                label: 'Participation Portal',
+                icon: <People className="size-[20px]" />,
+                href: pathNames.eParticipationPortal,
+            },
+            {
+                label: 'Initiatives',
+                icon: <LibraryBooks className="size-[20px]" />,
+                href: pathNames.eParticipationInitiatives,
+            },
+        ],
+    },
+    {
+        label: 'Help & Legal',
+        href: pathNames.help,
+        icon: <LibraryBooks className="size-space-05" />,
+        subLinks: [
+            {
+                label: 'FAQ',
+                icon: <QuestionAnswer className="size-[20px]" />,
+                href: pathNames.helpFaq,
+            },
+            {
+                label: 'Terms & Conditions',
+                icon: <LibraryBooks className="size-[20px]" />,
+                href: pathNames.helpTerms,
+            },
+            {
+                label: 'Privacy Policy',
+                icon: <Shield className="size-[20px]" />,
+                href: pathNames.helpPrivacy,
             },
         ],
     },
@@ -149,13 +337,13 @@ const SideBarMobile = ({ handleSectionToggle, openSection }: SidebarMobileProps)
                 <Stack gap={1} alignItems="center">
                     <img src={Logo} alt="Logo" className="h-auto: w-[60px]" />
                     <Stack direction="col" gap={'none'} alignItems="start" className="text-card-foreground">
-                        <h1 className="text-caption-02 font-bold">{strings.shared.unifiedPortal}</h1>
-                        <p className="whitespace-nowrap text-caption-01">{strings.shared.headerDesc}</p>
+                        <h1 className="text-caption-02 font-bold">{strings.common?.unifiedPortal || 'Unified Portal'}</h1>
+                        <p className="whitespace-nowrap text-caption-01">{strings.common?.headerDesc || 'Ministry of Education Services'}</p>
                     </Stack>
                     <p
                         className="flex items-center justify-center whitespace-nowrap rounded-full bg-primary-container px-[6px] py-[2px] text-[10px]"
                         data-testid="trialVersionTest">
-                        {strings.shared.trialVersion}
+                        {strings.common?.trialVersion || 'Beta version'}
                     </p>
                 </Stack>
                 <Button size="icon-sm" onClick={() => setOpenMobile(false)} variant="ghost" colors="gray" className="self-start">

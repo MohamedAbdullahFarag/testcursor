@@ -1,0 +1,858 @@
+using System.Data;
+using Dapper;
+using Microsoft.Extensions.Logging;
+
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Infrastructure.Data;
+
+namespace Ikhtibar.Infrastructure.Repositories;
+
+/// <summary>
+/// Repository implementation for MediaAccessLog entity operations
+/// Provides specialized methods for access tracking and analytics using Dapper
+/// </summary>
+public class MediaAccessLogRepository : BaseRepository<MediaAccessLog>, IMediaAccessLogRepository
+{
+    private new readonly ILogger<MediaAccessLogRepository> _logger;
+
+    public MediaAccessLogRepository(IDbConnectionFactory connectionFactory, ILogger<MediaAccessLogRepository> logger)
+        : base(connectionFactory, logger, "MediaAccessLogs", "Id")
+    {
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Gets access logs for a specific media file
+    /// </summary>
+    public async Task<IEnumerable<MediaAccessLog>> GetByMediaFileAsync(int mediaFileId, int offset = 0, int limit = 100, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        using var scope = _logger.BeginScope("GetByMediaFileAsync: MediaFileId={MediaFileId}, Offset={Offset}, Limit={Limit}", 
+            mediaFileId, offset, limit);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaAccessLogs 
+                WHERE MediaFileId = @MediaFileId 
+                AND IsDeleted = 0";
+            
+            var parameters = new DynamicParameters();
+            parameters.Add("MediaFileId", mediaFileId);
+            
+            if (startDate.HasValue)
+            {
+                sql += " AND CreatedAt >= @StartDate";
+                parameters.Add("StartDate", startDate.Value);
+            }
+            
+            if (endDate.HasValue)
+            {
+                sql += " AND CreatedAt <= @EndDate";
+                parameters.Add("EndDate", endDate.Value);
+            }
+            
+            sql += " ORDER BY CreatedAt DESC OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY";
+            parameters.Add("Offset", offset);
+            parameters.Add("Limit", limit);
+            
+            var accessLogs = await connection.QueryAsync<MediaAccessLog>(sql, parameters);
+            
+            _logger.LogInformation("Retrieved {Count} access logs for media file {MediaFileId}", 
+                accessLogs.Count(), mediaFileId);
+            return accessLogs;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving access logs for media file {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets access logs for a specific user
+    /// </summary>
+    public async Task<IEnumerable<MediaAccessLog>> GetByUserAsync(int userId, int offset = 0, int limit = 100, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        using var scope = _logger.BeginScope("GetByUserAsync: UserId={UserId}, Offset={Offset}, Limit={Limit}", 
+            userId, offset, limit);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaAccessLogs 
+                WHERE UserId = @UserId 
+                AND IsDeleted = 0";
+            
+            var parameters = new DynamicParameters();
+            parameters.Add("UserId", userId);
+            
+            if (startDate.HasValue)
+            {
+                sql += " AND CreatedAt >= @StartDate";
+                parameters.Add("StartDate", startDate.Value);
+            }
+            
+            if (endDate.HasValue)
+            {
+                sql += " AND CreatedAt <= @EndDate";
+                parameters.Add("EndDate", endDate.Value);
+            }
+            
+            sql += " ORDER BY CreatedAt DESC OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY";
+            parameters.Add("Offset", offset);
+            parameters.Add("Limit", limit);
+            
+            var accessLogs = await connection.QueryAsync<MediaAccessLog>(sql, parameters);
+            
+            _logger.LogInformation("Retrieved {Count} access logs for user {UserId}", accessLogs.Count(), userId);
+            return accessLogs;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving access logs for user {UserId}", userId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets access logs by access type
+    /// </summary>
+    public async Task<IEnumerable<MediaAccessLog>> GetByAccessTypeAsync(AccessType accessType, int offset = 0, int limit = 100, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        using var scope = _logger.BeginScope("GetByAccessTypeAsync: AccessType={AccessType}, Offset={Offset}, Limit={Limit}", 
+            accessType, offset, limit);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaAccessLogs 
+                WHERE AccessType = @AccessType 
+                AND IsDeleted = 0";
+            
+            var parameters = new DynamicParameters();
+            parameters.Add("AccessType", (int)accessType);
+            
+            if (startDate.HasValue)
+            {
+                sql += " AND CreatedAt >= @StartDate";
+                parameters.Add("StartDate", startDate.Value);
+            }
+            
+            if (endDate.HasValue)
+            {
+                sql += " AND CreatedAt <= @EndDate";
+                parameters.Add("EndDate", endDate.Value);
+            }
+            
+            sql += " ORDER BY CreatedAt DESC OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY";
+            parameters.Add("Offset", offset);
+            parameters.Add("Limit", limit);
+            
+            var accessLogs = await connection.QueryAsync<MediaAccessLog>(sql, parameters);
+            
+            _logger.LogInformation("Retrieved {Count} access logs for access type {AccessType}", 
+                accessLogs.Count(), accessType);
+            return accessLogs;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving access logs for access type {AccessType}", accessType);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets access logs by IP address
+    /// </summary>
+    public async Task<IEnumerable<MediaAccessLog>> GetByIpAddressAsync(string ipAddress, int limit = 100)
+    {
+        using var scope = _logger.BeginScope("GetByIpAddressAsync: IpAddress={IpAddress}, Limit={Limit}", 
+            ipAddress, limit);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT TOP (@Limit) * FROM MediaAccessLogs 
+                WHERE IpAddress = @IpAddress 
+                AND IsDeleted = 0
+                ORDER BY CreatedAt DESC";
+            
+            var accessLogs = await connection.QueryAsync<MediaAccessLog>(sql, 
+                new { IpAddress = ipAddress, Limit = limit });
+            
+            _logger.LogInformation("Retrieved {Count} access logs for IP address {IpAddress}", 
+                accessLogs.Count(), ipAddress);
+            return accessLogs;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving access logs for IP address {IpAddress}", ipAddress);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets failed access attempts
+    /// </summary>
+    public async Task<IEnumerable<MediaAccessLog>> GetFailedAccessAsync(DateTime? startDate = null, DateTime? endDate = null, int limit = 100)
+    {
+        using var scope = _logger.BeginScope("GetFailedAccessAsync: StartDate={StartDate}, EndDate={EndDate}, Limit={Limit}", 
+            startDate, endDate, limit);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT TOP (@Limit) * FROM MediaAccessLogs 
+                WHERE Success = 0 
+                AND IsDeleted = 0";
+            
+            var parameters = new DynamicParameters();
+            parameters.Add("Limit", limit);
+            
+            if (startDate.HasValue)
+            {
+                sql += " AND CreatedAt >= @StartDate";
+                parameters.Add("StartDate", startDate.Value);
+            }
+            
+            if (endDate.HasValue)
+            {
+                sql += " AND CreatedAt <= @EndDate";
+                parameters.Add("EndDate", endDate.Value);
+            }
+            
+            sql += " ORDER BY CreatedAt DESC";
+            
+            var accessLogs = await connection.QueryAsync<MediaAccessLog>(sql, parameters);
+            
+            _logger.LogInformation("Retrieved {Count} failed access logs", accessLogs.Count());
+            return accessLogs;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving failed access logs");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets access statistics for a date range
+    /// </summary>
+    public async Task<dynamic> GetAccessStatsAsync(DateTime startDate, DateTime endDate)
+    {
+        using var scope = _logger.BeginScope("GetAccessStatsAsync: StartDate={StartDate}, EndDate={EndDate}", 
+            startDate, endDate);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT 
+                    COUNT(*) AS TotalAccesses,
+                    COUNT(DISTINCT UserId) AS UniqueUsers,
+                    COUNT(DISTINCT MediaFileId) AS UniqueFiles,
+                    COUNT(DISTINCT IpAddress) AS UniqueIpAddresses,
+                    SUM(CASE WHEN Success = 1 THEN 1 ELSE 0 END) AS SuccessfulAccesses,
+                    SUM(CASE WHEN Success = 0 THEN 1 ELSE 0 END) AS FailedAccesses,
+                    ISNULL(SUM(BytesTransferred), 0) AS TotalBytesTransferred,
+                    AVG(CAST(DATEDIFF(MILLISECOND, CreatedAt, DATEADD(MILLISECOND, 
+                        CASE WHEN DurationMs IS NOT NULL THEN DurationMs ELSE 0 END, CreatedAt)) AS FLOAT)) AS AvgDurationMs
+                FROM MediaAccessLogs 
+                WHERE CreatedAt >= @StartDate 
+                AND CreatedAt <= @EndDate 
+                AND IsDeleted = 0";
+            
+            var stats = await connection.QuerySingleAsync(sql, new { StartDate = startDate, EndDate = endDate });
+            
+            _logger.LogInformation("Retrieved access statistics for period {StartDate} to {EndDate}", startDate, endDate);
+            return stats;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving access statistics");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets daily access counts for a media file
+    /// </summary>
+    public async Task<Dictionary<DateTime, int>> GetDailyAccessCountsAsync(int mediaFileId, int days = 30)
+    {
+        using var scope = _logger.BeginScope("GetDailyAccessCountsAsync: MediaFileId={MediaFileId}, Days={Days}", 
+            mediaFileId, days);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT 
+                    CAST(CreatedAt AS DATE) AS AccessDate,
+                    COUNT(*) AS AccessCount
+                FROM MediaAccessLogs 
+                WHERE MediaFileId = @MediaFileId 
+                AND CreatedAt >= @StartDate
+                AND IsDeleted = 0
+                GROUP BY CAST(CreatedAt AS DATE)
+                ORDER BY AccessDate";
+            
+            var startDate = DateTime.UtcNow.Date.AddDays(-days);
+            var results = await connection.QueryAsync<(DateTime AccessDate, int AccessCount)>(sql, 
+                new { MediaFileId = mediaFileId, StartDate = startDate });
+            
+            var dailyCounts = results.ToDictionary(r => r.AccessDate, r => r.AccessCount);
+            
+            _logger.LogInformation("Retrieved daily access counts for media file {MediaFileId} over {Days} days", 
+                mediaFileId, days);
+            return dailyCounts;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving daily access counts for media file {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets hourly access pattern for a media file
+    /// </summary>
+    public async Task<Dictionary<int, int>> GetHourlyAccessPatternAsync(int mediaFileId, int days = 7)
+    {
+        using var scope = _logger.BeginScope("GetHourlyAccessPatternAsync: MediaFileId={MediaFileId}, Days={Days}", 
+            mediaFileId, days);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT 
+                    DATEPART(HOUR, CreatedAt) AS AccessHour,
+                    COUNT(*) AS AccessCount
+                FROM MediaAccessLogs 
+                WHERE MediaFileId = @MediaFileId 
+                AND CreatedAt >= @StartDate
+                AND IsDeleted = 0
+                GROUP BY DATEPART(HOUR, CreatedAt)
+                ORDER BY AccessHour";
+            
+            var startDate = DateTime.UtcNow.AddDays(-days);
+            var results = await connection.QueryAsync<(int AccessHour, int AccessCount)>(sql, 
+                new { MediaFileId = mediaFileId, StartDate = startDate });
+            
+            var hourlyPattern = results.ToDictionary(r => r.AccessHour, r => r.AccessCount);
+            
+            _logger.LogInformation("Retrieved hourly access pattern for media file {MediaFileId} over {Days} days", 
+                mediaFileId, days);
+            return hourlyPattern;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving hourly access pattern for media file {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets most accessed media files
+    /// </summary>
+    public async Task<IEnumerable<dynamic>> GetMostAccessedFilesAsync(DateTime startDate, DateTime endDate, int limit = 10)
+    {
+        using var scope = _logger.BeginScope("GetMostAccessedFilesAsync: StartDate={StartDate}, EndDate={EndDate}, Limit={Limit}", 
+            startDate, endDate, limit);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT TOP (@Limit)
+                    mal.MediaFileId,
+                    mf.Title,
+                    mf.FileName,
+                    COUNT(*) AS AccessCount,
+                    COUNT(DISTINCT mal.UserId) AS UniqueUsers,
+                    SUM(CASE WHEN mal.Success = 1 THEN 1 ELSE 0 END) AS SuccessfulAccesses,
+                    ISNULL(SUM(mal.BytesTransferred), 0) AS TotalBytesTransferred
+                FROM MediaAccessLogs mal
+                INNER JOIN MediaFiles mf ON mal.MediaFileId = mf.Id AND mf.IsDeleted = 0
+                WHERE mal.CreatedAt >= @StartDate 
+                AND mal.CreatedAt <= @EndDate 
+                AND mal.IsDeleted = 0
+                GROUP BY mal.MediaFileId, mf.Title, mf.FileName
+                ORDER BY AccessCount DESC";
+            
+            var results = await connection.QueryAsync(sql, new { StartDate = startDate, EndDate = endDate, Limit = limit });
+            
+            _logger.LogInformation("Retrieved {Count} most accessed files for period {StartDate} to {EndDate}", 
+                results.Count(), startDate, endDate);
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving most accessed files");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets access statistics by media type
+    /// </summary>
+    public async Task<Dictionary<string, int>> GetAccessStatsByMediaTypeAsync(DateTime startDate, DateTime endDate)
+    {
+        using var scope = _logger.BeginScope("GetAccessStatsByMediaTypeAsync: StartDate={StartDate}, EndDate={EndDate}", 
+            startDate, endDate);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT 
+                    mf.MediaType,
+                    COUNT(*) AS AccessCount
+                FROM MediaAccessLogs mal
+                INNER JOIN MediaFiles mf ON mal.MediaFileId = mf.Id AND mf.IsDeleted = 0
+                WHERE mal.CreatedAt >= @StartDate 
+                AND mal.CreatedAt <= @EndDate 
+                AND mal.IsDeleted = 0
+                GROUP BY mf.MediaType
+                ORDER BY AccessCount DESC";
+            
+            var results = await connection.QueryAsync<(string MediaType, int AccessCount)>(sql, 
+                new { StartDate = startDate, EndDate = endDate });
+            
+            var statistics = results.ToDictionary(r => r.MediaType, r => r.AccessCount);
+            
+            _logger.LogInformation("Retrieved access statistics by media type for period {StartDate} to {EndDate}", 
+                startDate, endDate);
+            return statistics;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving access statistics by media type");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets access statistics by access type
+    /// </summary>
+    public async Task<Dictionary<AccessType, int>> GetAccessStatsByTypeAsync(DateTime startDate, DateTime endDate)
+    {
+        using var scope = _logger.BeginScope("GetAccessStatsByTypeAsync: StartDate={StartDate}, EndDate={EndDate}", 
+            startDate, endDate);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT 
+                    AccessType,
+                    COUNT(*) AS AccessCount
+                FROM MediaAccessLogs 
+                WHERE CreatedAt >= @StartDate 
+                AND CreatedAt <= @EndDate 
+                AND IsDeleted = 0
+                GROUP BY AccessType
+                ORDER BY AccessCount DESC";
+            
+            var results = await connection.QueryAsync<(int AccessType, int AccessCount)>(sql, 
+                new { StartDate = startDate, EndDate = endDate });
+            
+            var statistics = results.ToDictionary(r => (AccessType)r.AccessType, r => r.AccessCount);
+            
+            _logger.LogInformation("Retrieved access statistics by access type for period {StartDate} to {EndDate}", 
+                startDate, endDate);
+            return statistics;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving access statistics by access type");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets unique user count for a media file
+    /// </summary>
+    public async Task<int> GetUniqueUserCountAsync(int mediaFileId, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        using var scope = _logger.BeginScope("GetUniqueUserCountAsync: MediaFileId={MediaFileId}, StartDate={StartDate}, EndDate={EndDate}", 
+            mediaFileId, startDate, endDate);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT COUNT(DISTINCT UserId) 
+                FROM MediaAccessLogs 
+                WHERE MediaFileId = @MediaFileId 
+                AND UserId IS NOT NULL
+                AND IsDeleted = 0";
+            
+            var parameters = new DynamicParameters();
+            parameters.Add("MediaFileId", mediaFileId);
+            
+            if (startDate.HasValue)
+            {
+                sql += " AND CreatedAt >= @StartDate";
+                parameters.Add("StartDate", startDate.Value);
+            }
+            
+            if (endDate.HasValue)
+            {
+                sql += " AND CreatedAt <= @EndDate";
+                parameters.Add("EndDate", endDate.Value);
+            }
+            
+            var uniqueUserCount = await connection.QuerySingleAsync<int>(sql, parameters);
+            
+            _logger.LogInformation("Retrieved unique user count {Count} for media file {MediaFileId}", 
+                uniqueUserCount, mediaFileId);
+            return uniqueUserCount;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving unique user count for media file {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets bandwidth usage statistics
+    /// </summary>
+    public async Task<long> GetBandwidthUsageAsync(DateTime startDate, DateTime endDate)
+    {
+        using var scope = _logger.BeginScope("GetBandwidthUsageAsync: StartDate={StartDate}, EndDate={EndDate}", 
+            startDate, endDate);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT ISNULL(SUM(BytesTransferred), 0) 
+                FROM MediaAccessLogs 
+                WHERE CreatedAt >= @StartDate 
+                AND CreatedAt <= @EndDate 
+                AND Success = 1
+                AND IsDeleted = 0";
+            
+            var bandwidthUsage = await connection.QuerySingleAsync<long>(sql, 
+                new { StartDate = startDate, EndDate = endDate });
+            
+            _logger.LogInformation("Retrieved bandwidth usage {Usage} bytes for period {StartDate} to {EndDate}", 
+                bandwidthUsage, startDate, endDate);
+            return bandwidthUsage;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving bandwidth usage");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets top referrers for media access
+    /// </summary>
+    public async Task<Dictionary<string, int>> GetTopReferrersAsync(DateTime startDate, DateTime endDate, int limit = 10)
+    {
+        using var scope = _logger.BeginScope("GetTopReferrersAsync: StartDate={StartDate}, EndDate={EndDate}, Limit={Limit}", 
+            startDate, endDate, limit);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT TOP (@Limit)
+                    ISNULL(Referrer, 'Direct') AS Referrer,
+                    COUNT(*) AS AccessCount
+                FROM MediaAccessLogs 
+                WHERE CreatedAt >= @StartDate 
+                AND CreatedAt <= @EndDate 
+                AND IsDeleted = 0
+                GROUP BY Referrer
+                ORDER BY AccessCount DESC";
+            
+            var results = await connection.QueryAsync<(string Referrer, int AccessCount)>(sql, 
+                new { StartDate = startDate, EndDate = endDate, Limit = limit });
+            
+            var topReferrers = results.ToDictionary(r => r.Referrer, r => r.AccessCount);
+            
+            _logger.LogInformation("Retrieved {Count} top referrers for period {StartDate} to {EndDate}", 
+                topReferrers.Count, startDate, endDate);
+            return topReferrers;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving top referrers");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets access logs for security analysis (suspicious activity)
+    /// </summary>
+    public async Task<IEnumerable<dynamic>> GetSuspiciousAccessAsync(int minAccessCount = 100, int timeWindowHours = 1)
+    {
+        using var scope = _logger.BeginScope("GetSuspiciousAccessAsync: MinAccessCount={MinAccessCount}, TimeWindowHours={TimeWindowHours}", 
+            minAccessCount, timeWindowHours);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT 
+                    IpAddress,
+                    COUNT(*) AS AccessCount,
+                    COUNT(DISTINCT MediaFileId) AS UniqueFiles,
+                    COUNT(DISTINCT UserId) AS UniqueUsers,
+                    MIN(CreatedAt) AS FirstAccess,
+                    MAX(CreatedAt) AS LastAccess,
+                    SUM(CASE WHEN Success = 0 THEN 1 ELSE 0 END) AS FailedAttempts
+                FROM MediaAccessLogs 
+                WHERE CreatedAt >= @StartTime
+                AND IsDeleted = 0
+                GROUP BY IpAddress
+                HAVING COUNT(*) >= @MinAccessCount
+                ORDER BY AccessCount DESC";
+            
+            var startTime = DateTime.UtcNow.AddHours(-timeWindowHours);
+            var results = await connection.QueryAsync(sql, new { StartTime = startTime, MinAccessCount = minAccessCount });
+            
+            _logger.LogInformation("Retrieved {Count} suspicious access patterns", results.Count());
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving suspicious access patterns");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Logs a media access event
+    /// </summary>
+    public async Task<MediaAccessLog> LogAccessAsync(int mediaFileId, int? userId, AccessType accessType, string? ipAddress, string? userAgent, string? referrer, string? sessionId, bool success = true, long? bytesTransferred = null, TimeSpan? duration = null, string? errorMessage = null)
+    {
+        using var scope = _logger.BeginScope("LogAccessAsync: MediaFileId={MediaFileId}, UserId={UserId}, AccessType={AccessType}", 
+            mediaFileId, userId, accessType);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var accessLog = new MediaAccessLog
+            {
+                MediaFileId = mediaFileId,
+                UserId = userId,
+                AccessType = accessType,
+                IpAddress = ipAddress,
+                UserAgent = userAgent,
+                Referrer = referrer,
+                SessionId = sessionId,
+                Success = success,
+                BytesTransferred = bytesTransferred,
+                Duration = duration,
+                ErrorMessage = errorMessage,
+                CreatedAt = DateTime.UtcNow,
+                ModifiedAt = DateTime.UtcNow,
+                IsDeleted = false
+            };
+            
+            var sql = @"
+                INSERT INTO MediaAccessLogs (MediaFileId, UserId, AccessType, IpAddress, UserAgent, Referrer, SessionId, Success, BytesTransferred, Duration, ErrorMessage, CreatedAt, ModifiedAt, IsDeleted)
+                VALUES (@MediaFileId, @UserId, @AccessType, @IpAddress, @UserAgent, @Referrer, @SessionId, @Success, @BytesTransferred, @Duration, @ErrorMessage, @CreatedAt, @ModifiedAt, @IsDeleted)";
+            
+            await connection.ExecuteAsync(sql, new
+            {
+                Id = accessLog.Id,
+                MediaFileId = accessLog.MediaFileId,
+                UserId = accessLog.UserId,
+                AccessType = (int)accessLog.AccessType,
+                IpAddress = accessLog.IpAddress,
+                UserAgent = accessLog.UserAgent,
+                Referrer = accessLog.Referrer,
+                SessionId = accessLog.SessionId,
+                Success = accessLog.Success,
+                BytesTransferred = accessLog.BytesTransferred,
+                Duration = accessLog.Duration,
+                ErrorMessage = accessLog.ErrorMessage,
+                CreatedAt = accessLog.CreatedAt,
+                ModifiedAt = accessLog.ModifiedAt,
+                IsDeleted = accessLog.IsDeleted
+            });
+            
+            _logger.LogInformation("Logged access for media file {MediaFileId} by user {UserId}", mediaFileId, userId);
+            return accessLog;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error logging access for media file {MediaFileId}", mediaFileId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Bulk inserts access logs (for batch processing)
+    /// </summary>
+    public async Task<int> BulkInsertAsync(IEnumerable<MediaAccessLog> accessLogs)
+    {
+        using var scope = _logger.BeginScope("BulkInsertAsync: Count={Count}", accessLogs.Count());
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var logsArray = accessLogs.ToArray();
+            if (!logsArray.Any())
+            {
+                return 0;
+            }
+            
+            var sql = @"
+                INSERT INTO MediaAccessLogs (Id, MediaFileId, UserId, AccessType, IpAddress, UserAgent, Referrer, SessionId, Success, BytesTransferred, Duration, ErrorMessage, CreatedAt, ModifiedAt, IsDeleted)
+                VALUES (@Id, @MediaFileId, @UserId, @AccessType, @IpAddress, @UserAgent, @Referrer, @SessionId, @Success, @BytesTransferred, @Duration, @ErrorMessage, @CreatedAt, @ModifiedAt, @IsDeleted)";
+            
+            var parameters = logsArray.Select(log => new
+            {
+                Id = log.Id,
+                MediaFileId = log.MediaFileId,
+                UserId = log.UserId,
+                AccessType = (int)log.AccessType,
+                IpAddress = log.IpAddress,
+                UserAgent = log.UserAgent,
+                Referrer = log.Referrer,
+                SessionId = log.SessionId,
+                Success = log.Success,
+                BytesTransferred = log.BytesTransferred,
+                Duration = log.Duration,
+                ErrorMessage = log.ErrorMessage,
+                CreatedAt = log.CreatedAt,
+                ModifiedAt = log.ModifiedAt,
+                IsDeleted = log.IsDeleted
+            });
+            
+            var affectedRows = await connection.ExecuteAsync(sql, parameters);
+            
+            _logger.LogInformation("Bulk inserted {Count} access logs", affectedRows);
+            return affectedRows;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error bulk inserting access logs");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Deletes old access logs (for data retention)
+    /// </summary>
+    public async Task<int> DeleteOldLogsAsync(int olderThanDays = 365)
+    {
+        using var scope = _logger.BeginScope("DeleteOldLogsAsync: OlderThanDays={OlderThanDays}", olderThanDays);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                UPDATE MediaAccessLogs 
+                SET IsDeleted = 1, ModifiedAt = @ModifiedAt
+                WHERE CreatedAt < @CutoffDate
+                AND IsDeleted = 0";
+            
+            var cutoffDate = DateTime.UtcNow.AddDays(-olderThanDays);
+            
+            var affectedRows = await connection.ExecuteAsync(sql, new
+            {
+                CutoffDate = cutoffDate,
+                ModifiedAt = DateTime.UtcNow
+            });
+            
+            _logger.LogInformation("Deleted {Count} old access logs older than {OlderThanDays} days", 
+                affectedRows, olderThanDays);
+            return affectedRows;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting old access logs");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Archives old access logs to a different table/storage
+    /// </summary>
+    public async Task<int> ArchiveOldLogsAsync(int olderThanDays = 90)
+    {
+        using var scope = _logger.BeginScope("ArchiveOldLogsAsync: OlderThanDays={OlderThanDays}", olderThanDays);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var transaction = connection.BeginTransaction();
+            
+            try
+            {
+                var cutoffDate = DateTime.UtcNow.AddDays(-olderThanDays);
+                
+                // First, copy logs to archive table
+                var copyToArchiveSql = @"
+                    INSERT INTO MediaAccessLogsArchive 
+                    SELECT * FROM MediaAccessLogs 
+                    WHERE CreatedAt < @CutoffDate
+                    AND IsDeleted = 0";
+                
+                var archivedCount = await connection.ExecuteAsync(copyToArchiveSql, 
+                    new { CutoffDate = cutoffDate }, transaction);
+                
+                // Then soft delete the original records
+                var markDeletedSql = @"
+                    UPDATE MediaAccessLogs 
+                    SET IsDeleted = 1, ModifiedAt = @ModifiedAt
+                    WHERE CreatedAt < @CutoffDate
+                    AND IsDeleted = 0";
+                
+                await connection.ExecuteAsync(markDeletedSql, new
+                {
+                    CutoffDate = cutoffDate,
+                    ModifiedAt = DateTime.UtcNow
+                }, transaction);
+                
+                transaction.Commit();
+                
+                _logger.LogInformation("Archived {Count} access logs older than {OlderThanDays} days", 
+                    archivedCount, olderThanDays);
+                return archivedCount;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error archiving old access logs");
+            throw;
+        }
+    }
+}

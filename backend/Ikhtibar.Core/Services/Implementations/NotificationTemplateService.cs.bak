@@ -1,4 +1,4 @@
-using Ikhtibar.Core.Entities;
+
 using Ikhtibar.Core.Services.Interfaces;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Microsoft.Extensions.Logging;

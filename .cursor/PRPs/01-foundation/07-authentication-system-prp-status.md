@@ -161,7 +161,7 @@
 - **Status**: RESOLVED - All method calls now match interface definitions
 
 ### Issue 4: Missing Entity Properties ✅ RESOLVED
-- **Description**: RefreshToken entity referenced ReplacedByToken property that didn't exist
+- **Description**: RefreshTokens entity referenced ReplacedByToken property that didn't exist
 - **Root Cause**: Property was removed from entity but still referenced in controller
 - **Resolution**: Commented out the property assignment with explanatory comment
 - **Status**: RESOLVED - Entity references now valid

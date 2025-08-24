@@ -1,95 +1,187 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-
 namespace Ikhtibar.Shared.Entities;
 
 /// <summary>
-/// Tree node entity for hierarchical structure with materialized path
+/// Represents a node in a hierarchical tree structure.
+/// Supports materialized path for efficient tree traversal.
 /// </summary>
 [Table("TreeNodes")]
-public class TreeNode : BaseEntity
+public class TreeNode
 {
     /// <summary>
-    /// Primary key
+    /// Unique identifier for the tree node.
     /// </summary>
     [Key]
-    public int TreeNodeId { get; set; }
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
 
     /// <summary>
-    /// Node display name
+    /// Name of the tree node.
     /// </summary>
     [Required]
-    [StringLength(200)]
+    [StringLength(255)]
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Unique code for node
+    /// Description of the tree node.
     /// </summary>
-    [Required]
-    [StringLength(50)]
-    public string Code { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Optional description
-    /// </summary>
-    [StringLength(500)]
+    [StringLength(1000)]
     public string? Description { get; set; }
 
     /// <summary>
-    /// Foreign key to TreeNodeTypes
+    /// Type/category of the tree node.
     /// </summary>
     [Required]
-    public int TreeNodeTypeId { get; set; }
+    [StringLength(100)]
+    public string NodeType { get; set; } = string.Empty;
 
     /// <summary>
-    /// Foreign key to parent TreeNodeId
+    /// Materialized path from root to this node.
+    /// Format: /root/parent/child (e.g., "/1/5/12")
+    /// </summary>
+    [Required]
+    [StringLength(500)]
+    public string Path { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Level/depth of the node in the tree (0 for root).
+    /// </summary>
+    [Required]
+    public int Level { get; set; }
+
+    /// <summary>
+    /// Order/position among siblings.
+    /// </summary>
+    [Required]
+    public int OrderIndex { get; set; }
+
+    /// <summary>
+    /// ID of the parent node (null for root nodes).
     /// </summary>
     public int? ParentId { get; set; }
 
     /// <summary>
-    /// Display order
+    /// Navigation property for the parent node.
     /// </summary>
-    [Required]
-    public int OrderIndex { get; set; } = 0;
+    [ForeignKey(nameof(ParentId))]
+    public virtual TreeNode? Parent { get; set; }
 
     /// <summary>
-    /// Materialized path (e.g., -1-4-9-)
+    /// Collection of child nodes.
     /// </summary>
-    [Required]
-    [StringLength(100)]
-    public string Path { get; set; } = string.Empty;
+    public virtual ICollection<TreeNode> Children { get; set; } = new List<TreeNode>();
 
     /// <summary>
-    /// Active flag
+    /// Additional metadata stored as JSON.
+    /// </summary>
+    [Column(TypeName = "nvarchar(max)")]
+    public string? Metadata { get; set; }
+
+    /// <summary>
+    /// Whether the node is active/enabled.
     /// </summary>
     [Required]
     public bool IsActive { get; set; } = true;
 
     /// <summary>
-    /// Navigation property to TreeNodeType
+    /// Whether the node is visible to users.
     /// </summary>
-    [ForeignKey("TreeNodeTypeId")]
-    public virtual TreeNodeType TreeNodeType { get; set; } = null!;
+    [Required]
+    public bool IsVisible { get; set; } = true;
 
     /// <summary>
-    /// Navigation property to Parent
+    /// Icon or visual representation for the node.
     /// </summary>
-    [ForeignKey("ParentId")]
-    public virtual TreeNode? Parent { get; set; }
+    [StringLength(100)]
+    public string? Icon { get; set; }
 
     /// <summary>
-    /// Navigation property to Children
+    /// Color theme for the node.
     /// </summary>
-    public virtual ICollection<TreeNode> Children { get; set; } = new List<TreeNode>();
+    [StringLength(50)]
+    public string? Color { get; set; }
 
     /// <summary>
-    /// Navigation property to Questions
+    /// When the node was created.
     /// </summary>
-    public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
+    [Required]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
-    /// Navigation property to CurriculumAlignments
+    /// Who created the node.
     /// </summary>
-    public virtual ICollection<CurriculumAlignment> CurriculumAlignments { get; set; } = new List<CurriculumAlignment>();
+    [StringLength(100)]
+    public string? CreatedBy { get; set; }
+
+    /// <summary>
+    /// When the node was last modified.
+    /// </summary>
+    public DateTime? ModifiedAt { get; set; }
+
+    /// <summary>
+    /// Who last modified the node.
+    /// </summary>
+    [StringLength(100)]
+    public string? ModifiedBy { get; set; }
+
+    /// <summary>
+    /// Version number for optimistic concurrency.
+    /// </summary>
+    [Required]
+    public int Version { get; set; } = 1;
+
+    /// <summary>
+    /// Soft delete flag.
+    /// </summary>
+    [Required]
+    public bool IsDeleted { get; set; } = false;
+
+    /// <summary>
+    /// When the node was soft deleted.
+    /// </summary>
+    public DateTime? DeletedAt { get; set; }
+
+    /// <summary>
+    /// Who soft deleted the node.
+    /// </summary>
+    [StringLength(100)]
+    public string? DeletedBy { get; set; }
+
+    /// <summary>
+    /// Gets the full path including the current node.
+    /// </summary>
+    /// <returns>Full path string</returns>
+    public string GetFullPath() => $"{Path}/{Id}";
+
+    /// <summary>
+    /// Gets the parent path (path without current node).
+    /// </summary>
+    /// <returns>Parent path string</returns>
+    public string GetParentPath() => Path;
+
+    /// <summary>
+    /// Checks if this node is a root node.
+    /// </summary>
+    /// <returns>True if root, false otherwise</returns>
+    public bool IsRoot() => ParentId == null;
+
+    /// <summary>
+    /// Checks if this node is a leaf node (no children).
+    /// </summary>
+    /// <returns>True if leaf, false otherwise</returns>
+    public bool IsLeaf() => !Children.Any();
+
+    /// <summary>
+    /// Gets the number of children.
+    /// </summary>
+    /// <returns>Child count</returns>
+    public int GetChildCount() => Children.Count;
+
+    /// <summary>
+    /// Gets the total number of descendants.
+    /// </summary>
+    /// <returns>Total descendant count</returns>
+    public int GetDescendantCount() => Children.Sum(c => 1 + c.GetDescendantCount());
 }

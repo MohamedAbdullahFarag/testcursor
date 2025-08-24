@@ -11,7 +11,7 @@ namespace Ikhtibar.Shared.DTOs;
 /// </summary>
 public class MediaFileDto
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public string OriginalFileName { get; set; } = string.Empty;
     public string StorageFileName { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
@@ -19,12 +19,12 @@ public class MediaFileDto
     public string StoragePath { get; set; } = string.Empty;
     public MediaFileType MediaType { get; set; }
     public MediaFileStatus Status { get; set; }
-    public Guid? CategoryId { get; set; }
+    public int? CategoryId { get; set; }
     public string Description { get; set; } = string.Empty;
     public string AltText { get; set; } = string.Empty;
     public string Tags { get; set; } = string.Empty;
     public string? ChecksumSha256 { get; set; }
-    public Guid UploadedByUserId { get; set; }
+    public int UploadedByUserId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime ModifiedAt { get; set; }
 
@@ -62,7 +62,7 @@ public class CreateMediaFileDto
     [Required]
     public MediaFileType MediaType { get; set; }
 
-    public Guid? CategoryId { get; set; }
+    public int? CategoryId { get; set; }
 
     [StringLength(1000)]
     public string? Description { get; set; }
@@ -76,7 +76,7 @@ public class CreateMediaFileDto
     public string? ChecksumSha256 { get; set; }
 
     [Required]
-    public Guid UploadedByUserId { get; set; }
+    public int UploadedByUserId { get; set; }
 }
 
 /// <summary>
@@ -84,6 +84,9 @@ public class CreateMediaFileDto
 /// </summary>
 public class UpdateMediaFileDto
 {
+    [StringLength(255)]
+    public string? Title { get; set; }
+
     [StringLength(1000)]
     public string? Description { get; set; }
 
@@ -93,9 +96,11 @@ public class UpdateMediaFileDto
     [StringLength(500)]
     public string? Tags { get; set; }
 
-    public Guid? CategoryId { get; set; }
+    public int? CategoryId { get; set; }
 
     public MediaFileStatus? Status { get; set; }
+
+    public bool? IsPublic { get; set; }
 }
 
 /// <summary>
@@ -105,9 +110,9 @@ public class MediaFileSearchDto
 {
     public string? SearchTerm { get; set; }
     public MediaFileType? MediaType { get; set; }
-    public Guid? CategoryId { get; set; }
+    public int? CategoryId { get; set; }
     public MediaFileStatus? Status { get; set; }
-    public Guid? UploadedByUserId { get; set; }
+    public int? UploadedByUserId { get; set; }
     public DateTime? CreatedAfter { get; set; }
     public DateTime? CreatedBefore { get; set; }
     public string? SortBy { get; set; } = "CreatedAt";
@@ -122,12 +127,12 @@ public class MediaFileSearchDto
 public class BulkMediaFileOperationDto
 {
     [Required]
-    public List<Guid> MediaFileIds { get; set; } = new();
+    public List<int> MediaFileIds { get; set; } = new();
 
     [Required]
     public string Operation { get; set; } = string.Empty; // "delete", "move", "categorize", "status_change"
 
-    public Guid? TargetCategoryId { get; set; }
+    public int? TargetCategoryId { get; set; }
     public MediaFileStatus? TargetStatus { get; set; }
     public string? Tags { get; set; }
 }
@@ -141,12 +146,12 @@ public class BulkMediaFileOperationDto
 /// </summary>
 public class MediaCategoryDto
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string? Icon { get; set; }
     public string? Color { get; set; }
-    public Guid? ParentId { get; set; }
+    public int? ParentId { get; set; }
     public int SortOrder { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -176,7 +181,7 @@ public class CreateMediaCategoryDto
     [StringLength(7)]
     public string? Color { get; set; }
 
-    public Guid? ParentId { get; set; }
+    public int? ParentId { get; set; }
 
     public int SortOrder { get; set; } = 0;
 
@@ -201,7 +206,7 @@ public class UpdateMediaCategoryDto
     [StringLength(7)]
     public string? Color { get; set; }
 
-    public Guid? ParentId { get; set; }
+    public int? ParentId { get; set; }
 
     public int SortOrder { get; set; }
 
@@ -217,8 +222,8 @@ public class UpdateMediaCategoryDto
 /// </summary>
 public class MediaMetadataDto
 {
-    public Guid Id { get; set; }
-    public Guid MediaFileId { get; set; }
+    public int Id { get; set; }
+    public int MediaFileId { get; set; }
     public string MetadataJson { get; set; } = string.Empty;
     public int? Width { get; set; }
     public int? Height { get; set; }
@@ -244,7 +249,7 @@ public class MediaMetadataDto
 public class CreateMediaMetadataDto
 {
     [Required]
-    public Guid MediaFileId { get; set; }
+    public int MediaFileId { get; set; }
 
     public string MetadataJson { get; set; } = "{}";
     public int? Width { get; set; }
@@ -272,8 +277,8 @@ public class CreateMediaMetadataDto
 /// </summary>
 public class MediaThumbnailDto
 {
-    public Guid Id { get; set; }
-    public Guid MediaFileId { get; set; }
+    public int Id { get; set; }
+    public int MediaFileId { get; set; }
     public ThumbnailSize Size { get; set; }
     public int Width { get; set; }
     public int Height { get; set; }
@@ -289,7 +294,7 @@ public class MediaThumbnailDto
 public class CreateMediaThumbnailDto
 {
     [Required]
-    public Guid MediaFileId { get; set; }
+    public int MediaFileId { get; set; }
 
     [Required]
     public ThumbnailSize Size { get; set; }
@@ -324,9 +329,9 @@ public class CreateMediaThumbnailDto
 /// </summary>
 public class MediaAccessLogDto
 {
-    public Guid Id { get; set; }
-    public Guid MediaFileId { get; set; }
-    public Guid? UserId { get; set; }
+    public int Id { get; set; }
+    public int MediaFileId { get; set; }
+    public int? UserId { get; set; }
     public MediaAccessAction Action { get; set; }
     public string IpAddress { get; set; } = string.Empty;
     public string UserAgent { get; set; } = string.Empty;
@@ -344,9 +349,9 @@ public class MediaAccessLogDto
 public class CreateMediaAccessLogDto
 {
     [Required]
-    public Guid MediaFileId { get; set; }
+    public int MediaFileId { get; set; }
 
-    public Guid? UserId { get; set; }
+    public int? UserId { get; set; }
 
     [Required]
     public MediaAccessAction Action { get; set; }
@@ -371,12 +376,12 @@ public class CreateMediaAccessLogDto
 /// </summary>
 public class MediaCollectionDto
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public MediaCollectionType Type { get; set; }
     public bool IsPublic { get; set; }
-    public Guid CreatedByUserId { get; set; }
+    public int CreatedByUserId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime ModifiedAt { get; set; }
 
@@ -404,9 +409,9 @@ public class CreateMediaCollectionDto
     public bool IsPublic { get; set; } = true;
 
     [Required]
-    public Guid CreatedByUserId { get; set; }
+    public int CreatedByUserId { get; set; }
 
-    public List<Guid> MediaFileIds { get; set; } = new();
+    public List<int> MediaFileIds { get; set; } = new();
 }
 
 /// <summary>
@@ -423,7 +428,7 @@ public class UpdateMediaCollectionDto
 
     public bool IsPublic { get; set; }
 
-    public List<Guid> MediaFileIds { get; set; } = new();
+    public List<int> MediaFileIds { get; set; } = new();
 }
 
 #endregion
@@ -435,8 +440,8 @@ public class UpdateMediaCollectionDto
 /// </summary>
 public class MediaProcessingJobDto
 {
-    public Guid Id { get; set; }
-    public Guid MediaFileId { get; set; }
+    public int Id { get; set; }
+    public int MediaFileId { get; set; }
     public ProcessingJobType JobType { get; set; }
     public ProcessingJobStatus Status { get; set; }
     public string? Parameters { get; set; }
@@ -458,7 +463,7 @@ public class MediaProcessingJobDto
 public class CreateMediaProcessingJobDto
 {
     [Required]
-    public Guid MediaFileId { get; set; }
+    public int MediaFileId { get; set; }
 
     [Required]
     public ProcessingJobType JobType { get; set; }
@@ -513,13 +518,50 @@ public class MediaStorageStatistics
 /// </summary>
 public class MediaAccessAnalytics
 {
-    public Guid MediaFileId { get; set; }
+    public int MediaFileId { get; set; }
     public string FileName { get; set; } = string.Empty;
     public int TotalAccesses { get; set; }
     public int UniqueUsers { get; set; }
     public DateTime LastAccessed { get; set; }
     public Dictionary<MediaAccessAction, int> AccessesByAction { get; set; } = new();
     public Dictionary<DateTime, int> DailyAccesses { get; set; } = new();
+}
+
+#endregion
+
+#region Search Statistics
+
+/// <summary>
+/// DTO for search statistics and analytics
+/// </summary>
+public class SearchStatistics
+{
+    public int TotalMediaFiles { get; set; }
+    public int TotalCategories { get; set; }
+    public int TotalCollections { get; set; }
+    public DateTime LastUpdated { get; set; }
+}
+
+#endregion
+
+#region MediaCollectionItem DTOs
+
+/// <summary>
+/// DTO for media collection item responses
+/// </summary>
+public class MediaCollectionItemDto
+{
+    public int Id { get; set; }
+    public int CollectionId { get; set; }
+    public int MediaFileId { get; set; }
+    public int SortOrder { get; set; }
+    public string? Caption { get; set; }
+    public bool IsFeatured { get; set; }
+    public DateTime CreatedAt { get; set; }
+    
+    // Navigation properties
+    public MediaFileDto? MediaFile { get; set; }
+    public MediaCollectionDto? Collection { get; set; }
 }
 
 #endregion

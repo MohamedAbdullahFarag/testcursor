@@ -59,7 +59,7 @@ guidelines:
 ```yaml
 database_entities:
   - User: Core user entity with authentication properties
-  - RefreshToken: Token storage for rotation security
+  - RefreshTokens: Token storage for rotation security
   - UserRole: Role assignment for authorization
   - Role: Role definitions with permissions
 
@@ -131,11 +131,11 @@ public class TokenService : ITokenService
 
 #### 3. Refresh Token Repository
 ```csharp
-// PATTERN: Repository following SRP - ONLY RefreshToken data operations
+// PATTERN: Repository following SRP - ONLY RefreshTokens data operations
 public interface IRefreshTokenRepository
 {
-    Task<RefreshToken?> GetByTokenHashAsync(string tokenHash);
-    Task<RefreshToken> AddAsync(RefreshToken refreshToken);
+    Task<RefreshTokens?> GetByTokenHashAsync(string tokenHash);
+    Task<RefreshTokens> AddAsync(RefreshTokens refreshToken);
     Task<bool> RevokeByUserIdAsync(int userId);
     Task<bool> RevokeByTokenHashAsync(string tokenHash);
     Task<bool> CleanupExpiredTokensAsync();
@@ -144,7 +144,7 @@ public interface IRefreshTokenRepository
 // ✅ CORRECT: Focused repository
 public class RefreshTokenRepository : IRefreshTokenRepository
 {
-    // ONLY RefreshToken data operations
+    // ONLY RefreshTokens data operations
     // NO business logic, NO authentication logic, NO user operations
 }
 ```
@@ -328,17 +328,17 @@ cd backend
 dotnet run --project Ikhtibar.API
 
 # Test authentication endpoints
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST https://localhost:7001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "admin@ikhtibar.com", "password": "Admin123!"}'
 # Expected: 200 OK with JWT tokens
 
-curl -X POST http://localhost:5000/api/auth/refresh \
+curl -X POST https://localhost:7001/api/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"refreshToken": "refresh-token-from-login"}'
 # Expected: 200 OK with new JWT tokens
 
-curl -X POST http://localhost:5000/api/auth/logout \
+curl -X POST https://localhost:7001/api/auth/logout \
   -H "Authorization: Bearer jwt-token-from-login"
 # Expected: 200 OK with success message
 ```
@@ -442,7 +442,7 @@ public async Task<ActionResult<AuthResult>> Login(LoginRequest request)
 
 ### Database Migrations
 ```sql
--- RefreshToken table for token rotation
+-- RefreshTokens table for token rotation
 CREATE TABLE RefreshTokens (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     TokenHash NVARCHAR(255) NOT NULL,
@@ -480,7 +480,7 @@ CREATE TABLE RefreshTokens (
 ### Frontend Environment Variables
 ```env
 # .env.local additions
-VITE_API_BASE_URL=http://localhost:5000
+VITE_API_BASE_URL=https://localhost:7001
 VITE_OIDC_CLIENT_ID=ikhtibar-client
 VITE_OIDC_AUTHORITY=https://your-oidc-provider.com
 ```

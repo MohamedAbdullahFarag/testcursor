@@ -2,7 +2,7 @@ const dashboardPath = '/dashboard'
 const portalPath = '/'
 
 export const pathNames = {
-    dasbhaord: dashboardPath,
+    dashboard: dashboardPath,
     contentManagment: `${dashboardPath}/content-managment`,
     userManagement: `${dashboardPath}/user-management`,
     roleManagement: `${dashboardPath}/role-management`,
@@ -18,5 +18,35 @@ export const pathNames = {
     termsAndConditions: '/TermsAndConditions',
     privacyPolicy: '/privacyPolicy',
     login: '/login',
-    eParticipation: '/eparticipation',
+    eParticipation: `${dashboardPath}/e-participation`,
+    // New paths for completed features
+    mediaManagement: `${dashboardPath}/media`,
+    mediaCollections: `${dashboardPath}/media/collections`,
+    questionBank: `${dashboardPath}/question-bank`,
+    questionBankTree: `${dashboardPath}/question-bank/tree`,
+    questionBankCategories: `${dashboardPath}/question-bank/categories`,
+    notifications: `${dashboardPath}/notifications`,
+    notificationPreferences: `${dashboardPath}/notifications/preferences`,
+    // System paths
+    system: `${dashboardPath}/system`,
+    systemSettings: `${dashboardPath}/system/settings`,
+    systemApiDocs: `${dashboardPath}/system/api-docs`,
+    systemHealth: `${dashboardPath}/system/health`,
+    // Analytics paths
+    analytics: `${dashboardPath}/analytics`,
+    analyticsDashboard: `${dashboardPath}/analytics/dashboard`,
+    analyticsUsers: `${dashboardPath}/analytics/users`,
+    analyticsContent: `${dashboardPath}/analytics/content`,
+    // Customer Experience paths
+    customerExperience: `${dashboardPath}/customer-experience`,
+    customerExperienceSurveys: `${dashboardPath}/customer-experience/surveys`,
+    customerExperienceFeedback: `${dashboardPath}/customer-experience/feedback`,
+    // E-Participation paths
+    eParticipationPortal: `${dashboardPath}/e-participation/portal`,
+    eParticipationInitiatives: `${dashboardPath}/e-participation/initiatives`,
+    // Help & Legal paths
+    help: `${dashboardPath}/help`,
+    helpFaq: `${dashboardPath}/help/faq`,
+    helpTerms: `${dashboardPath}/help/terms`,
+    helpPrivacy: `${dashboardPath}/help/privacy`,
 }

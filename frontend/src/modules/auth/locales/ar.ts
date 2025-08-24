@@ -1,60 +1,41 @@
-export const authAr = {
-  login: {
-    title: 'تسجيل الدخول إلى حسابك',
-    subtitle: 'أدخل بيانات الاعتماد الخاصة بك للوصول إلى المنصة',
-    emailLabel: 'عنوان البريد الإلكتروني',
-    emailPlaceholder: 'أدخل بريدك الإلكتروني',
-    passwordLabel: 'كلمة المرور',
-    passwordPlaceholder: 'أدخل كلمة المرور',
-    signIn: 'تسجيل الدخول',
-    signingIn: 'جاري تسجيل الدخول...',
-    forgotPassword: 'نسيت كلمة المرور؟',
-    needHelp: 'تحتاج مساعدة؟',
-  },
-  logout: {
-    title: 'تسجيل الخروج',
-    button: 'تسجيل الخروج',
-    confirmMessage: 'هل أنت متأكد من أنك تريد تسجيل الخروج؟',
-    success: 'تم تسجيل الخروج بنجاح',
-  },
-  validation: {
-    emailRequired: 'البريد الإلكتروني مطلوب',
-    emailInvalid: 'يرجى إدخال عنوان بريد إلكتروني صحيح',
-    passwordRequired: 'كلمة المرور مطلوبة',
-    passwordMinLength: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل',
-    invalidCredentials: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
-  },
-  errors: {
-    loginFailed: 'فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد الخاصة بك.',
-    networkError: 'خطأ في الشبكة. يرجى التحقق من الاتصال الخاص بك.',
-    sessionExpired: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.',
-    unauthorized: 'غير مصرح لك بالوصول إلى هذا المورد.',
-    serverError: 'خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.',
-  },
-  success: {
-    loginSuccess: 'تم تسجيل الدخول بنجاح',
-    logoutSuccess: 'تم تسجيل الخروج بنجاح',
-  },
-  common: {
-    loading: 'جاري التحميل...',
-    error: 'خطأ',
-    success: 'نجح',
-    cancel: 'إلغاء',
-    confirm: 'تأكيد',
-    back: 'رجوع',
-    next: 'التالي',
-    submit: 'إرسال',
-    save: 'حفظ',
-    delete: 'حذف',
-    edit: 'تعديل',
-    view: 'عرض',
-    search: 'بحث',
-    filter: 'تصفية',
-    sort: 'ترتيب',
-    refresh: 'تحديث',
-    close: 'إغلاق',
-    open: 'فتح',
-    yes: 'نعم',
-    no: 'لا',
-  },
+export default {
+  // Form labels
+  email: 'البريد الإلكتروني',
+  password: 'كلمة المرور',
+  
+  // Actions
+  login: 'تسجيل الدخول',
+  logout: 'تسجيل الخروج',
+  
+  // Validation messages
+  emailRequired: 'البريد الإلكتروني مطلوب',
+  emailInvalid: 'يرجى إدخال بريد إلكتروني صحيح',
+  passwordRequired: 'كلمة المرور مطلوبة',
+  passwordMinLength: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+  
+  // Error messages
+  invalidCredentials: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+  loginFailed: 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.',
+  logoutFailed: 'فشل تسجيل الخروج. يرجى المحاولة مرة أخرى.',
+  
+  // Success messages
+  loginSuccess: 'تم تسجيل الدخول بنجاح',
+  logoutSuccess: 'تم تسجيل الخروج بنجاح',
+  
+  // Placeholders
+  emailPlaceholder: 'أدخل بريدك الإلكتروني',
+  passwordPlaceholder: 'أدخل كلمة المرور',
+  
+  // Loading states
+  signingIn: 'جاري تسجيل الدخول...',
+  signingOut: 'جاري تسجيل الخروج...',
+  
+  // Links
+  forgotPassword: 'نسيت كلمة المرور؟',
+  needHelp: 'تحتاج مساعدة؟',
+  
+  // Navigation
+  dashboard: 'لوحة التحكم',
+  profile: 'الملف الشخصي',
+  settings: 'الإعدادات',
 };

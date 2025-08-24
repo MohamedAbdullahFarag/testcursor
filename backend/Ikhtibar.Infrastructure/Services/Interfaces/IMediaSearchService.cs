@@ -17,12 +17,12 @@ public interface IMediaSearchService
     /// <summary>
     /// Gets similar media files based on content or metadata
     /// </summary>
-    Task<IEnumerable<MediaFileDto>> GetSimilarMediaAsync(Guid mediaId);
+    Task<IEnumerable<MediaFileDto>> GetSimilarMediaAsync(int mediaId);
 
     /// <summary>
     /// Gets recently uploaded or modified media files
     /// </summary>
-    Task<IEnumerable<MediaFileDto>> GetRecentMediaAsync(int count = 10, Guid? userId = null);
+    Task<IEnumerable<MediaFileDto>> GetRecentMediaAsync(int count = 10, int? userId = null);
 
     /// <summary>
     /// Gets media files by tags
@@ -32,22 +32,22 @@ public interface IMediaSearchService
     /// <summary>
     /// Gets media files by category with pagination
     /// </summary>
-    Task<PagedResult<MediaFileDto>> GetMediaByCategoryAsync(Guid categoryId, int page = 1, int pageSize = 20);
+    Task<PagedResult<MediaFileDto>> GetMediaByCategoryAsync(int categoryId, int page = 1, int pageSize = 20);
 
     /// <summary>
     /// Gets media files by collection
     /// </summary>
-    Task<IEnumerable<MediaFileDto>> GetMediaByCollectionAsync(Guid collectionId);
+    Task<IEnumerable<MediaFileDto>> GetMediaByCollectionAsync(int collectionId);
 
     /// <summary>
     /// Gets media files by user with pagination
     /// </summary>
-    Task<PagedResult<MediaFileDto>> GetMediaByUserAsync(Guid userId, int page = 1, int pageSize = 20);
+    Task<PagedResult<MediaFileDto>> GetMediaByUserAsync(int userId, int page = 1, int pageSize = 20);
 
     /// <summary>
     /// Gets media files by type with pagination
     /// </summary>
-    Task<PagedResult<MediaFileDto>> GetMediaByTypeAsync(MediaFileType mediaType, int page = 1, int pageSize = 20);
+    Task<PagedResult<MediaFileDto>> GetMediaByTypeAsync(Shared.Enums.MediaType mediaType, int page = 1, int pageSize = 20);
 
     /// <summary>
     /// Gets media files by date range

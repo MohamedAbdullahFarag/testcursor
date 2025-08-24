@@ -1,0 +1,60 @@
+﻿using Ikhtibar.Shared.Entities;
+
+namespace Ikhtibar.Core.Repositories.Interfaces;
+
+/// <summary>
+/// Repository interface for Role entity operations
+/// Following SRP: ONLY Role data operations
+/// </summary>
+public interface IRoleRepository : IBaseRepository<Role>
+{
+    /// <summary>
+    /// Get role by code
+    /// </summary>
+    /// <param name="code">Role code</param>
+    /// <returns>Role entity if found, null otherwise</returns>
+    Task<Role?> GetByCodeAsync(string code);
+
+    /// <summary>
+    /// Get role by name
+    /// </summary>
+    /// <param name="name">Role name</param>
+    /// <returns>Role entity if found, null otherwise</returns>
+    Task<Role?> GetByNameAsync(string name);
+
+    /// <summary>
+    /// Get all active roles
+    /// </summary>
+    /// <returns>Collection of active roles</returns>
+    Task<IEnumerable<Role>> GetActiveRolesAsync();
+
+    /// <summary>
+    /// Get roles by user ID
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <returns>Collection of roles assigned to the user</returns>
+    Task<IEnumerable<Role>> GetByUserIdAsync(int userId);
+
+    /// <summary>
+    /// Check if role code exists
+    /// </summary>
+    /// <param name="code">Role code to check</param>
+    /// <param name="excludeRoleId">Role ID to exclude from check (for updates)</param>
+    /// <returns>True if role code exists, false otherwise</returns>
+    Task<bool> CodeExistsAsync(string code, int? excludeRoleId = null);
+
+    /// <summary>
+    /// Check if role code is in use
+    /// </summary>
+    /// <param name="code">Role code to check</param>
+    /// <param name="excludeRoleId">Role ID to exclude from check (for updates)</param>
+    /// <returns>True if role code is in use, false otherwise</returns>
+    Task<bool> IsRoleCodeInUseAsync(string code, int? excludeRoleId = null);
+
+    /// <summary>
+    /// Create a new role
+    /// </summary>
+    /// <param name="role">Role entity to create</param>
+    /// <returns>Created role entity</returns>
+    Task<Role> CreateAsync(Role role);
+}

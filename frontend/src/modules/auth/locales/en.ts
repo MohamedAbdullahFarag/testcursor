@@ -1,60 +1,41 @@
-export const authEn = {
-  login: {
-    title: 'Sign in to your account',
-    subtitle: 'Enter your credentials to access the platform',
-    emailLabel: 'Email address',
-    emailPlaceholder: 'Enter your email',
-    passwordLabel: 'Password',
-    passwordPlaceholder: 'Enter your password',
-    signIn: 'Sign in',
-    signingIn: 'Signing in...',
-    forgotPassword: 'Forgot your password?',
-    needHelp: 'Need help?',
-  },
-  logout: {
-    title: 'Logout',
-    button: 'Logout',
-    confirmMessage: 'Are you sure you want to logout?',
-    success: 'Successfully logged out',
-  },
-  validation: {
-    emailRequired: 'Email is required',
-    emailInvalid: 'Please enter a valid email address',
-    passwordRequired: 'Password is required',
-    passwordMinLength: 'Password must be at least 6 characters',
-    invalidCredentials: 'Invalid email or password',
-  },
-  errors: {
-    loginFailed: 'Login failed. Please check your credentials.',
-    networkError: 'Network error. Please check your connection.',
-    sessionExpired: 'Your session has expired. Please login again.',
-    unauthorized: 'You are not authorized to access this resource.',
-    serverError: 'Server error. Please try again later.',
-  },
-  success: {
-    loginSuccess: 'Successfully logged in',
-    logoutSuccess: 'Successfully logged out',
-  },
-  common: {
-    loading: 'Loading...',
-    error: 'Error',
-    success: 'Success',
-    cancel: 'Cancel',
-    confirm: 'Confirm',
-    back: 'Back',
-    next: 'Next',
-    submit: 'Submit',
-    save: 'Save',
-    delete: 'Delete',
-    edit: 'Edit',
-    view: 'View',
-    search: 'Search',
-    filter: 'Filter',
-    sort: 'Sort',
-    refresh: 'Refresh',
-    close: 'Close',
-    open: 'Open',
-    yes: 'Yes',
-    no: 'No',
-  },
+export default {
+  // Form labels
+  email: 'Email',
+  password: 'Password',
+  
+  // Actions
+  login: 'Sign In',
+  logout: 'Sign Out',
+  
+  // Validation messages
+  emailRequired: 'Email is required',
+  emailInvalid: 'Please enter a valid email address',
+  passwordRequired: 'Password is required',
+  passwordMinLength: 'Password must be at least 6 characters',
+  
+  // Error messages
+  invalidCredentials: 'Invalid email or password',
+  loginFailed: 'Login failed. Please try again.',
+  logoutFailed: 'Logout failed. Please try again.',
+  
+  // Success messages
+  loginSuccess: 'Login successful',
+  logoutSuccess: 'Logout successful',
+  
+  // Placeholders
+  emailPlaceholder: 'Enter your email',
+  passwordPlaceholder: 'Enter your password',
+  
+  // Loading states
+  signingIn: 'Signing in...',
+  signingOut: 'Signing out...',
+  
+  // Links
+  forgotPassword: 'Forgot your password?',
+  needHelp: 'Need help?',
+  
+  // Navigation
+  dashboard: 'Dashboard',
+  profile: 'Profile',
+  settings: 'Settings',
 };

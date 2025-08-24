@@ -13,7 +13,7 @@ public class OidcTokenResponse
     /// <summary>
     /// Refresh token received from OIDC provider
     /// </summary>
-    public string? RefreshToken { get; set; }
+    public string? RefreshTokens { get; set; }
 
     /// <summary>
     /// ID token received from OIDC provider

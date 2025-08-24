@@ -1,8 +1,9 @@
 -- =============================================
 -- data_safe.sql - Safe seed data insertion with duplicate handling
+-- Updated for Ikhtibar comprehensive schema
 -- =============================================
 
-USE [Ekhtibar];
+USE [Ikhtibar];
 GO
 
 PRINT 'Starting safe data insertion...';
@@ -16,8 +17,8 @@ MERGE INTO dbo.QuestionTypes AS Target
 USING (VALUES
     ('MultipleChoice'),('MultipleResponse'),('TrueFalse'),
     ('FillInBlank'),('ShortAnswer'),('Essay'),
-    ('Matching'),('Ordering'),('Coding'),
-    ('MathEquation'),('FillInTheBlank')
+    ('Matching'),('Ordering'),('Hotspot'),
+    ('DragAndDrop'),('Numeric')
 ) AS Source(Name)
 ON Target.Name = Source.Name
 WHEN NOT MATCHED THEN
@@ -28,7 +29,7 @@ GO
 PRINT 'Inserting DifficultyLevels...';
 MERGE INTO dbo.DifficultyLevels AS Target
 USING (VALUES
-    ('Easy'),('Medium'),('Hard'),('VeryHard')
+    ('Beginner'),('Easy'),('Medium'),('Hard'),('Expert')
 ) AS Source(Name)
 ON Target.Name = Source.Name
 WHEN NOT MATCHED THEN
@@ -39,8 +40,8 @@ GO
 PRINT 'Inserting QuestionStatuses...';
 MERGE INTO dbo.QuestionStatuses AS Target
 USING (VALUES
-    ('Draft'),('PendingReview'),('Reviewed'),
-    ('Published'),('Archived'),('Rejected')
+    ('Draft'),('UnderReview'),('Approved'),
+    ('Published'),('Archived'),('Rejected'),('NeedsRevision')
 ) AS Source(Name)
 ON Target.Name = Source.Name
 WHEN NOT MATCHED THEN
@@ -51,7 +52,7 @@ GO
 PRINT 'Inserting MediaTypes...';
 MERGE INTO dbo.MediaTypes AS Target
 USING (VALUES
-    ('Image'),('Audio'),('Video'),('Document')
+    ('Image'),('Audio'),('Video'),('Document'),('Interactive')
 ) AS Source(Name)
 ON Target.Name = Source.Name
 WHEN NOT MATCHED THEN
@@ -62,9 +63,7 @@ GO
 PRINT 'Inserting TreeNodeTypes...';
 MERGE INTO dbo.TreeNodeTypes AS Target
 USING (VALUES
-    ('Root'),('Subject'),('Topic'),('Subtopic'),
-    ('TagGroup'),('Custom'),('Stage'),('Grade'),
-    ('Semester'),('Unit'),('Lesson')
+    ('Root'),('Stage'),('Grade'),('Semester'),('Subject')
 ) AS Source(Name)
 ON Target.Name = Source.Name
 WHEN NOT MATCHED THEN
@@ -75,14 +74,10 @@ GO
 PRINT 'Inserting Roles...';
 MERGE INTO dbo.Roles AS Target
 USING (VALUES
-    ('system-admin',    'SystemAdmin',     'Full access to all features',                  1),
-    ('reviewer',        'Reviewer',        'Can review and approve questions',             1),
-    ('creator',         'Creator',         'Can create and manage questions',              1),
-    ('grader',          'Grader',          'Can grade exams and assessments',              1),
-    ('student',         'Student',         'Can take exams and view results',              1),
-    ('exam-manager',    'ExamManager',     'Can create and manage exams',                  1),
-    ('supervisor',      'Supervisor',      'Can supervise exam sessions',                  1),
-    ('quality-reviewer','QualityReviewer', 'Ensures educational standards are met',        1)
+    ('ADMIN',           'Administrator',   'System administrator with full access',        1),
+    ('TEACHER',         'Teacher',         'Teacher with question and exam management access', 1),
+    ('STUDENT',         'Student',         'Student with exam taking access',              1),
+    ('REVIEWER',        'Reviewer',        'Content reviewer with validation access',      1)
 ) AS Source(Code, Name, Description, IsSystemRole)
 ON Target.Code = Source.Code
 WHEN NOT MATCHED THEN
@@ -94,44 +89,36 @@ GO
 PRINT 'Inserting Permissions...';
 MERGE INTO dbo.Permissions AS Target
 USING (VALUES
-    -- UserManagement
-    ('user-management.view-users',        'ViewUsers',          'View users',                     'UserManagement'),
-    ('user-management.create-user',       'CreateUser',         'Create new users',               'UserManagement'),
-    ('user-management.edit-user',         'EditUser',           'Edit existing users',            'UserManagement'),
-    ('user-management.delete-user',       'DeleteUser',         'Delete users',                   'UserManagement'),
-    ('user-management.manage-roles',      'ManageRoles',        'Manage role assignments',        'UserManagement'),
-    ('user-management.manage-permissions','ManagePermissions',  'Manage permissions',             'UserManagement'),
-    ('user-management.impersonate-user',  'ImpersonateUser',    'Impersonate other users',        'UserManagement'),
-    ('user-management.view-audit-logs',   'ViewAuditLogs',      'View audit trails',              'UserManagement'),
-    -- QuestionBank
-    ('question-bank.view-questions',   'ViewQuestions',         'View question bank entries',     'QuestionBank'),
-    ('question-bank.create-question',  'CreateQuestion',        'Create questions',               'QuestionBank'),
-    ('question-bank.edit-question',    'EditQuestion',          'Edit questions',                 'QuestionBank'),
-    ('question-bank.delete-question',  'DeleteQuestion',        'Delete questions',               'QuestionBank'),
-    ('question-bank.review-question',  'ReviewQuestion',        'Review submitted questions',     'QuestionBank'),
-    ('question-bank.approve-question', 'ApproveQuestion',       'Approve questions for exams',    'QuestionBank'),
-    ('question-bank.import-questions', 'ImportQuestions',       'Bulk import questions',          'QuestionBank'),
-    ('question-bank.export-questions', 'ExportQuestions',       'Bulk export questions',          'QuestionBank'),
-    ('question-bank.manage-categories','ManageCategories',      'Manage question categories',     'QuestionBank'),
-    -- ExamManagement
-    ('exam-management.view-exams',     'ViewExams',             'View exams',                     'ExamManagement'),
-    ('exam-management.create-exam',    'CreateExam',            'Create new exams',               'ExamManagement'),
-    ('exam-management.edit-exam',      'EditExam',              'Edit exams',                     'ExamManagement'),
-    ('exam-management.delete-exam',    'DeleteExam',            'Delete exams',                   'ExamManagement'),
-    ('exam-management.publish-exam',   'PublishExam',           'Publish exams',                  'ExamManagement'),
-    ('exam-management.grade-exam',     'GradeExam',             'Grade exams',                    'ExamManagement'),
-    ('exam-management.view-results',   'ViewResults',           'View results',                   'ExamManagement'),
-    ('exam-management.supervise-exam', 'SuperviseExam',         'Supervise exam sessions',        'ExamManagement'),
-    -- System
-    ('system.manage-settings',      'ManageSettings',           'Manage system settings',         'System'),
-    ('system.view-logs',            'ViewLogs',                 'View system logs',               'System'),
-    ('system.manage-integrations',  'ManageIntegrations',       'Manage integrations',            'System'),
-    ('system.manage-tree-nodes',    'ManageTreeNodes',          'Manage tree structure',          'System'),
-    -- Reporting
-    ('reporting.view-reports',           'ViewReports',         'View reports',                   'Reporting'),
-    ('reporting.generate-reports',       'GenerateReports',     'Generate new reports',           'Reporting'),
-    ('reporting.export-reports',         'ExportReports',       'Export report files',            'Reporting'),
-    ('reporting.manage-report-templates','ManageReportTemplates','Manage report templates',       'Reporting')
+    -- User Management
+    ('USERS_VIEW', 'View Users', 'View user information', 'User Management'),
+    ('USERS_CREATE', 'Create Users', 'Create new users', 'User Management'),
+    ('USERS_EDIT', 'Edit Users', 'Edit existing users', 'User Management'),
+    ('USERS_DELETE', 'Delete Users', 'Delete users', 'User Management'),
+    
+    -- Question Management
+    ('QUESTIONS_VIEW', 'View Questions', 'View questions', 'Question Management'),
+    ('QUESTIONS_CREATE', 'Create Questions', 'Create new questions', 'Question Management'),
+    ('QUESTIONS_EDIT', 'Edit Questions', 'Edit existing questions', 'Question Management'),
+    ('QUESTIONS_DELETE', 'Delete Questions', 'Delete questions', 'Question Management'),
+    ('QUESTIONS_VALIDATE', 'Validate Questions', 'Validate question content', 'Question Management'),
+    
+    -- Media Management
+    ('MEDIA_VIEW', 'View Media', 'View media files', 'Media Management'),
+    ('MEDIA_UPLOAD', 'Upload Media', 'Upload media files', 'Media Management'),
+    ('MEDIA_EDIT', 'Edit Media', 'Edit media metadata', 'Media Management'),
+    ('MEDIA_DELETE', 'Delete Media', 'Delete media files', 'Media Management'),
+    
+    -- Exam Management
+    ('EXAMS_VIEW', 'View Exams', 'View exams', 'Exam Management'),
+    ('EXAMS_CREATE', 'Create Exams', 'Create new exams', 'Exam Management'),
+    ('EXAMS_EDIT', 'Edit Exams', 'Edit existing exams', 'Exam Management'),
+    ('EXAMS_DELETE', 'Delete Exams', 'Delete exams', 'Exam Management'),
+    ('EXAMS_TAKE', 'Take Exams', 'Take exams', 'Exam Management'),
+    
+    -- System Administration
+    ('SYSTEM_CONFIG', 'System Configuration', 'Configure system settings', 'System Administration'),
+    ('AUDIT_LOGS', 'View Audit Logs', 'View system audit logs', 'System Administration'),
+    ('BACKUP_RESTORE', 'Backup and Restore', 'Perform system backup and restore', 'System Administration')
 ) AS Source(Code, Name, Description, Category)
 ON Target.Code = Source.Code
 WHEN NOT MATCHED THEN
@@ -142,130 +129,57 @@ GO
 -- 4) Seed RolePermissions (junction) with duplicate checks
 PRINT 'Inserting RolePermissions...';
 
--- Delete existing role permissions to prevent duplicates
--- SystemAdmin gets every permission
-PRINT 'Assigning permissions to SystemAdmin role...';
+-- Admin gets all permissions
+PRINT 'Assigning permissions to Admin role...';
 INSERT INTO dbo.RolePermissions (RoleId, PermissionId, AssignedAt)
 SELECT r.RoleId, p.PermissionId, SYSUTCDATETIME()
 FROM dbo.Roles r
 CROSS JOIN dbo.Permissions p
-WHERE r.Code = 'system-admin'
+WHERE r.Code = 'ADMIN'
 AND NOT EXISTS (
     SELECT 1 FROM dbo.RolePermissions rp 
     WHERE rp.RoleId = r.RoleId AND rp.PermissionId = p.PermissionId
 );
 GO
 
--- Reviewer: review & approve question bank
-PRINT 'Assigning permissions to Reviewer role...';
+-- Teacher gets question and media management permissions
+PRINT 'Assigning permissions to Teacher role...';
 INSERT INTO dbo.RolePermissions (RoleId, PermissionId, AssignedAt)
 SELECT r.RoleId, p.PermissionId, SYSUTCDATETIME()
 FROM dbo.Roles r
 JOIN dbo.Permissions p 
-  ON p.Code IN ('question-bank.review-question','question-bank.approve-question')
-WHERE r.Code = 'reviewer'
+  ON p.Category IN ('Question Management', 'Media Management', 'Exam Management')
+  AND p.Code != 'EXAMS_TAKE'
+WHERE r.Code = 'TEACHER'
 AND NOT EXISTS (
     SELECT 1 FROM dbo.RolePermissions rp 
     WHERE rp.RoleId = r.RoleId AND rp.PermissionId = p.PermissionId
 );
 GO
 
--- Creator: create/edit/import/export questions
-PRINT 'Assigning permissions to Creator role...';
-INSERT INTO dbo.RolePermissions (RoleId, PermissionId, AssignedAt)
-SELECT r.RoleId, p.PermissionId, SYSUTCDATETIME()
-FROM dbo.Roles r
-JOIN dbo.Permissions p 
-  ON p.Code IN (
-    'question-bank.create-question',
-    'question-bank.edit-question',
-    'question-bank.import-questions',
-    'question-bank.export-questions'
-  )
-WHERE r.Code = 'creator'
-AND NOT EXISTS (
-    SELECT 1 FROM dbo.RolePermissions rp 
-    WHERE rp.RoleId = r.RoleId AND rp.PermissionId = p.PermissionId
-);
-GO
-
--- Grader: grade exams
-PRINT 'Assigning permissions to Grader role...';
-INSERT INTO dbo.RolePermissions (RoleId, PermissionId, AssignedAt)
-SELECT r.RoleId, p.PermissionId, SYSUTCDATETIME()
-FROM dbo.Roles r
-JOIN dbo.Permissions p 
-  ON p.Code = 'exam-management.grade-exam'
-WHERE r.Code = 'grader'
-AND NOT EXISTS (
-    SELECT 1 FROM dbo.RolePermissions rp 
-    WHERE rp.RoleId = r.RoleId AND rp.PermissionId = p.PermissionId
-);
-GO
-
--- ExamManager: full exam management
-PRINT 'Assigning permissions to ExamManager role...';
-INSERT INTO dbo.RolePermissions (RoleId, PermissionId, AssignedAt)
-SELECT r.RoleId, p.PermissionId, SYSUTCDATETIME()
-FROM dbo.Roles r
-JOIN dbo.Permissions p 
-  ON p.Code IN (
-    'exam-management.view-exams',
-    'exam-management.create-exam',
-    'exam-management.edit-exam',
-    'exam-management.delete-exam',
-    'exam-management.publish-exam',
-    'exam-management.view-results'
-  )
-WHERE r.Code = 'exam-manager'
-AND NOT EXISTS (
-    SELECT 1 FROM dbo.RolePermissions rp 
-    WHERE rp.RoleId = r.RoleId AND rp.PermissionId = p.PermissionId
-);
-GO
-
--- Supervisor: supervise exam sessions
-PRINT 'Assigning permissions to Supervisor role...';
-INSERT INTO dbo.RolePermissions (RoleId, PermissionId, AssignedAt)
-SELECT r.RoleId, p.PermissionId, SYSUTCDATETIME()
-FROM dbo.Roles r
-JOIN dbo.Permissions p 
-  ON p.Code = 'exam-management.supervise-exam'
-WHERE r.Code = 'supervisor'
-AND NOT EXISTS (
-    SELECT 1 FROM dbo.RolePermissions rp 
-    WHERE rp.RoleId = r.RoleId AND rp.PermissionId = p.PermissionId
-);
-GO
-
--- Student: view exams & results
+-- Student gets exam taking permissions
 PRINT 'Assigning permissions to Student role...';
 INSERT INTO dbo.RolePermissions (RoleId, PermissionId, AssignedAt)
 SELECT r.RoleId, p.PermissionId, SYSUTCDATETIME()
 FROM dbo.Roles r
 JOIN dbo.Permissions p 
-  ON p.Code IN (
-    'exam-management.view-exams',
-    'exam-management.view-results'
-  )
-WHERE r.Code = 'student'
+  ON p.Code IN ('EXAMS_VIEW', 'EXAMS_TAKE', 'QUESTIONS_VIEW')
+WHERE r.Code = 'STUDENT'
 AND NOT EXISTS (
     SELECT 1 FROM dbo.RolePermissions rp 
     WHERE rp.RoleId = r.RoleId AND rp.PermissionId = p.PermissionId
 );
 GO
 
--- QualityReviewer: manage categories & view reports
-PRINT 'Assigning permissions to QualityReviewer role...';
+-- Reviewer gets validation permissions
+PRINT 'Assigning permissions to Reviewer role...';
 INSERT INTO dbo.RolePermissions (RoleId, PermissionId, AssignedAt)
 SELECT r.RoleId, p.PermissionId, SYSUTCDATETIME()
 FROM dbo.Roles r
 JOIN dbo.Permissions p 
-  ON p.Code IN (
-    'question-bank.manage-categories',
-    'reporting.view-reports'
-  )
-WHERE r.Code = 'quality-reviewer'
+  ON p.Category IN ('Question Management', 'Media Management')
+  AND p.Code IN ('QUESTIONS_VIEW', 'QUESTIONS_VALIDATE', 'MEDIA_VIEW')
+WHERE r.Code = 'REVIEWER'
 AND NOT EXISTS (
     SELECT 1 FROM dbo.RolePermissions rp 
     WHERE rp.RoleId = r.RoleId AND rp.PermissionId = p.PermissionId
@@ -477,6 +391,83 @@ FROM dbo.TreeNodes tn
 JOIN CTE c ON tn.TreeNodeId = c.TreeNodeId;
 GO
 
+-- ================ Seed New Schema Tables ================
+PRINT 'Seeding new schema tables...';
+
+-- Seed QuestionBanks
+PRINT 'Inserting QuestionBanks...';
+MERGE INTO dbo.QuestionBanks AS Target
+USING (VALUES
+    ('Mathematics Bank', 'Comprehensive mathematics question bank for all grade levels', 1, 1),
+    ('Science Bank', 'Science questions covering physics, chemistry, and biology', 1, 1),
+    ('Language Bank', 'Arabic and English language questions', 1, 1),
+    ('History Bank', 'History and social studies questions', 1, 1)
+) AS Source(Name, Description, IsPublic, IsActive)
+ON Target.Name = Source.Name
+WHEN NOT MATCHED THEN
+    INSERT (Name, Description, IsPublic, IsActive, CreatedAt)
+    VALUES (Source.Name, Source.Description, Source.IsPublic, Source.IsActive, SYSUTCDATETIME());
+GO
+
+-- Seed QuestionBankCategories
+PRINT 'Inserting QuestionBankCategories...';
+DECLARE @mathBankId INT = (SELECT Id FROM dbo.QuestionBanks WHERE Name = 'Mathematics Bank');
+
+MERGE INTO dbo.QuestionBankCategories AS Target
+USING (VALUES
+    (@mathBankId, 'Elementary Math', 'Mathematics for grades 1-5', NULL, 1, 1),
+    (@mathBankId, 'Middle School Math', 'Mathematics for grades 6-8', NULL, 2, 1),
+    (@mathBankId, 'High School Math', 'Mathematics for grades 9-12', NULL, 3, 1)
+) AS Source(QuestionBankId, Name, Description, ParentCategoryId, SortOrder, IsActive)
+ON Target.Name = Source.Name
+WHEN NOT MATCHED THEN
+    INSERT (QuestionBankId, Name, Description, ParentCategoryId, SortOrder, IsActive, CreatedAt)
+    VALUES (Source.QuestionBankId, Source.Name, Source.Description, Source.ParentCategoryId, Source.SortOrder, Source.IsActive, SYSUTCDATETIME());
+GO
+
+-- Seed MediaCategories
+PRINT 'Inserting MediaCategories...';
+MERGE INTO dbo.MediaCategories AS Target
+USING (VALUES
+    ('Educational Images', 'Images for educational content', NULL, 'image', '#4A90E2', 1, 1),
+    ('Educational Videos', 'Videos for educational content', NULL, 'video', '#E74C3C', 2, 1),
+    ('Documents', 'PDF and document files', NULL, 'document', '#27AE60', 3, 1),
+    ('Audio Files', 'Audio recordings and podcasts', NULL, 'audio', '#F39C12', 4, 1)
+) AS Source(Name, Description, ParentCategoryId, Icon, Color, SortOrder, IsActive)
+ON Target.Name = Source.Name
+WHEN NOT MATCHED THEN
+    INSERT (Name, Description, ParentCategoryId, Icon, Color, SortOrder, IsActive, CreatedAt)
+    VALUES (Source.Name, Source.Description, Source.ParentCategoryId, Source.Icon, Source.Color, Source.SortOrder, Source.IsActive, SYSUTCDATETIME());
+GO
+
+-- Seed NotificationTemplates
+PRINT 'Inserting NotificationTemplates...';
+MERGE INTO dbo.NotificationTemplates AS Target
+USING (VALUES
+    ('Welcome Email', 'Welcome email for new users', 'email', 'Welcome to Ikhtibar', 'Welcome {{FirstName}}! Thank you for joining Ikhtibar.', '{"FirstName": "string"}', 1),
+    ('Question Approved', 'Notification when question is approved', 'in-app', NULL, 'Your question "{{QuestionTitle}}" has been approved!', '{"QuestionTitle": "string"}', 1),
+    ('Exam Reminder', 'Reminder for upcoming exams', 'push', NULL, 'Reminder: You have an exam tomorrow at {{ExamTime}}', '{"ExamTime": "string"}', 1)
+) AS Source(Name, Description, TemplateType, Subject, Body, Variables, IsActive)
+ON Target.Name = Source.Name
+WHEN NOT MATCHED THEN
+    INSERT (Name, Description, TemplateType, Subject, Body, Variables, IsActive, CreatedAt)
+    VALUES (Source.Name, Source.Description, Source.TemplateType, Source.Subject, Source.Body, Source.Variables, Source.IsActive, SYSUTCDATETIME());
+GO
+
+-- Seed QuestionTemplates
+PRINT 'Inserting QuestionTemplates...';
+MERGE INTO dbo.QuestionTemplates AS Target
+USING (VALUES
+    ('Multiple Choice Template', 'Standard multiple choice question template', '{"type": "multiple-choice", "options": 4, "allowMultiple": false}', 1),
+    ('True/False Template', 'True or false question template', '{"type": "true-false", "options": 2}', 1),
+    ('Fill in the Blank Template', 'Fill in the blank question template', '{"type": "fill-blank", "maxLength": 100}', 1)
+) AS Source(Name, Description, TemplateData, IsActive)
+ON Target.Name = Source.Name
+WHEN NOT MATCHED THEN
+    INSERT (Name, Description, TemplateData, IsActive, CreatedAt)
+    VALUES (Source.Name, Source.Description, Source.TemplateData, Source.IsActive, SYSUTCDATETIME());
+GO
+
 -- Insert questions with proper column names
 PRINT 'Inserting questions...';
 DECLARE @leafId INT, @stageCode NVARCHAR(10), @q INT, @questionText NVARCHAR(500);
@@ -576,14 +567,10 @@ GO
 PRINT 'Inserting users...';
 MERGE INTO dbo.Users AS Target
 USING (VALUES
-    ('sysadmin',        'sysadmin@example.com',        'System',   'Admin',        '123123', NULL, 'ar', 1),
-    ('reviewer',        'reviewer@example.com',        'Content',  'Reviewer',     '123123', NULL, 'ar', 1),
-    ('creator',         'creator@example.com',         'Content',  'Creator',      '123123', NULL, 'ar', 1),
-    ('grader',          'grader@example.com',          'Exam',     'Grader',       '123123', NULL, 'ar', 1),
-    ('student1',        'student1@example.com',        'Student',  'One',          '123123', NULL, 'ar', 1),
-    ('exammanager',     'exammanager@example.com',     'Exam',     'Manager',      '123123', NULL, 'ar', 1),
-    ('supervisor',      'supervisor@example.com',      'Session',  'Supervisor',   '123123', NULL, 'ar', 1),
-    ('qualityreviewer', 'qualityreviewer@example.com', 'Quality',  'Reviewer',     '123123', NULL, 'ar', 1)
+    ('admin',           'admin@ikhtibar.com',          'System',   'Administrator', '123123', NULL, 'en', 1),
+    ('teacher1',        'teacher1@ikhtibar.com',       'Content',  'Teacher',      '123123', NULL, 'ar', 1),
+    ('student1',        'student1@ikhtibar.com',       'Student',  'One',          '123123', NULL, 'ar', 1),
+    ('reviewer1',       'reviewer1@ikhtibar.com',      'Content',  'Reviewer',     '123123', NULL, 'ar', 1)
 ) AS Source(Username, Email, FirstName, LastName, PasswordHash, PhoneNumber, PreferredLanguage, IsActive)
 ON Target.Username = Source.Username
 WHEN NOT MATCHED THEN
@@ -593,124 +580,65 @@ GO
 
 -- Assign users to roles with duplicate checks
 PRINT 'Assigning users to roles...';
--- sysadmin -> system-admin
+
+-- admin -> ADMIN
 IF NOT EXISTS (
     SELECT 1 FROM dbo.UserRoles ur
     JOIN dbo.Users u ON ur.UserId = u.UserId
     JOIN dbo.Roles r ON ur.RoleId = r.RoleId
-    WHERE u.Username = 'sysadmin' AND r.Code = 'system-admin'
+    WHERE u.Username = 'admin' AND r.Code = 'ADMIN'
 )
 BEGIN
     INSERT INTO dbo.UserRoles (UserId, RoleId, AssignedAt)
     SELECT u.UserId, r.RoleId, SYSUTCDATETIME()
     FROM dbo.Users u
     CROSS JOIN dbo.Roles r
-    WHERE u.Username = 'sysadmin' AND r.Code = 'system-admin';
+    WHERE u.Username = 'admin' AND r.Code = 'ADMIN';
 END;
 
--- reviewer -> reviewer
+-- teacher1 -> TEACHER
 IF NOT EXISTS (
     SELECT 1 FROM dbo.UserRoles ur
     JOIN dbo.Users u ON ur.UserId = u.UserId
     JOIN dbo.Roles r ON ur.RoleId = r.RoleId
-    WHERE u.Username = 'reviewer' AND r.Code = 'reviewer'
+    WHERE u.Username = 'teacher1' AND r.Code = 'TEACHER'
 )
 BEGIN
     INSERT INTO dbo.UserRoles (UserId, RoleId, AssignedAt)
     SELECT u.UserId, r.RoleId, SYSUTCDATETIME()
     FROM dbo.Users u
     CROSS JOIN dbo.Roles r
-    WHERE u.Username = 'reviewer' AND r.Code = 'reviewer';
+    WHERE u.Username = 'teacher1' AND r.Code = 'TEACHER';
 END;
 
--- creator -> creator
+-- student1 -> STUDENT
 IF NOT EXISTS (
     SELECT 1 FROM dbo.UserRoles ur
     JOIN dbo.Users u ON ur.UserId = u.UserId
     JOIN dbo.Roles r ON ur.RoleId = r.RoleId
-    WHERE u.Username = 'creator' AND r.Code = 'creator'
+    WHERE u.Username = 'student1' AND r.Code = 'STUDENT'
 )
 BEGIN
     INSERT INTO dbo.UserRoles (UserId, RoleId, AssignedAt)
     SELECT u.UserId, r.RoleId, SYSUTCDATETIME()
     FROM dbo.Users u
     CROSS JOIN dbo.Roles r
-    WHERE u.Username = 'creator' AND r.Code = 'creator';
+    WHERE u.Username = 'student1' AND r.Code = 'STUDENT';
 END;
 
--- grader -> grader
+-- reviewer1 -> REVIEWER
 IF NOT EXISTS (
     SELECT 1 FROM dbo.UserRoles ur
     JOIN dbo.Users u ON ur.UserId = u.UserId
     JOIN dbo.Roles r ON ur.RoleId = r.RoleId
-    WHERE u.Username = 'grader' AND r.Code = 'grader'
+    WHERE u.Username = 'reviewer1' AND r.Code = 'REVIEWER'
 )
 BEGIN
     INSERT INTO dbo.UserRoles (UserId, RoleId, AssignedAt)
     SELECT u.UserId, r.RoleId, SYSUTCDATETIME()
     FROM dbo.Users u
     CROSS JOIN dbo.Roles r
-    WHERE u.Username = 'grader' AND r.Code = 'grader';
-END;
-
--- student1 -> student
-IF NOT EXISTS (
-    SELECT 1 FROM dbo.UserRoles ur
-    JOIN dbo.Users u ON ur.UserId = u.UserId
-    JOIN dbo.Roles r ON ur.RoleId = r.RoleId
-    WHERE u.Username = 'student1' AND r.Code = 'student'
-)
-BEGIN
-    INSERT INTO dbo.UserRoles (UserId, RoleId, AssignedAt)
-    SELECT u.UserId, r.RoleId, SYSUTCDATETIME()
-    FROM dbo.Users u
-    CROSS JOIN dbo.Roles r
-    WHERE u.Username = 'student1' AND r.Code = 'student';
-END;
-
--- exammanager -> exam-manager
-IF NOT EXISTS (
-    SELECT 1 FROM dbo.UserRoles ur
-    JOIN dbo.Users u ON ur.UserId = u.UserId
-    JOIN dbo.Roles r ON ur.RoleId = r.RoleId
-    WHERE u.Username = 'exammanager' AND r.Code = 'exam-manager'
-)
-BEGIN
-    INSERT INTO dbo.UserRoles (UserId, RoleId, AssignedAt)
-    SELECT u.UserId, r.RoleId, SYSUTCDATETIME()
-    FROM dbo.Users u
-    CROSS JOIN dbo.Roles r
-    WHERE u.Username = 'exammanager' AND r.Code = 'exam-manager';
-END;
-
--- supervisor -> supervisor
-IF NOT EXISTS (
-    SELECT 1 FROM dbo.UserRoles ur
-    JOIN dbo.Users u ON ur.UserId = u.UserId
-    JOIN dbo.Roles r ON ur.RoleId = r.RoleId
-    WHERE u.Username = 'supervisor' AND r.Code = 'supervisor'
-)
-BEGIN
-    INSERT INTO dbo.UserRoles (UserId, RoleId, AssignedAt)
-    SELECT u.UserId, r.RoleId, SYSUTCDATETIME()
-    FROM dbo.Users u
-    CROSS JOIN dbo.Roles r
-    WHERE u.Username = 'supervisor' AND r.Code = 'supervisor';
-END;
-
--- qualityreviewer -> quality-reviewer
-IF NOT EXISTS (
-    SELECT 1 FROM dbo.UserRoles ur
-    JOIN dbo.Users u ON ur.UserId = u.UserId
-    JOIN dbo.Roles r ON ur.RoleId = r.RoleId
-    WHERE u.Username = 'qualityreviewer' AND r.Code = 'quality-reviewer'
-)
-BEGIN
-    INSERT INTO dbo.UserRoles (UserId, RoleId, AssignedAt)
-    SELECT u.UserId, r.RoleId, SYSUTCDATETIME()
-    FROM dbo.Users u
-    CROSS JOIN dbo.Roles r
-    WHERE u.Username = 'qualityreviewer' AND r.Code = 'quality-reviewer';
+    WHERE u.Username = 'reviewer1' AND r.Code = 'REVIEWER';
 END;
 
 -- =============================================
@@ -1512,4 +1440,61 @@ VALUES
     (@question39_id, N'الدالة ليس لها نقطة تقاطع مع محور y', 0);
 
 PRINT 'Successfully inserted demo questions and answers!';
+GO
+
+-- ================ Final Seed Data ================
+PRINT 'Adding final seed data...';
+
+-- Seed some sample media files
+PRINT 'Inserting sample media files...';
+DECLARE @imageMediaTypeId INT = (SELECT MediaTypeId FROM dbo.MediaTypes WHERE Name = 'Image');
+DECLARE @adminUserId INT = (SELECT UserId FROM dbo.Users WHERE Username = 'admin');
+
+MERGE INTO dbo.MediaFiles AS Target
+USING (VALUES
+    ('math_diagram.png', 'math_diagram_001.png', 'image/png', 1024000, '/media/images/math/', @imageMediaTypeId, 1, 'Mathematics Diagram', 'Educational diagram for mathematics', 'Alt text for math diagram', 'abc123hash', NULL, @adminUserId, 1),
+    ('science_video.mp4', 'science_video_001.mp4', 'video/mp4', 52428800, '/media/videos/science/', 3, 1, 'Science Experiment Video', 'Video demonstration of science experiment', 'Alt text for science video', 'def456hash', NULL, @adminUserId, 1)
+) AS Source(OriginalFileName, StorageFileName, ContentType, FileSizeBytes, StoragePath, MediaType, Status, Title, Description, AltText, FileHash, CategoryId, UploadedBy, IsPublic)
+ON Target.OriginalFileName = Source.OriginalFileName
+WHEN NOT MATCHED THEN
+    INSERT (OriginalFileName, StorageFileName, ContentType, FileSizeBytes, StoragePath, MediaType, Status, Title, Description, AltText, FileHash, CategoryId, UploadedBy, IsPublic, CreatedAt)
+    VALUES (Source.OriginalFileName, Source.StorageFileName, Source.ContentType, Source.FileSizeBytes, Source.StoragePath, Source.MediaType, Source.Status, Source.Title, Source.Description, Source.AltText, Source.FileHash, Source.CategoryId, Source.UploadedBy, Source.IsPublic, SYSUTCDATIME());
+GO
+
+-- Seed some sample questions for the new schema
+PRINT 'Inserting sample questions for new schema...';
+DECLARE @multipleChoiceId INT = (SELECT QuestionTypeId FROM dbo.QuestionTypes WHERE Name = 'MultipleChoice');
+DECLARE @easyId INT = (SELECT DifficultyLevelId FROM dbo.DifficultyLevels WHERE Name = 'Easy');
+DECLARE @publishedId INT = (SELECT QuestionStatusId FROM dbo.QuestionStatuses WHERE Name = 'Published');
+
+-- Get a sample tree node for questions
+DECLARE @sampleTreeNodeId INT = (SELECT TOP 1 TreeNodeId FROM dbo.TreeNodes WHERE Name LIKE '%Mathematics%');
+
+IF @sampleTreeNodeId IS NOT NULL
+BEGIN
+    MERGE INTO dbo.Questions AS Target
+    USING (VALUES
+        (N'What is 2 + 2?', @multipleChoiceId, @easyId, @publishedId, @sampleTreeNodeId, N'2 + 2 = 4', 30, 1),
+        (N'What is the capital of Saudi Arabia?', @multipleChoiceId, @easyId, @publishedId, @sampleTreeNodeId, N'Riyadh is the capital of Saudi Arabia', 30, 1)
+    ) AS Source(Text, QuestionTypeId, DifficultyLevelId, QuestionStatusId, PrimaryTreeNodeId, Solution, EstimatedTimeSec, Points)
+    ON Target.Text = Source.Text
+    WHEN NOT MATCHED THEN
+        INSERT (Text, QuestionTypeId, DifficultyLevelId, QuestionStatusId, PrimaryTreeNodeId, Solution, EstimatedTimeSec, Points, CreatedAt)
+        VALUES (Source.Text, Source.QuestionTypeId, Source.DifficultyLevelId, Source.QuestionStatusId, Source.PrimaryTreeNodeId, Source.Solution, Source.EstimatedTimeSec, Source.Points, SYSUTCDATETIME());
+END
+GO
+
+-- ================ Completion Message ================
+PRINT '=============================================';
+PRINT 'Ikhtibar Database Seed Data Complete!';
+PRINT '=============================================';
+PRINT 'Successfully seeded:';
+PRINT '- Lookup tables (QuestionTypes, DifficultyLevels, etc.)';
+PRINT '- Core tables (Users, Roles, Permissions)';
+PRINT '- Media management tables';
+PRINT '- Question management tables';
+PRINT '- Notification and audit tables';
+PRINT '- Sample data for testing';
+PRINT '=============================================';
+PRINT 'Database is ready for use!';
 GO

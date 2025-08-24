@@ -1,204 +1,221 @@
-using Ikhtibar.Core.Entities;
-using Ikhtibar.Core.Repositories.Interfaces;
-using Ikhtibar.Shared.DTOs;
-using Ikhtibar.Shared.Enums;
-using Ikhtibar.Shared.Models;
-using Microsoft.Data.SqlClient;
 using Dapper;
-using System.Data;
+
+using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
-using MediaType = Ikhtibar.Core.Entities.MediaType;
-using MediaStatus = Ikhtibar.Core.Entities.MediaStatus;
+using System.Text;
+using MediaType = Ikhtibar.Shared.Entities.MediaType;
+using MediaStatus = Ikhtibar.Shared.Entities.MediaStatus;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Models;
 
 namespace Ikhtibar.Infrastructure.Repositories;
 
 /// <summary>
-/// Media file repository implementation
-/// Handles data access for media files using Dapper
+/// Repository implementation for MediaFile entity operations using Dapper
+/// Provides specialized methods for media file management with optimized queries
 /// </summary>
 public class MediaFileRepository : BaseRepository<MediaFile>, IMediaFileRepository
 {
-    public MediaFileRepository(
-        IDbConnectionFactory connectionFactory,
-        ILogger<MediaFileRepository> logger) 
+    private new readonly ILogger<MediaFileRepository> _logger;
+
+    public MediaFileRepository(IDbConnectionFactory connectionFactory, ILogger<MediaFileRepository> logger)
         : base(connectionFactory, logger, "MediaFiles", "Id")
     {
+        _logger = logger;
     }
 
-    public async Task<MediaFile?> GetByIdWithDetailsAsync(int id)
-    {
-        try
-        {
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = @"
-                SELECT mf.*, mc.*, mm.*, mt.*
-                FROM MediaFiles mf
-                LEFT JOIN MediaCategories mc ON mf.CategoryId = mc.Id
-                LEFT JOIN MediaMetadata mm ON mf.Id = mm.MediaFileId
-                LEFT JOIN MediaThumbnails mt ON mf.Id = mt.MediaFileId
-                WHERE mf.Id = @Id AND mf.IsDeleted = 0";
-
-            var mediaFileDictionary = new Dictionary<int, MediaFile>();
-            var categoryDictionary = new Dictionary<int, MediaCategory>();
-            var metadataDictionary = new Dictionary<int, MediaMetadata>();
-            var thumbnailDictionary = new Dictionary<int, MediaThumbnail>();
-
-            await connection.QueryAsync<MediaFile, MediaCategory, MediaMetadata, MediaThumbnail, MediaFile>(
-                sql,
-                (mediaFile, category, metadata, thumbnail) =>
-                {
-                    if (!mediaFileDictionary.TryGetValue(mediaFile.Id, out var existingMediaFile))
-                    {
-                        existingMediaFile = mediaFile;
-                        mediaFileDictionary.Add(mediaFile.Id, existingMediaFile);
-                    }
-
-                    if (category != null && !categoryDictionary.ContainsKey(category.Id))
-                    {
-                        existingMediaFile.Category = category;
-                        categoryDictionary.Add(category.Id, category);
-                    }
-
-                    if (metadata != null && !metadataDictionary.ContainsKey(metadata.Id))
-                    {
-                        existingMediaFile.ExtendedMetadata.Add(metadata);
-                        metadataDictionary.Add(metadata.Id, metadata);
-                    }
-
-                    if (thumbnail != null && !thumbnailDictionary.ContainsKey(thumbnail.Id))
-                    {
-                        existingMediaFile.Thumbnails.Add(thumbnail);
-                        thumbnailDictionary.Add(thumbnail.Id, thumbnail);
-                    }
-
-                    return existingMediaFile;
-                },
-                new { Id = id },
-                splitOn: "Id"
-            );
-
-            return mediaFileDictionary.Values.FirstOrDefault();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting media file with details by ID {Id}", id);
-            throw;
-        }
-    }
-
+    /// <summary>
+    /// Gets media files by category
+    /// </summary>
     public async Task<IEnumerable<MediaFile>> GetByCategoryAsync(int categoryId, bool includeSubcategories = false)
     {
+        using var scope = _logger.BeginScope("Getting media files by category {CategoryId}, includeSubcategories: {IncludeSubcategories}", categoryId, includeSubcategories);
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = @"
-                SELECT * FROM MediaFiles 
-                WHERE CategoryId = @CategoryId AND IsDeleted = 0
-                ORDER BY CreatedAt DESC";
             
-            return await connection.QueryAsync<MediaFile>(sql, new { CategoryId = categoryId });
+            string sql;
+            if (includeSubcategories)
+            {
+                sql = @"
+                    WITH CategoryHierarchy AS (
+                        SELECT Id FROM MediaCategories WHERE Id = @CategoryId
+                        UNION ALL
+                        SELECT c.Id FROM MediaCategories c
+                        INNER JOIN CategoryHierarchy ch ON c.ParentCategoryId = ch.Id
+                    )
+                    SELECT m.* FROM MediaFiles m
+                    INNER JOIN CategoryHierarchy ch ON m.CategoryId = ch.Id
+                    WHERE m.IsDeleted = 0
+                    ORDER BY m.CreatedAt DESC";
+            }
+            else
+            {
+                sql = @"
+                    SELECT * FROM MediaFiles 
+                    WHERE CategoryId = @CategoryId AND IsDeleted = 0
+                    ORDER BY CreatedAt DESC";
+            }
+            
+            var result = await connection.QueryAsync<MediaFile>(sql, new { CategoryId = categoryId });
+            
+            _logger.LogInformation("Retrieved {Count} media files for category {CategoryId}", result.Count(), categoryId);
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting media files by category {CategoryId}", categoryId);
+            _logger.LogError(ex, "Error retrieving media files by category {CategoryId}", categoryId);
             throw;
         }
     }
 
-    public async Task<IEnumerable<MediaFile>> GetByTypeAsync(MediaType mediaType, int offset = 0, int limit = 50, string? orderBy = null)
+    /// <summary>
+    /// Gets media files by type with pagination
+    /// </summary>
+    public async Task<IEnumerable<MediaFile>> GetByTypeAsync(Shared.Enums.MediaType mediaType, int offset = 0, int limit = 50, string? orderBy = null)
     {
+        using var scope = _logger.BeginScope("Getting media files by type {MediaType}", mediaType);
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = @"
+            
+            var orderClause = string.IsNullOrEmpty(orderBy) ? "ORDER BY CreatedAt DESC" : $"ORDER BY {orderBy}";
+            
+            var sql = $@"
                 SELECT * FROM MediaFiles 
                 WHERE MediaType = @MediaType AND IsDeleted = 0
-                ORDER BY " + (orderBy ?? "CreatedAt DESC") + @"
+                {orderClause}
                 OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY";
             
-            return await connection.QueryAsync<MediaFile>(sql, new { MediaType = mediaType, Offset = offset, Limit = limit });
+            var result = await connection.QueryAsync<MediaFile>(sql, new
+            {
+                MediaType = mediaType,
+                Offset = offset,
+                Limit = limit
+            });
+            
+            _logger.LogInformation("Retrieved {Count} media files for type {MediaType}", result.Count(), mediaType);
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting media files by type {MediaType}", mediaType);
+            _logger.LogError(ex, "Error retrieving media files by type {MediaType}", mediaType);
             throw;
         }
     }
 
+    /// <summary>
+    /// Gets media files by status
+    /// </summary>
     public async Task<IEnumerable<MediaFile>> GetByStatusAsync(MediaStatus status)
     {
+        using var scope = _logger.BeginScope("Getting media files by status {Status}", status);
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
+            
             var sql = @"
                 SELECT * FROM MediaFiles 
                 WHERE Status = @Status AND IsDeleted = 0
                 ORDER BY CreatedAt DESC";
             
-            return await connection.QueryAsync<MediaFile>(sql, new { Status = status });
+            var result = await connection.QueryAsync<MediaFile>(sql, new { Status = status });
+            
+            _logger.LogInformation("Retrieved {Count} media files with status {Status}", result.Count(), status);
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting media files by status {Status}", status);
+            _logger.LogError(ex, "Error retrieving media files by status {Status}", status);
             throw;
         }
     }
 
+    /// <summary>
+    /// Gets media files uploaded by a specific user
+    /// </summary>
     public async Task<IEnumerable<MediaFile>> GetByUserAsync(int userId, int offset = 0, int limit = 50)
     {
+        using var scope = _logger.BeginScope("Getting media files by user {UserId}", userId);
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
+            
             var sql = @"
                 SELECT * FROM MediaFiles 
-                WHERE UploadedBy = @UserId AND IsDeleted = 0
-                ORDER BY CreatedAt DESC 
+                WHERE UploadedByUserId = @UserId AND IsDeleted = 0
+                ORDER BY CreatedAt DESC
                 OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY";
             
-            return await connection.QueryAsync<MediaFile>(sql, new { UserId = userId, Offset = offset, Limit = limit });
+            var result = await connection.QueryAsync<MediaFile>(sql, new
+            {
+                UserId = userId,
+                Offset = offset,
+                Limit = limit
+            });
+            
+            _logger.LogInformation("Retrieved {Count} media files for user {UserId}", result.Count(), userId);
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting media files by user {UserId}", userId);
+            _logger.LogError(ex, "Error retrieving media files by user {UserId}", userId);
             throw;
         }
     }
 
-    public async Task<IEnumerable<MediaFile>> SearchAsync(string searchTerm, MediaType? mediaType = null, int? categoryId = null, int offset = 0, int limit = 50)
+    /// <summary>
+    /// Searches media files by filename, title, or description
+    /// </summary>
+    public async Task<IEnumerable<MediaFile>> SearchAsync(string searchTerm, Shared.Enums.MediaType? mediaType = null, int? categoryId = null, int offset = 0, int limit = 50)
     {
+        using var scope = _logger.BeginScope("Searching media files with term {SearchTerm}", searchTerm);
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
-            var whereConditions = new List<string> { "IsDeleted = 0" };
+            
+            var sql = new StringBuilder(@"
+                SELECT DISTINCT m.* FROM MediaFiles m
+                LEFT JOIN MediaMetadata mm ON m.Id = mm.MediaFileId
+                WHERE m.IsDeleted = 0 AND (
+                    m.FileName LIKE @SearchTerm OR 
+                    m.Title LIKE @SearchTerm OR 
+                    m.Description LIKE @SearchTerm OR
+                    mm.Value LIKE @SearchTerm
+                )");
+            
             var parameters = new DynamicParameters();
-
-            whereConditions.Add("(OriginalFileName LIKE @SearchTerm OR Description LIKE @SearchTerm OR Tags LIKE @SearchTerm)");
-            parameters.Add("@SearchTerm", $"%{searchTerm}%");
-
+            parameters.Add("SearchTerm", $"%{searchTerm}%");
+            
             if (mediaType.HasValue)
             {
-                whereConditions.Add("MediaType = @MediaType");
-                parameters.Add("@MediaType", mediaType.Value);
+                sql.Append(" AND m.MediaType = @MediaType");
+                parameters.Add("MediaType", mediaType.Value);
             }
-
+            
             if (categoryId.HasValue)
             {
-                whereConditions.Add("CategoryId = @CategoryId");
-                parameters.Add("@CategoryId", categoryId.Value);
+                sql.Append(" AND m.CategoryId = @CategoryId");
+                parameters.Add("CategoryId", categoryId.Value);
             }
-
-            var whereClause = string.Join(" AND ", whereConditions);
-            var sql = $@"
-                SELECT * FROM MediaFiles 
-                WHERE {whereClause}
-                ORDER BY CreatedAt DESC
-                OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY";
-
-            parameters.Add("@Offset", offset);
-            parameters.Add("@Limit", limit);
-
-            return await connection.QueryAsync<MediaFile>(sql, parameters);
+            
+            sql.Append(@"
+                ORDER BY m.CreatedAt DESC
+                OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY");
+            
+            parameters.Add("Offset", offset);
+            parameters.Add("Limit", limit);
+            
+            var result = await connection.QueryAsync<MediaFile>(sql.ToString(), parameters);
+            
+            _logger.LogInformation("Found {Count} media files matching search term {SearchTerm}", result.Count(), searchTerm);
+            return result;
         }
         catch (Exception ex)
         {
@@ -207,13 +224,123 @@ public class MediaFileRepository : BaseRepository<MediaFile>, IMediaFileReposito
         }
     }
 
-    public async Task<IEnumerable<MediaFile>> GetByHashAsync(string fileHash)
+    /// <summary>
+    /// Searches media files using the search DTO with advanced filtering and pagination
+    /// </summary>
+    public async Task<PagedResult<MediaFile>> SearchAsync(MediaFileSearchDto searchDto)
     {
+        using var scope = _logger.BeginScope("Searching media files with advanced criteria");
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = "SELECT * FROM MediaFiles WHERE FileHash = @FileHash AND IsDeleted = 0";
-            return await connection.QueryAsync<MediaFile>(sql, new { FileHash = fileHash });
+            
+            var sql = new StringBuilder(@"
+                SELECT DISTINCT m.* FROM MediaFiles m
+                LEFT JOIN MediaMetadata mm ON m.Id = mm.MediaFileId
+                WHERE m.IsDeleted = 0");
+            
+            var parameters = new DynamicParameters();
+            
+            // Add search term filter
+            if (!string.IsNullOrEmpty(searchDto.SearchTerm))
+            {
+                sql.Append(" AND (m.FileName LIKE @SearchTerm OR m.Title LIKE @SearchTerm OR m.Description LIKE @SearchTerm OR mm.Value LIKE @SearchTerm)");
+                parameters.Add("SearchTerm", $"%{searchDto.SearchTerm}%");
+            }
+            
+            // Add media type filter
+            if (searchDto.MediaType.HasValue)
+            {
+                sql.Append(" AND m.MediaType = @MediaType");
+                parameters.Add("MediaType", searchDto.MediaType.Value);
+            }
+            
+            // Add category filter
+            if (searchDto.CategoryId.HasValue)
+            {
+                sql.Append(" AND m.CategoryId = @CategoryId");
+                parameters.Add("CategoryId", searchDto.CategoryId.Value);
+            }
+            
+            // Add status filter
+            if (searchDto.Status.HasValue)
+            {
+                sql.Append(" AND m.Status = @Status");
+                parameters.Add("Status", searchDto.Status.Value);
+            }
+            
+            // Add user filter
+            if (searchDto.UploadedByUserId.HasValue)
+            {
+                sql.Append(" AND m.UploadedByUserId = @UploadedByUserId");
+                parameters.Add("UploadedByUserId", searchDto.UploadedByUserId.Value);
+            }
+            
+            // Add date range filters
+            if (searchDto.CreatedAfter.HasValue)
+            {
+                sql.Append(" AND m.CreatedAt >= @CreatedAfter");
+                parameters.Add("CreatedAfter", searchDto.CreatedAfter.Value);
+            }
+            
+            if (searchDto.CreatedBefore.HasValue)
+            {
+                sql.Append(" AND m.CreatedAt <= @CreatedBefore");
+                parameters.Add("CreatedBefore", searchDto.CreatedBefore.Value);
+            }
+            
+            // Get total count for pagination
+            var countSql = sql.ToString().Replace("SELECT DISTINCT m.*", "SELECT COUNT(DISTINCT m.Id)");
+            var totalCount = await connection.QuerySingleAsync<int>(countSql, parameters);
+            
+            // Add sorting and pagination
+            var sortDirection = searchDto.SortDescending ? "DESC" : "ASC";
+            var sortBy = string.IsNullOrEmpty(searchDto.SortBy) ? "m.CreatedAt" : $"m.{searchDto.SortBy}";
+            
+            sql.Append($" ORDER BY {sortBy} {sortDirection}");
+            sql.Append(" OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY");
+            
+            parameters.Add("Offset", (searchDto.Page - 1) * searchDto.PageSize);
+            parameters.Add("PageSize", searchDto.PageSize);
+            
+            var result = await connection.QueryAsync<MediaFile>(sql.ToString(), parameters);
+            
+            return new PagedResult<MediaFile>
+            {
+                Items = result,
+                TotalCount = totalCount,
+                PageNumber = searchDto.Page,
+                PageSize = searchDto.PageSize
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching media files with advanced criteria");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets media files by file hash
+    /// </summary>
+    public async Task<IEnumerable<MediaFile>> GetByHashAsync(string fileHash)
+    {
+        using var scope = _logger.BeginScope("Getting media files by hash {FileHash}", fileHash);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT * FROM MediaFiles 
+                WHERE FileHash = @FileHash AND IsDeleted = 0
+                ORDER BY CreatedAt ASC";
+            
+            var result = await connection.QueryAsync<MediaFile>(sql, new { FileHash = fileHash });
+            
+            _logger.LogInformation("Found {Count} media files with hash {FileHash}", result.Count(), fileHash);
+            return result;
         }
         catch (Exception ex)
         {
@@ -222,606 +349,360 @@ public class MediaFileRepository : BaseRepository<MediaFile>, IMediaFileReposito
         }
     }
 
-    public async Task<IEnumerable<MediaFile>> GetPendingProcessingAsync(int limit = 100)
-    {
-        try
-        {
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = @"
-                SELECT * FROM MediaFiles 
-                WHERE Status = @Status AND IsDeleted = 0
-                ORDER BY CreatedAt ASC
-                OFFSET 0 ROWS FETCH NEXT @Limit ROWS ONLY";
-            
-            return await connection.QueryAsync<MediaFile>(sql, new { Status = MediaStatus.Uploading, Limit = limit });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting pending processing media files with limit {Limit}", limit);
-            throw;
-        }
-    }
-
+    /// <summary>
+    /// Gets media files by content type
+    /// </summary>
     public async Task<IEnumerable<MediaFile>> GetByContentTypeAsync(string contentType)
     {
+        using var scope = _logger.BeginScope("Getting media files by content type {ContentType}", contentType);
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
+            
             var sql = @"
                 SELECT * FROM MediaFiles 
-                WHERE MimeType = @ContentType AND IsDeleted = 0
+                WHERE ContentType = @ContentType AND IsDeleted = 0
                 ORDER BY CreatedAt DESC";
             
-            return await connection.QueryAsync<MediaFile>(sql, new { ContentType = contentType });
+            var result = await connection.QueryAsync<MediaFile>(sql, new { ContentType = contentType });
+            
+            _logger.LogInformation("Retrieved {Count} media files with content type {ContentType}", result.Count(), contentType);
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting media files by content type {ContentType}", contentType);
+            _logger.LogError(ex, "Error retrieving media files by content type {ContentType}", contentType);
             throw;
         }
     }
 
+    /// <summary>
+    /// Gets recently uploaded media files
+    /// </summary>
     public async Task<IEnumerable<MediaFile>> GetRecentAsync(int days = 7, int limit = 50)
     {
+        using var scope = _logger.BeginScope("Getting recent uploads from last {Days} days", days);
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
-            var fromDate = DateTime.UtcNow.AddDays(-days);
-            var sql = @"
-                SELECT * FROM MediaFiles 
-                WHERE CreatedAt >= @FromDate AND IsDeleted = 0
-                ORDER BY CreatedAt DESC
-                OFFSET 0 ROWS FETCH NEXT @Limit ROWS ONLY";
             
-            return await connection.QueryAsync<MediaFile>(sql, new { FromDate = fromDate, Limit = limit });
+            var sql = @"
+                SELECT TOP(@Limit) * FROM MediaFiles 
+                WHERE CreatedAt >= DATEADD(DAY, -@Days, GETUTCDATE()) AND IsDeleted = 0
+                ORDER BY CreatedAt DESC";
+            
+            var result = await connection.QueryAsync<MediaFile>(sql, new { Days = days, Limit = limit });
+            
+            _logger.LogInformation("Retrieved {Count} recent uploads from last {Days} days", result.Count(), days);
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting recent media files for {Days} days with limit {Limit}", days, limit);
+            _logger.LogError(ex, "Error retrieving recent uploads from last {Days} days", days);
             throw;
         }
     }
 
+    /// <summary>
+    /// Gets most accessed media files
+    /// </summary>
     public async Task<IEnumerable<MediaFile>> GetMostAccessedAsync(int limit = 50)
     {
+        using var scope = _logger.BeginScope("Getting most accessed media files");
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
+            
             var sql = @"
                 SELECT TOP(@Limit) * FROM MediaFiles 
                 WHERE IsDeleted = 0
-                ORDER BY AccessCount DESC, CreatedAt DESC";
+                ORDER BY AccessCount DESC, LastAccessedAt DESC";
             
-            return await connection.QueryAsync<MediaFile>(sql, new { Limit = limit });
+            var result = await connection.QueryAsync<MediaFile>(sql, new { Limit = limit });
+            
+            _logger.LogInformation("Retrieved {Count} most accessed media files", result.Count());
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting most accessed media files with limit {Limit}", limit);
+            _logger.LogError(ex, "Error retrieving most accessed media files");
             throw;
         }
     }
 
-    public async Task<IEnumerable<MediaFile>> GetLargerThanAsync(long sizeBytes)
+    /// <summary>
+    /// Gets media files that need processing
+    /// </summary>
+    public async Task<IEnumerable<MediaFile>> GetPendingProcessingAsync(int limit = 100)
     {
+        using var scope = _logger.BeginScope("Getting media files pending processing");
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            var sql = @"
+                SELECT TOP(@Limit) * FROM MediaFiles 
+                WHERE Status = @PendingStatus AND IsDeleted = 0
+                ORDER BY CreatedAt ASC";
+            
+            var result = await connection.QueryAsync<MediaFile>(sql, new { PendingStatus = MediaStatus.Processing, Limit = limit });
+            
+            _logger.LogInformation("Retrieved {Count} media files pending processing", result.Count());
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving media files pending processing");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets media files larger than specified size
+    /// </summary>
+    public async Task<IEnumerable<MediaFile>> GetLargerThanAsync(long sizeBytes)
+    {
+        using var scope = _logger.BeginScope("Getting media files larger than {SizeBytes} bytes", sizeBytes);
+        
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
             var sql = @"
                 SELECT * FROM MediaFiles 
                 WHERE FileSizeBytes > @SizeBytes AND IsDeleted = 0
                 ORDER BY FileSizeBytes DESC";
             
-            return await connection.QueryAsync<MediaFile>(sql, new { SizeBytes = sizeBytes });
+            var result = await connection.QueryAsync<MediaFile>(sql, new { SizeBytes = sizeBytes });
+            
+            _logger.LogInformation("Retrieved {Count} media files larger than {SizeBytes} bytes", result.Count(), sizeBytes);
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting media files larger than {SizeBytes} bytes", sizeBytes);
+            _logger.LogError(ex, "Error retrieving media files larger than {SizeBytes} bytes", sizeBytes);
             throw;
         }
     }
 
-    public async Task<Dictionary<MediaType, long>> GetStorageStatsByTypeAsync()
+    /// <summary>
+    /// Gets storage statistics grouped by media type
+    /// </summary>
+    public async Task<Dictionary<Shared.Enums.MediaType, long>> GetStorageStatsByTypeAsync()
     {
+        using var scope = _logger.BeginScope("Getting storage statistics by media type");
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
+            
             var sql = @"
                 SELECT MediaType, SUM(FileSizeBytes) as TotalSize
                 FROM MediaFiles 
                 WHERE IsDeleted = 0
                 GROUP BY MediaType";
             
-            var results = await connection.QueryAsync(sql);
-            var stats = new Dictionary<MediaType, long>();
+            var result = await connection.QueryAsync<(Shared.Enums.MediaType MediaType, long TotalSize)>(sql);
             
-            foreach (var row in results)
-            {
-                var mediaType = (MediaType)row.MediaType;
-                var totalSize = (long)row.TotalSize;
-                stats[mediaType] = totalSize;
-            }
+            var stats = result.ToDictionary(x => x.MediaType, x => x.TotalSize);
             
+            _logger.LogInformation("Retrieved storage statistics for {TypeCount} media types", stats.Count);
             return stats;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting storage stats by media type");
+            _logger.LogError(ex, "Error retrieving storage statistics by media type");
             throw;
         }
     }
 
+    /// <summary>
+    /// Gets storage statistics grouped by category
+    /// </summary>
     public async Task<Dictionary<int, long>> GetStorageStatsByCategoryAsync()
     {
+        using var scope = _logger.BeginScope("Getting storage statistics by category");
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
+            
             var sql = @"
                 SELECT CategoryId, SUM(FileSizeBytes) as TotalSize
                 FROM MediaFiles 
                 WHERE IsDeleted = 0 AND CategoryId IS NOT NULL
                 GROUP BY CategoryId";
             
-            var results = await connection.QueryAsync(sql);
-            var stats = new Dictionary<int, long>();
+            var result = await connection.QueryAsync<(int CategoryId, long TotalSize)>(sql);
             
-            foreach (var row in results)
-            {
-                var categoryId = (int)row.CategoryId;
-                var totalSize = (long)row.TotalSize;
-                stats[categoryId] = totalSize;
-            }
+            var stats = result.ToDictionary(x => x.CategoryId, x => x.TotalSize);
             
+            _logger.LogInformation("Retrieved storage statistics for {CategoryCount} categories", stats.Count);
             return stats;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting storage stats by category");
+            _logger.LogError(ex, "Error retrieving storage statistics by category");
             throw;
         }
     }
 
+    /// <summary>
+    /// Updates the access count and last accessed time
+    /// </summary>
     public async Task<bool> UpdateAccessInfoAsync(int mediaFileId)
     {
+        using var scope = _logger.BeginScope("Updating access info for media file {MediaFileId}", mediaFileId);
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
+            
             var sql = @"
                 UPDATE MediaFiles 
-                SET AccessCount = AccessCount + 1, LastAccessedAt = @LastAccessedAt
-                WHERE Id = @Id";
+                SET AccessCount = ISNULL(AccessCount, 0) + 1, 
+                    LastAccessedAt = GETUTCDATE(),
+                    ModifiedAt = GETUTCDATE()
+                WHERE Id = @MediaFileId AND IsDeleted = 0";
             
-            var result = await connection.ExecuteAsync(sql, new 
-            { 
-                Id = mediaFileId, 
-                LastAccessedAt = DateTime.UtcNow 
-            });
-            return result > 0;
+            var result = await connection.ExecuteAsync(sql, new { MediaFileId = mediaFileId });
+            
+            var success = result > 0;
+            _logger.LogInformation("Updated access info for media file {MediaFileId}: {Success}", mediaFileId, success);
+            return success;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating access info for media file {Id}", mediaFileId);
+            _logger.LogError(ex, "Error updating access info for media file {MediaFileId}", mediaFileId);
             throw;
         }
     }
 
-    public async Task<bool> UpdateStatusAsync(int id, MediaStatus status)
+    /// <summary>
+    /// Updates the media file status
+    /// </summary>
+    public async Task<bool> UpdateStatusAsync(int mediaFileId, MediaStatus status)
     {
+        using var scope = _logger.BeginScope("Updating status to {Status} for media file {MediaFileId}", status, mediaFileId);
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = "UPDATE MediaFiles SET Status = @Status, ModifiedAt = @ModifiedAt WHERE Id = @Id";
-            var result = await connection.ExecuteAsync(sql, new { Id = id, Status = status, ModifiedAt = DateTime.UtcNow });
-            return result > 0;
-        }
-        catch (Exception ex)
-        {
-            // Log error
-            throw;
-        }
-    }
-
-    public async Task<bool> UpdateProcessingStatusAsync(int id, MediaStatus status, string? errorMessage = null)
-    {
-        try
-        {
-            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
             var sql = @"
                 UPDATE MediaFiles 
-                SET Status = @Status, ModifiedAt = @ModifiedAt, MetadataJson = @MetadataJson
-                WHERE Id = @Id AND IsDeleted = 0";
+                SET Status = @Status, ModifiedAt = GETUTCDATE()
+                WHERE Id = @MediaFileId AND IsDeleted = 0";
             
-            var metadata = new { ErrorMessage = errorMessage };
-            var result = await connection.ExecuteAsync(sql, new
-            {
-                Id = id,
-                Status = status,
-                ModifiedAt = DateTime.UtcNow,
-                MetadataJson = System.Text.Json.JsonSerializer.Serialize(metadata)
-            });
-
-            return result > 0;
+            var result = await connection.ExecuteAsync(sql, new { Status = status, MediaFileId = mediaFileId });
+            
+            var success = result > 0;
+            _logger.LogInformation("Updated status to {Status} for media file {MediaFileId}: {Success}", status, mediaFileId, success);
+            return success;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating processing status for media file {Id} to {Status}", id, status);
+            _logger.LogError(ex, "Error updating status to {Status} for media file {MediaFileId}", status, mediaFileId);
             throw;
         }
     }
 
+    /// <summary>
+    /// Bulk updates media file status
+    /// </summary>
     public async Task<int> BulkUpdateStatusAsync(IEnumerable<int> mediaFileIds, MediaStatus status)
     {
+        using var scope = _logger.BeginScope("Bulk updating status to {Status} for {Count} media files", status, mediaFileIds.Count());
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
+            
             var sql = @"
                 UPDATE MediaFiles 
-                SET Status = @Status, ModifiedAt = @ModifiedAt 
-                WHERE Id IN @Ids";
+                SET Status = @Status, ModifiedAt = GETUTCDATE()
+                WHERE Id IN @MediaFileIds AND IsDeleted = 0";
             
-            var result = await connection.ExecuteAsync(sql, new 
-            { 
-                Status = status, 
-                ModifiedAt = DateTime.UtcNow,
-                Ids = mediaFileIds.ToArray()
-            });
+            var result = await connection.ExecuteAsync(sql, new { Status = status, MediaFileIds = mediaFileIds });
+            
+            _logger.LogInformation("Updated status to {Status} for {UpdatedCount} media files", status, result);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error bulk updating status for {Count} media files to {Status}", mediaFileIds.Count(), status);
+            _logger.LogError(ex, "Error bulk updating status to {Status}", status);
             throw;
         }
     }
 
-    public async Task<IEnumerable<MediaFile>> GetInactiveAsync(int days = 30, int limit = 100)
+    /// <summary>
+    /// Gets media files that haven't been accessed recently
+    /// </summary>
+    public async Task<IEnumerable<MediaFile>> GetInactiveAsync(int days = 365, int limit = 1000)
     {
+        using var scope = _logger.BeginScope("Getting inactive media files (>{Days} days, limit {Limit})", days, limit);
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
+            
             var sql = @"
                 SELECT TOP(@Limit) * FROM MediaFiles 
-                WHERE LastAccessedAt < @FromDate AND IsDeleted = 0
-                ORDER BY LastAccessedAt ASC";
+                WHERE (LastAccessedAt IS NULL OR LastAccessedAt < DATEADD(DAY, -@Days, GETUTCDATE()))
+                  AND IsDeleted = 0
+                ORDER BY LastAccessedAt ASC, CreatedAt ASC";
             
-            var fromDate = DateTime.UtcNow.AddDays(-days);
-            return await connection.QueryAsync<MediaFile>(sql, new { FromDate = fromDate, Limit = limit });
+            var result = await connection.QueryAsync<MediaFile>(sql, new { Days = days, Limit = limit });
+            
+            _logger.LogInformation("Retrieved {Count} inactive media files", result.Count());
+            return result;
         }
         catch (Exception ex)
         {
-            // Log error
+            _logger.LogError(ex, "Error retrieving inactive media files");
             throw;
         }
     }
 
+    /// <summary>
+    /// Checks if a file with the same hash already exists
+    /// </summary>
     public async Task<bool> IsDuplicateAsync(string fileHash, int? excludeId = null)
     {
+        using var scope = _logger.BeginScope("Checking if file is duplicate by hash {FileHash}", fileHash);
+        
         try
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = "SELECT COUNT(*) FROM MediaFiles WHERE FileHash = @FileHash AND IsDeleted = 0";
+            
+            var sql = @"
+                SELECT COUNT(1) 
+                FROM MediaFiles 
+                WHERE FileHash = @FileHash AND IsDeleted = 0";
+            
             var parameters = new DynamicParameters();
-            parameters.Add("@FileHash", fileHash);
+            parameters.Add("FileHash", fileHash);
             
             if (excludeId.HasValue)
             {
                 sql += " AND Id != @ExcludeId";
-                parameters.Add("@ExcludeId", excludeId.Value);
+                parameters.Add("ExcludeId", excludeId.Value);
             }
             
-            var count = await connection.ExecuteScalarAsync<int>(sql, parameters);
-            return count > 0;
+            var count = await connection.QuerySingleAsync<int>(sql, parameters);
+            var isDuplicate = count > 0;
+            
+            _logger.LogInformation("File is duplicate by hash {FileHash}: {IsDuplicate}", fileHash, isDuplicate);
+            return isDuplicate;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking for duplicate file with hash {FileHash}", fileHash);
+            _logger.LogError(ex, "Error checking if file is duplicate by hash {FileHash}", fileHash);
             throw;
         }
     }
-
-    // Additional methods for the search service
-    public async Task<(IEnumerable<MediaFile> items, int totalCount)> SearchAsync(MediaFileSearchDto searchDto)
-    {
-        try
-        {
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            var whereConditions = new List<string> { "IsDeleted = 0" };
-            var parameters = new DynamicParameters();
-
-            if (!string.IsNullOrEmpty(searchDto.SearchTerm))
-            {
-                whereConditions.Add("(OriginalFileName LIKE @SearchTerm OR Description LIKE @SearchTerm OR Tags LIKE @SearchTerm)");
-                parameters.Add("@SearchTerm", $"%{searchDto.SearchTerm}%");
-            }
-
-            if (searchDto.MediaType.HasValue)
-            {
-                whereConditions.Add("MediaType = @MediaType");
-                parameters.Add("@MediaType", searchDto.MediaType.Value);
-            }
-
-            if (searchDto.CategoryId.HasValue)
-            {
-                whereConditions.Add("CategoryId = @CategoryId");
-                parameters.Add("@CategoryId", searchDto.CategoryId.Value);
-            }
-
-            if (searchDto.Status.HasValue)
-            {
-                whereConditions.Add("Status = @Status");
-                parameters.Add("@Status", searchDto.Status.Value);
-            }
-
-            if (searchDto.UploadedByUserId.HasValue)
-            {
-                whereConditions.Add("UploadedByUserId = @UploadedByUserId");
-                parameters.Add("@UploadedByUserId", searchDto.UploadedByUserId.Value);
-            }
-
-            if (searchDto.CreatedAfter.HasValue)
-            {
-                whereConditions.Add("CreatedAt >= @CreatedAfter");
-                parameters.Add("@CreatedAfter", searchDto.CreatedAfter.Value);
-            }
-
-            if (searchDto.CreatedBefore.HasValue)
-            {
-                whereConditions.Add("CreatedAt <= @CreatedBefore");
-                parameters.Add("@CreatedBefore", searchDto.CreatedBefore.Value);
-            }
-
-            var whereClause = string.Join(" AND ", whereConditions);
-            var orderBy = searchDto.SortDescending ? $"{searchDto.SortBy} DESC" : searchDto.SortBy;
-
-            return await GetPagedAsync(searchDto);
-        }
-        catch (Exception ex)
-        {
-            // Log error
-            throw;
-        }
-    }
-
-    public async Task<IEnumerable<MediaFile>> GetSimilarMediaAsync(int mediaId, int maxResults = 10)
-    {
-        try
-        {
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = @"
-                SELECT TOP(@MaxResults) mf.*
-                FROM MediaFiles mf
-                INNER JOIN MediaFiles current ON current.CategoryId = mf.CategoryId
-                WHERE current.Id = @MediaId 
-                AND mf.Id != @MediaId 
-                AND mf.IsDeleted = 0
-                ORDER BY mf.CreatedAt DESC";
-            
-            return await connection.QueryAsync<MediaFile>(sql, new { MediaId = mediaId, MaxResults = maxResults });
-        }
-        catch (Exception ex)
-        {
-            // Log error
-            throw;
-        }
-    }
-
-    public async Task<IEnumerable<MediaFile>> GetRecentMediaAsync(int count = 10, Guid? userId = null)
-    {
-        try
-        {
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = "SELECT TOP(@Count) * FROM MediaFiles WHERE IsDeleted = 0";
-            var parameters = new DynamicParameters();
-            parameters.Add("@Count", count);
-
-            if (userId.HasValue)
-            {
-                sql += " AND UploadedByUserId = @UserId";
-                parameters.Add("@UserId", userId.Value);
-            }
-
-            sql += " ORDER BY CreatedAt DESC";
-            
-            return await connection.QueryAsync<MediaFile>(sql, parameters);
-        }
-        catch (Exception ex)
-        {
-            // Log error
-            throw;
-        }
-    }
-
-    public async Task<IEnumerable<MediaFile>> GetByTagsAsync(string[] tags)
-    {
-        try
-        {
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            var tagList = string.Join(",", tags.Select(t => $"'{t}'"));
-            var sql = $@"
-                SELECT DISTINCT mf.*
-                FROM MediaFiles mf
-                WHERE mf.IsDeleted = 0
-                AND EXISTS (
-                    SELECT 1 FROM STRING_SPLIT(mf.Tags, ',') s
-                    WHERE s.value IN ({tagList})
-                )";
-            
-            return await connection.QueryAsync<MediaFile>(sql);
-        }
-        catch (Exception ex)
-        {
-            // Log error
-            throw;
-        }
-    }
-
-    public async Task<IEnumerable<MediaFile>> GetByCollectionAsync(Guid collectionId)
-    {
-        try
-        {
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = @"
-                SELECT mf.*
-                FROM MediaFiles mf
-                INNER JOIN MediaCollectionItems mci ON mf.Id = mci.MediaFileId
-                WHERE mci.CollectionId = @CollectionId 
-                AND mf.IsDeleted = 0
-                ORDER BY mci.SortOrder";
-            
-            return await connection.QueryAsync<MediaFile>(sql, new { CollectionId = collectionId });
-        }
-        catch (Exception ex)
-        {
-            // Log error
-            throw;
-        }
-    }
-
-    public async Task<IEnumerable<MediaFile>> GetByDateRangeAsync(DateTime fromDate, DateTime toDate)
-    {
-        try
-        {
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = @"
-                SELECT * FROM MediaFiles 
-                WHERE CreatedAt >= @FromDate 
-                AND CreatedAt <= @ToDate 
-                AND IsDeleted = 0
-                ORDER BY CreatedAt DESC";
-            
-            return await connection.QueryAsync<MediaFile>(sql, new { FromDate = fromDate, ToDate = toDate });
-        }
-        catch (Exception ex)
-        {
-            // Log error
-            throw;
-        }
-    }
-
-    public async Task<IEnumerable<MediaFile>> GetBySizeRangeAsync(long minSizeBytes, long maxSizeBytes)
-    {
-        try
-        {
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = @"
-                SELECT * FROM MediaFiles 
-                WHERE FileSizeBytes >= @MinSize 
-                AND FileSizeBytes <= @MaxSize 
-                AND IsDeleted = 0
-                ORDER BY FileSizeBytes DESC";
-            
-            return await connection.QueryAsync<MediaFile>(sql, new { MinSize = minSizeBytes, MaxSize = maxSizeBytes });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting media files by size range {MinSize} to {MaxSize} bytes", minSizeBytes, maxSizeBytes);
-            throw;
-        }
-    }
-
-    public async Task<IEnumerable<MediaFile>> GetPopularMediaAsync(int count = 10, TimeSpan? timeRange = null)
-    {
-        try
-        {
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            var sql = "SELECT TOP(@Count) * FROM MediaFiles WHERE IsDeleted = 0";
-            var parameters = new DynamicParameters();
-            parameters.Add("@Count", count);
-
-            if (timeRange.HasValue)
-            {
-                sql += " AND CreatedAt >= @FromDate";
-                parameters.Add("@FromDate", DateTime.UtcNow.Subtract(timeRange.Value));
-            }
-
-            sql += " ORDER BY DownloadCount DESC, CreatedAt DESC";
-            
-            return await connection.QueryAsync<MediaFile>(sql, parameters);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting popular media files with count {Count}", count);
-            throw;
-        }
-    }
-
-    public async Task<PagedResult<MediaFile>> GetPagedAsync(MediaFileSearchDto searchDto)
-    {
-        try
-        {
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            
-            var whereConditions = new List<string> { "IsDeleted = 0" };
-            var parameters = new DynamicParameters();
-
-            if (!string.IsNullOrEmpty(searchDto.SearchTerm))
-            {
-                whereConditions.Add("(OriginalFileName LIKE @SearchTerm OR Description LIKE @SearchTerm OR Tags LIKE @SearchTerm)");
-                parameters.Add("@SearchTerm", $"%{searchDto.SearchTerm}%");
-            }
-
-            if (searchDto.MediaType.HasValue)
-            {
-                whereConditions.Add("MediaType = @MediaType");
-                parameters.Add("@MediaType", searchDto.MediaType.Value);
-            }
-
-            if (searchDto.CategoryId.HasValue)
-            {
-                whereConditions.Add("CategoryId = @CategoryId");
-                parameters.Add("@CategoryId", searchDto.CategoryId.Value);
-            }
-
-            if (searchDto.Status.HasValue)
-            {
-                whereConditions.Add("Status = @Status");
-                parameters.Add("@Status", searchDto.Status.Value);
-            }
-
-            var whereClause = string.Join(" AND ", whereConditions);
-            
-            // Count query
-            var countSql = $"SELECT COUNT(*) FROM MediaFiles WHERE {whereClause}";
-            var totalCount = await connection.ExecuteScalarAsync<int>(countSql, parameters);
-            
-            // Data query with pagination
-            var offset = (searchDto.PageNumber - 1) * searchDto.PageSize;
-            var dataSql = $@"
-                SELECT * FROM MediaFiles 
-                WHERE {whereClause}
-                ORDER BY {searchDto.OrderBy ?? "CreatedAt DESC"}
-                OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
-
-            var pagedParameters = new DynamicParameters(parameters);
-            pagedParameters.Add("@Offset", offset);
-            pagedParameters.Add("@PageSize", searchDto.PageSize);
-
-            var items = await connection.QueryAsync<MediaFile>(dataSql, pagedParameters);
-
-            return new PagedResult<MediaFile>
-            {
-                Items = items,
-                TotalCount = totalCount,
-                PageNumber = searchDto.PageNumber,
-                PageSize = searchDto.PageSize,
-                TotalPages = (int)Math.Ceiling((double)totalCount / searchDto.PageSize)
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting paged media files");
-            throw;
-        }
-    }
-}
-
-// Supporting classes
-public class Answer
-{
-    public Guid QuestionId { get; set; }
-    public string Text { get; set; } = string.Empty;
-    public bool IsCorrect { get; set; }
-    public string? Explanation { get; set; }
-    public int SortOrder { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public bool IsActive { get; set; }
 }

@@ -1433,27 +1433,27 @@ npm run test:e2e -- --testPathPattern=question-management
 ### Question Operations Validation Loop
 ```bash
 # 1. Question Creation Test
-curl -X POST "http://localhost:5000/api/questions" \
+curl -X POST "https://localhost:7001/api/questions" \
   -H "Content-Type: application/json" \
   -d '{"text":"Sample question?","questionTypeId":1,"difficultyLevelId":1}'
 # Expected: 201 Created with question data
 
 # 2. Question Retrieval Test
-curl -X GET "http://localhost:5000/api/questions/1"
+curl -X GET "https://localhost:7001/api/questions/1"
 # Expected: 200 OK with complete question data
 
 # 3. Question Update Test
-curl -X PUT "http://localhost:5000/api/questions/1" \
+curl -X PUT "https://localhost:7001/api/questions/1" \
   -H "Content-Type: application/json" \
   -d '{"text":"Updated question?","points":5}'
 # Expected: 200 OK with updated question data
 
 # 4. Question Search Test
-curl -X GET "http://localhost:5000/api/questions?searchText=sample&page=1&pageSize=10"
+curl -X GET "https://localhost:7001/api/questions?searchText=sample&page=1&pageSize=10"
 # Expected: 200 OK with paginated search results
 
 # 5. Question Validation Test
-curl -X POST "http://localhost:5000/api/questions/1/validate"
+curl -X POST "https://localhost:7001/api/questions/1/validate"
 # Expected: 200 OK with validation result
 ```
 

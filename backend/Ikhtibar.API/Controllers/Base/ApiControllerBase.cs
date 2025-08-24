@@ -14,12 +14,12 @@ public abstract class ApiControllerBase : ControllerBase
     /// <summary>
     /// Gets the current user ID from the JWT token claims
     /// </summary>
-    protected Guid? CurrentUserId
+    protected int? CurrentUserId
     {
         get
         {
             var userIdClaim = User?.Claims?.FirstOrDefault(c => c.Type == "sub" || c.Type == "userId")?.Value;
-            return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
+            return int.TryParse(userIdClaim, out var userId) ? userId : null;
         }
     }
 

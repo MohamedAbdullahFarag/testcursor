@@ -9,15 +9,15 @@ namespace Ikhtibar.Core.Services;
 public interface IMediaCollectionService
 {
     Task<IEnumerable<MediaCollectionDto>> GetAllCollectionsAsync();
-    Task<MediaCollectionDto?> GetCollectionByIdAsync(Guid id);
+    Task<MediaCollectionDto?> GetCollectionByIdAsync(int id);
     Task<MediaCollectionDto> CreateCollectionAsync(CreateMediaCollectionDto createDto);
-    Task<MediaCollectionDto> UpdateCollectionAsync(Guid id, UpdateMediaCollectionDto updateDto);
-    Task<bool> DeleteCollectionAsync(Guid id);
-    Task<IEnumerable<MediaCollectionDto>> GetCollectionsByUserIdAsync(Guid userId);
+    Task<MediaCollectionDto> UpdateCollectionAsync(int id, UpdateMediaCollectionDto updateDto);
+    Task<bool> DeleteCollectionAsync(int id);
+    Task<IEnumerable<MediaCollectionDto>> GetCollectionsByUserIdAsync(int userId);
     Task<IEnumerable<MediaCollectionDto>> GetPublicCollectionsAsync();
-    Task<bool> AddMediaFileToCollectionAsync(Guid collectionId, Guid mediaFileId);
-    Task<bool> RemoveMediaFileFromCollectionAsync(Guid collectionId, Guid mediaFileId);
-    Task<bool> ExistsByNameAsync(string name, Guid? excludeId = null);
+    Task<bool> AddMediaFileToCollectionAsync(int collectionId, int mediaFileId);
+    Task<bool> RemoveMediaFileFromCollectionAsync(int collectionId, int mediaFileId);
+    Task<bool> ExistsByNameAsync(string name, int? excludeId = null);
 }
 
 public class MediaCollectionService : IMediaCollectionService
@@ -56,7 +56,7 @@ public class MediaCollectionService : IMediaCollectionService
         }
     }
 
-    public async Task<MediaCollectionDto?> GetCollectionByIdAsync(Guid id)
+    public async Task<MediaCollectionDto?> GetCollectionByIdAsync(int id)
     {
         using var scope = _logger.BeginScope("Getting media collection by ID: {CollectionId}", id);
         
@@ -94,8 +94,8 @@ public class MediaCollectionService : IMediaCollectionService
                 throw new InvalidOperationException($"Media collection with name '{createDto.Name}' already exists");
             }
 
-            var collection = _mapper.Map<Ikhtibar.Core.Entities.MediaCollection>(createDto);
-            collection.Id = Guid.NewGuid();
+            var collection = _mapper.Map<Ikhtibar.Shared.Entities.MediaCollection>(createDto);
+            collection.Id = int.Newint();
             collection.CreatedAt = DateTime.UtcNow;
 
             var createdCollection = await _repository.AddAsync(collection);
@@ -113,7 +113,7 @@ public class MediaCollectionService : IMediaCollectionService
         }
     }
 
-    public async Task<MediaCollectionDto> UpdateCollectionAsync(Guid id, UpdateMediaCollectionDto updateDto)
+    public async Task<MediaCollectionDto> UpdateCollectionAsync(int id, UpdateMediaCollectionDto updateDto)
     {
         using var scope = _logger.BeginScope("Updating media collection: {CollectionId}", id);
         
@@ -152,7 +152,7 @@ public class MediaCollectionService : IMediaCollectionService
         }
     }
 
-    public async Task<bool> DeleteCollectionAsync(Guid id)
+    public async Task<bool> DeleteCollectionAsync(int id)
     {
         using var scope = _logger.BeginScope("Deleting media collection: {CollectionId}", id);
         
@@ -186,7 +186,7 @@ public class MediaCollectionService : IMediaCollectionService
         }
     }
 
-    public async Task<IEnumerable<MediaCollectionDto>> GetCollectionsByUserIdAsync(Guid userId)
+    public async Task<IEnumerable<MediaCollectionDto>> GetCollectionsByUserIdAsync(int userId)
     {
         using var scope = _logger.BeginScope("Getting collections by user ID: {UserId}", userId);
         
@@ -227,7 +227,7 @@ public class MediaCollectionService : IMediaCollectionService
         }
     }
 
-    public async Task<bool> AddMediaFileToCollectionAsync(Guid collectionId, Guid mediaFileId)
+    public async Task<bool> AddMediaFileToCollectionAsync(int collectionId, int mediaFileId)
     {
         using var scope = _logger.BeginScope("Adding media file {MediaFileId} to collection {CollectionId}", 
             mediaFileId, collectionId);
@@ -257,7 +257,7 @@ public class MediaCollectionService : IMediaCollectionService
         }
     }
 
-    public async Task<bool> RemoveMediaFileFromCollectionAsync(Guid collectionId, Guid mediaFileId)
+    public async Task<bool> RemoveMediaFileFromCollectionAsync(int collectionId, int mediaFileId)
     {
         using var scope = _logger.BeginScope("Removing media file {MediaFileId} from collection {CollectionId}", 
             mediaFileId, collectionId);
@@ -287,7 +287,7 @@ public class MediaCollectionService : IMediaCollectionService
         }
     }
 
-    public async Task<bool> ExistsByNameAsync(string name, Guid? excludeId = null)
+    public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null)
     {
         try
         {

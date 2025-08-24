@@ -1383,22 +1383,22 @@ npm run test:e2e -- --testPathPattern=media-upload
 ### Storage Integration Validation Loop
 ```bash
 # 1. File Upload Test
-curl -X POST "http://localhost:5000/api/media/upload" \
+curl -X POST "https://localhost:7001/api/media/upload" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@test-image.jpg" \
   -F "categoryId=1"
 # Expected: 201 Created with media file data
 
 # 2. File Download Test
-curl -X GET "http://localhost:5000/api/media/1/download"
+curl -X GET "https://localhost:7001/api/media/1/download"
 # Expected: 200 OK with file content
 
 # 3. Thumbnail Generation Test
-curl -X GET "http://localhost:5000/api/media/1/thumbnail/medium"
+curl -X GET "https://localhost:7001/api/media/1/thumbnail/medium"
 # Expected: 200 OK with thumbnail image
 
 # 4. Processing Status Test
-curl -X GET "http://localhost:5000/api/media/1/processing-status"
+curl -X GET "https://localhost:7001/api/media/1/processing-status"
 # Expected: 200 OK with processing status
 ```
 

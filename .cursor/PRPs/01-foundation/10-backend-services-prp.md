@@ -27,7 +27,7 @@ Implement complete backend support for user management: CRUD operations for user
    - `IUserRepository : IRepository<User>` with extra:
      ```csharp
      Task<User?> GetByEmailAsync(string email);
-     Task<bool> UserExistsAsync(Guid id);
+     Task<bool> UserExistsAsync(int id);
      ```
    - `IRoleRepository : IRepository<Role>` with extra:
      ```csharp
@@ -35,9 +35,9 @@ Implement complete backend support for user management: CRUD operations for user
      ```
    - `IUserRoleRepository` for assignments:
      ```csharp
-     Task AssignRoleAsync(Guid userId, Guid roleId);
-     Task RemoveRoleAsync(Guid userId, Guid roleId);
-     Task<IEnumerable<Role>> GetUserRolesAsync(Guid userId);
+     Task AssignRoleAsync(int userId, int roleId);
+     Task RemoveRoleAsync(int userId, int roleId);
+     Task<IEnumerable<Role>> GetUserRolesAsync(int userId);
      ```
    - ❌ DON'T mix other entity logic here.
 
@@ -47,7 +47,7 @@ Implement complete backend support for user management: CRUD operations for user
    - Ensure no business logic or cross-entity joins.
 
 3. **Define Service Interfaces & DTOs** (`Ikhtibar.Core/Services` & `API/DTOs`)
-   - `IUserService`: methods: `CreateUserAsync(CreateUserDto)`, `GetUserAsync(Guid)`, `UpdateUserAsync(Guid, UpdateUserDto)`, `DeleteUserAsync(Guid)`, `GetAllUsersAsync()`.
+   - `IUserService`: methods: `CreateUserAsync(CreateUserDto)`, `GetUserAsync(int)`, `UpdateUserAsync(int, UpdateUserDto)`, `DeleteUserAsync(int)`, `GetAllUsersAsync()`.
    - `IRoleService`: similar for roles. Also methods to seed default roles.
    - `IUserRoleService`: assign/remove roles.
    - DTOs: `CreateUserDto`, `UpdateUserDto`, `UserDto`, `RoleDto`, `AssignRoleDto` under `Ikhtibar.API/DTOs`.

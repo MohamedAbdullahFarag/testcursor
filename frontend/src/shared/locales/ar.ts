@@ -1,4 +1,4 @@
-import { authAr } from '@/modules/auth/locales/ar'
+import authAr from '@/modules/auth/locales/ar'
 import { contentManagmentAr } from '@/modules/content-managment/locales/ar'
 import { customerExperienceAr } from '@/modules/customerExperience/locale/ar'
 import { dashboardAr } from '@/modules/dashboard/locales/ar'

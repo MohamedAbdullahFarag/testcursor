@@ -50,7 +50,7 @@
 - **Findings**:
   - **Missing Backend**: IAuthenticationService interface and implementation
   - **Missing Backend**: RefreshTokenMiddleware implementation
-  - **Missing Backend**: RefreshToken entity and repository
+  - **Missing Backend**: RefreshTokens entity and repository
   - **Missing Frontend**: PrivateRoute component for route guarding
   - **Missing Frontend**: i18n locales for authentication
   - **Missing**: Comprehensive testing coverage
@@ -64,11 +64,11 @@
   - `backend/Ikhtibar.Core/Services/Implementations/AuthenticationService.cs`
 - **Implementation**: Complete authentication business logic following SRP
 
-#### Task 3.2: RefreshToken Infrastructure ✅
+#### Task 3.2: RefreshTokens Infrastructure ✅
 - **Status**: COMPLETED
-- **Description**: Created RefreshToken entity and repository
+- **Description**: Created RefreshTokens entity and repository
 - **Files Created**:
-  - `backend/Ikhtibar.Shared/Entities/RefreshToken.cs`
+  - `backend/Ikhtibar.Shared/Entities/RefreshTokens.cs`
   - `backend/Ikhtibar.Core/Repositories/Interfaces/IRefreshTokenRepository.cs`
   - `backend/Ikhtibar.Infrastructure/Repositories/RefreshTokenRepository.cs`
 - **Implementation**: Complete refresh token management with security features
@@ -137,8 +137,8 @@
 - [x] **JWT Settings**: ✅ Configuration binding implemented
 - [x] **IAuthenticationService**: ✅ Interface and implementation created
 - [x] **RefreshTokenMiddleware**: ✅ Implementation created
-- [x] **RefreshToken Entity**: ✅ Entity definition created
-- [x] **RefreshToken Repository**: ✅ Repository implementation created
+- [x] **RefreshTokens Entity**: ✅ Entity definition created
+- [x] **RefreshTokens Repository**: ✅ Repository implementation created
 
 ### Frontend Components Status
 - [x] **LoginForm**: ✅ Fully implemented with validation
@@ -183,8 +183,8 @@
 
 ### Critical Gaps (Must Fix)
 1. **Missing IAuthenticationService**: ✅ IMPLEMENTED - Core authentication business logic interface created
-2. **Missing RefreshToken Entity**: ✅ IMPLEMENTED - Database entity for token rotation created
-3. **Missing RefreshToken Repository**: ✅ IMPLEMENTED - Data access for refresh tokens created
+2. **Missing RefreshTokens Entity**: ✅ IMPLEMENTED - Database entity for token rotation created
+3. **Missing RefreshTokens Repository**: ✅ IMPLEMENTED - Data access for refresh tokens created
 4. **Missing RefreshTokenMiddleware**: ✅ IMPLEMENTED - Token rotation middleware created
 5. **Missing PrivateRoute Component**: ✅ IMPLEMENTED - Frontend route protection created
 6. **Missing i18n Locales**: ✅ IMPLEMENTED - Authentication translations created
@@ -213,8 +213,8 @@
 ### Immediate Actions Required
 1. **Create IAuthenticationService Interface**: ✅ COMPLETED
 2. **Implement AuthenticationService**: ✅ COMPLETED
-3. **Create RefreshToken Entity**: ✅ COMPLETED
-4. **Implement RefreshToken Repository**: ✅ COMPLETED
+3. **Create RefreshTokens Entity**: ✅ COMPLETED
+4. **Implement RefreshTokens Repository**: ✅ COMPLETED
 5. **Create RefreshTokenMiddleware**: ✅ COMPLETED
 6. **Create PrivateRoute Component**: ✅ COMPLETED
 7. **Add i18n Locales**: ✅ COMPLETED

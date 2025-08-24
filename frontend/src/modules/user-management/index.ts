@@ -4,10 +4,10 @@
  * Following folder-per-feature architecture with clean separation of concerns
  */
 
-// Core Components
+// Components
 export { UserList } from './components/UserList';
 export { UserForm } from './components/UserForm';
-export { UserManagementView } from './components/UserManagementView';
+export { UserManagementView } from './views/UserManagementView';
 
 // Hooks
 export { useUserManagement } from './hooks/useUserManagement';
@@ -18,30 +18,18 @@ export { userService } from './services/userService';
 // Types
 export type {
   User,
-  CreateUserDto,
-  UpdateUserDto,
-  UserFilters,
-  UserExportFormat,
-  BulkUserActionResult,
-  UserFormErrors,
-  UserActivityLog,
-  UserStatusUpdateRequest,
-  UserRoleAssignmentRequest,
+  CreateUserRequest,
+  UpdateUserRequest,
+  UserListResponse
 } from './models/user.types';
 
-// Component Types
-export type { UserListProps } from './components/UserList';
-export type { Role } from './components/UserForm';
-
-// Hook Types
-export type { 
-  UseUserManagementOptions, 
-  UseUserManagementReturn 
-} from './hooks/useUserManagement';
+// Locales
+export { default as userManagementEn } from './locales/en';
+export { default as userManagementAr } from './locales/ar';
 
 // Constants
 export const USER_MANAGEMENT_MODULE = 'user-management';
-export const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_PAGE_SIZE = 25;
 export const SEARCH_DEBOUNCE_MS = 300;
 
 /**

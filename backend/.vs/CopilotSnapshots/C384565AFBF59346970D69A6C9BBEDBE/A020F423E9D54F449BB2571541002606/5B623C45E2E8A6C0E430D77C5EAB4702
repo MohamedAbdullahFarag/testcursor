@@ -1,0 +1,189 @@
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Moq;
+using System.Threading.Tasks;
+using Xunit.Framework;
+using Ikhtibar.API.Controllers;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.DTOs.Authentication;
+
+namespace Ikhtibar.Tests.Auth;
+
+/// <summary>
+/// Tests for AuthController
+/// </summary>
+[TestFixture]
+public class AuthControllerTests
+{
+    private Mock<IAuthenticationService> _mockAuthenticationService;
+    private Mock<ILogger<AuthController>> _mockLogger;
+    private AuthController _controller;
+
+    [SetUp]
+    public void Setup()
+    {
+        _mockAuthenticationService = new Mock<IAuthenticationService>();
+        _mockLogger = new Mock<ILogger<AuthController>>();
+
+        _controller = new AuthController(
+            _mockAuthenticationService.Object,
+            _mockLogger.Object);
+
+        // Setup HTTP context
+        var httpContext = new DefaultHttpContext();
+        httpContext.Connection.RemoteIpAddress = new System.Net.IPAddress(new byte[] { 127, 0, 0, 1 });
+        httpContext.Request.Headers["User-Agent"] = "Test Agent";
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = httpContext
+        };
+    }
+
+    [Test]
+    public async Task Login_WithValidCredentials_ReturnsOkWithTokens()
+    {
+        // Arrange
+        var loginDto = new LoginDto { Email = "test@example.com", Password = "Password123!" };
+        var authResult = new AuthResultDto { 
+            Success = true,
+            AccessToken = "test-jwt-token",
+            RefreshTokens = "test-refresh-token",
+            User = new UserDto { 
+                UserId = 1, 
+                Email = "test@example.com", 
+                Username = "testuser",
+                FirstName = "Test",
+                LastName = "User",
+                IsActive = true,
+                Roles = new List<RoleDto> { new RoleDto { Name = "User" } }
+            }
+        };
+
+        _mockAuthenticationService.Setup(x => x.AuthenticateAsync(loginDto))
+            .ReturnsAsync(authResult);
+
+        // Act
+        var result = await _controller.Login(loginDto);
+
+        // Assert
+        var okResult = result.Result as OkObjectResult;
+        Assert.That(okResult, Is.Not.Null);
+        var returnedAuthResult = okResult.Value as AuthResultDto;
+        Assert.That(returnedAuthResult, Is.Not.Null);
+        Assert.That(returnedAuthResult.Success, Is.True);
+        Assert.That(returnedAuthResult.AccessToken, Is.EqualTo("test-jwt-token"));
+        Assert.That(returnedAuthResult.RefreshTokens, Is.EqualTo("test-refresh-token"));
+        Assert.That(returnedAuthResult.User, Is.Not.Null);
+        Assert.That(returnedAuthResult.User.Email, Is.EqualTo(loginDto.Email));
+    }
+
+    [Test]
+    public async Task Login_WithInvalidCredentials_ReturnsUnauthorized()
+    {
+        // Arrange
+        var loginDto = new LoginDto { Email = "test@example.com", Password = "WrongPassword" };
+        _mockAuthenticationService.Setup(x => x.AuthenticateAsync(loginDto))
+            .ThrowsAsync(new UnauthorizedAccessException("Invalid credentials"));
+
+        // Act
+        var result = await _controller.Login(loginDto);
+
+        // Assert
+        Assert.That(result.Result, Is.InstanceOf<UnauthorizedObjectResult>());
+    }
+
+    [Test]
+    public async Task RefreshToken_WithValidToken_ReturnsNewTokens()
+    {
+        // Arrange
+        var refreshToken = "valid-refresh-token";
+        var authResult = new AuthResultDto { 
+            Success = true,
+            AccessToken = "new-jwt-token",
+            RefreshTokens = "new-refresh-token",
+            User = new UserDto { 
+                UserId = 1, 
+                Email = "test@example.com",
+                Username = "testuser",
+                Roles = new List<RoleDto> { new RoleDto { Name = "User" } }
+            }
+        };
+
+        _mockAuthenticationService.Setup(x => x.RefreshTokenAsync(refreshToken))
+            .ReturnsAsync(authResult);
+
+        // Act
+        var result = await _controller.RefreshToken(refreshToken);
+
+        // Assert
+        var okResult = result.Result as OkObjectResult;
+        Assert.That(okResult, Is.Not.Null);
+        var returnedAuthResult = okResult.Value as AuthResultDto;
+        Assert.That(returnedAuthResult, Is.Not.Null);
+        Assert.That(returnedAuthResult.Success, Is.True);
+        Assert.That(returnedAuthResult.AccessToken, Is.EqualTo("new-jwt-token"));
+        Assert.That(returnedAuthResult.RefreshTokens, Is.EqualTo("new-refresh-token"));
+    }
+
+    [Test]
+    public async Task SsoCallback_WithValidCode_ReturnsTokens()
+    {
+        // Arrange
+        var callbackDto = new SsoCallbackDto { 
+            Code = "valid-auth-code",
+            State = "state-value",
+            RedirectUri = "https://localhost:7001/callback"
+        };
+        var authResult = new AuthResultDto {
+            Success = true,
+            AccessToken = "jwt-token",
+            RefreshTokens = "refresh-token",
+            User = new UserDto {
+                UserId = 1,
+                Email = "test@example.com",
+                Username = "testuser",
+                FirstName = "Test",
+                LastName = "User",
+                IsActive = true,
+                Roles = new List<RoleDto> { new RoleDto { Name = "User" } }
+            }
+        };
+
+        _mockAuthenticationService.Setup(x => x.ProcessSsoCallbackAsync(callbackDto))
+            .ReturnsAsync(authResult);
+
+        // Act
+        var result = await _controller.SsoCallback(callbackDto);
+
+        // Assert
+        var okResult = result.Result as OkObjectResult;
+        Assert.That(okResult, Is.Not.Null);
+        var returnedAuthResult = okResult.Value as AuthResultDto;
+        Assert.That(returnedAuthResult, Is.Not.Null);
+        Assert.That(returnedAuthResult.Success, Is.True);
+        Assert.That(returnedAuthResult.AccessToken, Is.EqualTo("jwt-token"));
+        Assert.That(returnedAuthResult.RefreshTokens, Is.EqualTo("refresh-token"));
+    }
+
+    [Test]
+    public async Task SsoCallback_WithError_ReturnsBadRequest()
+    {
+        // Arrange
+        var callbackDto = new SsoCallbackDto {
+            Error = "access_denied",
+            ErrorDescription = "User denied access"
+        };
+
+        _mockAuthenticationService.Setup(x => x.ProcessSsoCallbackAsync(callbackDto))
+            .ThrowsAsync(new InvalidOperationException("SSO callback error"));
+
+        // Act
+        var result = await _controller.SsoCallback(callbackDto);
+
+        // Assert
+        Assert.That(result.Result, Is.InstanceOf<ObjectResult>());
+    }
+}

@@ -28,14 +28,14 @@ public interface INotificationService
     /// <param name="id">Notification ID</param>
     /// <param name="dto">Updated notification data</param>
     /// <returns>Updated notification details</returns>
-    Task<OperationResult<NotificationResponseDto>> UpdateNotificationAsync(Guid id, UpdateNotificationDto dto);
+    Task<OperationResult<NotificationResponseDto>> UpdateNotificationAsync(int id, UpdateNotificationDto dto);
     
     /// <summary>
     /// Gets a notification by ID
     /// </summary>
     /// <param name="id">Notification ID</param>
     /// <returns>Notification details</returns>
-    Task<OperationResult<NotificationResponseDto>> GetNotificationAsync(Guid id);
+    Task<OperationResult<NotificationResponseDto>> GetNotificationAsync(int id);
     
     /// <summary>
     /// Gets paginated list of notifications
@@ -49,7 +49,7 @@ public interface INotificationService
     /// </summary>
     /// <param name="id">Notification ID</param>
     /// <returns>Operation result</returns>
-    Task<OperationResult> DeleteNotificationAsync(Guid id);
+    Task<OperationResult> DeleteNotificationAsync(int id);
     
     // Notification processing and delivery
     
@@ -58,7 +58,7 @@ public interface INotificationService
     /// </summary>
     /// <param name="notificationId">Notification ID to send</param>
     /// <returns>Delivery result</returns>
-    Task<OperationResult<DeliveryResultDto>> SendNotificationAsync(Guid notificationId);
+    Task<OperationResult<DeliveryResultDto>> SendNotificationAsync(int notificationId);
     
     /// <summary>
     /// Sends notification to specific users
@@ -79,7 +79,7 @@ public interface INotificationService
     /// </summary>
     /// <param name="notificationId">Notification ID to cancel</param>
     /// <returns>Operation result</returns>
-    Task<OperationResult> CancelScheduledNotificationAsync(Guid notificationId);
+    Task<OperationResult> CancelScheduledNotificationAsync(int notificationId);
     
     /// <summary>
     /// Sends bulk notifications
@@ -138,7 +138,7 @@ public interface INotificationService
     /// <param name="userId">User ID</param>
     /// <param name="metadata">Additional event data</param>
     /// <returns>Operation result</returns>
-    Task<OperationResult> HandleNotificationEventAsync(string eventType, Guid notificationId, int userId, Dictionary<string, object>? metadata = null);
+    Task<OperationResult> HandleNotificationEventAsync(string eventType, int notificationId, int userId, Dictionary<string, object>? metadata = null);
     
     // Health and monitoring
     
@@ -175,14 +175,14 @@ public interface INotificationTemplateService
     /// <param name="id">Template ID</param>
     /// <param name="dto">Updated template data</param>
     /// <returns>Updated template details</returns>
-    Task<OperationResult<NotificationTemplateResponseDto>> UpdateTemplateAsync(Guid id, UpdateNotificationTemplateDto dto);
+    Task<OperationResult<NotificationTemplateResponseDto>> UpdateTemplateAsync(int id, UpdateNotificationTemplateDto dto);
     
     /// <summary>
     /// Gets a template by ID
     /// </summary>
     /// <param name="id">Template ID</param>
     /// <returns>Template details</returns>
-    Task<OperationResult<NotificationTemplateResponseDto>> GetTemplateAsync(Guid id);
+    Task<OperationResult<NotificationTemplateResponseDto>> GetTemplateAsync(int id);
     
     /// <summary>
     /// Gets paginated list of templates
@@ -196,7 +196,7 @@ public interface INotificationTemplateService
     /// </summary>
     /// <param name="id">Template ID</param>
     /// <returns>Operation result</returns>
-    Task<OperationResult> DeleteTemplateAsync(Guid id);
+    Task<OperationResult> DeleteTemplateAsync(int id);
     
     // Template processing operations
     
@@ -237,7 +237,7 @@ public interface INotificationTemplateService
     /// <param name="id">Template ID</param>
     /// <param name="isActive">Active status</param>
     /// <returns>Operation result</returns>
-    Task<OperationResult> SetActiveStatusAsync(Guid id, bool isActive);
+    Task<OperationResult> SetActiveStatusAsync(int id, bool isActive);
     
     /// <summary>
     /// Clones an existing template
@@ -245,7 +245,7 @@ public interface INotificationTemplateService
     /// <param name="id">Template ID to clone</param>
     /// <param name="newName">New template name</param>
     /// <returns>Cloned template details</returns>
-    Task<OperationResult<NotificationTemplateResponseDto>> CloneTemplateAsync(Guid id, string newName);
+    Task<OperationResult<NotificationTemplateResponseDto>> CloneTemplateAsync(int id, string newName);
     
     /// <summary>
     /// Imports templates from external source
@@ -270,7 +270,7 @@ public interface INotificationTemplateService
     /// <param name="startDate">Start date</param>
     /// <param name="endDate">End date</param>
     /// <returns>Usage statistics</returns>
-    Task<OperationResult<TemplateUsageStats>> GetUsageStatsAsync(Guid templateId, DateTime startDate, DateTime endDate);
+    Task<OperationResult<TemplateUsageStats>> GetUsageStatsAsync(int templateId, DateTime startDate, DateTime endDate);
     
     /// <summary>
     /// Gets all template usage analytics

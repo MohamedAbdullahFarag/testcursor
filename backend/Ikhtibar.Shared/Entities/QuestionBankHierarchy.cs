@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Ikhtibar.Shared.Entities;
 
 namespace Ikhtibar.Shared.Entities;
-
 /// <summary>
 /// Question Bank Hierarchy entity for efficient tree traversal operations
 /// Implements closure table pattern to support complex hierarchy queries

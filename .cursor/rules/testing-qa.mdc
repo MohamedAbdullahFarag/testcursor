@@ -7,7 +7,7 @@
 - Use component testing for React components
 
 ## Backend Testing (.NET)
-- Use xUnit or NUnit for testing framework
+- Use xUnit or Xunit for testing framework
 - Mock dependencies using Moq or similar
 - Test repository methods with in-memory database
 - Include authentication and authorization tests

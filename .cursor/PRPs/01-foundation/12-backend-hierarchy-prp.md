@@ -90,9 +90,9 @@ namespace Ikhtibar.Shared.Entities
         public string Description { get; set; }
         
         [Required]
-        public Guid TreeNodeTypeId { get; set; }
+        public int TreeNodeTypeId { get; set; }
         
-        public Guid? ParentId { get; set; }
+        public int? ParentId { get; set; }
         
         public int OrderIndex { get; set; }
         
@@ -130,7 +130,7 @@ namespace Ikhtibar.Shared.Entities
     public class CurriculumAlignment : BaseEntity
     {
         [Required]
-        public Guid TreeNodeId { get; set; }
+        public int TreeNodeId { get; set; }
         
         [Required]
         [MaxLength(100)]
@@ -168,7 +168,7 @@ namespace Ikhtibar.API.DTOs
 {
     public class TreeNodeTypeDto
     {
-        public Guid Id { get; set; }
+        public int id { get; set; }
         public string Name { get; set; }
     }
     
@@ -194,13 +194,13 @@ namespace Ikhtibar.API.DTOs
 {
     public class TreeNodeDto
     {
-        public Guid Id { get; set; }
+        public int id { get; set; }
         public string Name { get; set; }
         public string Code { get; set; }
         public string Description { get; set; }
-        public Guid TreeNodeTypeId { get; set; }
+        public int TreeNodeTypeId { get; set; }
         public string TreeNodeTypeName { get; set; }
-        public Guid? ParentId { get; set; }
+        public int? ParentId { get; set; }
         public int OrderIndex { get; set; }
         public string Path { get; set; }
         public bool IsActive { get; set; }
@@ -229,9 +229,9 @@ namespace Ikhtibar.API.DTOs
         public string Description { get; set; }
         
         [Required]
-        public Guid TreeNodeTypeId { get; set; }
+        public int TreeNodeTypeId { get; set; }
         
-        public Guid? ParentId { get; set; }
+        public int? ParentId { get; set; }
         
         public int OrderIndex { get; set; }
         
@@ -250,7 +250,7 @@ namespace Ikhtibar.API.DTOs
         [MaxLength(500)]
         public string Description { get; set; }
         
-        public Guid TreeNodeTypeId { get; set; }
+        public int TreeNodeTypeId { get; set; }
         
         public int OrderIndex { get; set; }
         
@@ -260,7 +260,7 @@ namespace Ikhtibar.API.DTOs
     public class MoveTreeNodeDto
     {
         [Required]
-        public Guid NewParentId { get; set; }
+        public int NewParentId { get; set; }
     }
 }
 ```
@@ -315,14 +315,14 @@ namespace Ikhtibar.Infrastructure.Repositories
 {
     public interface ITreeNodeRepository : IBaseRepository<TreeNode>
     {
-        Task<IEnumerable<TreeNode>> GetChildrenAsync(Guid parentId);
+        Task<IEnumerable<TreeNode>> GetChildrenAsync(int parentId);
         Task<TreeNode> GetByCodeAsync(string code);
         Task<IEnumerable<TreeNode>> GetByPathAsync(string pathQuery);
-        Task<IEnumerable<TreeNode>> GetAncestorsAsync(Guid nodeId);
-        Task<IEnumerable<TreeNode>> GetDescendantsAsync(Guid nodeId);
+        Task<IEnumerable<TreeNode>> GetAncestorsAsync(int nodeId);
+        Task<IEnumerable<TreeNode>> GetDescendantsAsync(int nodeId);
         Task<bool> UpdatePathsAsync(string oldPath, string newPath);
-        Task<int> GetMaxOrderIndexAsync(Guid? parentId);
-        Task<bool> ReorderNodesAsync(Guid parentId, IDictionary<Guid, int> nodeOrders);
+        Task<int> GetMaxOrderIndexAsync(int? parentId);
+        Task<bool> ReorderNodesAsync(int parentId, IDictionary<int, int> nodeOrders);
     }
 }
 ```
@@ -341,7 +341,7 @@ namespace Ikhtibar.Infrastructure.Repositories
         {
         }
 
-        public async Task<IEnumerable<TreeNode>> GetChildrenAsync(Guid parentId)
+        public async Task<IEnumerable<TreeNode>> GetChildrenAsync(int parentId)
         {
             var query = @"
                 SELECT t.*, tt.Name as TreeNodeTypeName 
@@ -388,7 +388,7 @@ namespace Ikhtibar.Infrastructure.Repositories
             );
         }
 
-        public async Task<IEnumerable<TreeNode>> GetAncestorsAsync(Guid nodeId)
+        public async Task<IEnumerable<TreeNode>> GetAncestorsAsync(int nodeId)
         {
             // First get the node to extract its path
             var node = await GetByIdAsync(nodeId);
@@ -398,7 +398,7 @@ namespace Ikhtibar.Infrastructure.Repositories
             var path = node.Path;
             var nodeIds = path.Trim('-').Split('-')
                 .Where(id => !string.IsNullOrEmpty(id))
-                .Select(id => Guid.Parse(id));
+                .Select(id => int.Parse(id));
             
             if (!nodeIds.Any()) return new List<TreeNode>();
             
@@ -416,7 +416,7 @@ namespace Ikhtibar.Infrastructure.Repositories
             );
         }
 
-        public async Task<IEnumerable<TreeNode>> GetDescendantsAsync(Guid nodeId)
+        public async Task<IEnumerable<TreeNode>> GetDescendantsAsync(int nodeId)
         {
             // First get the node to extract its path
             var node = await GetByIdAsync(nodeId);
@@ -440,7 +440,7 @@ namespace Ikhtibar.Infrastructure.Repositories
             return result > 0;
         }
 
-        public async Task<int> GetMaxOrderIndexAsync(Guid? parentId)
+        public async Task<int> GetMaxOrderIndexAsync(int? parentId)
         {
             var query = @"
                 SELECT ISNULL(MAX(OrderIndex), 0)
@@ -454,7 +454,7 @@ namespace Ikhtibar.Infrastructure.Repositories
             );
         }
 
-        public async Task<bool> ReorderNodesAsync(Guid parentId, IDictionary<Guid, int> nodeOrders)
+        public async Task<bool> ReorderNodesAsync(int parentId, IDictionary<int, int> nodeOrders)
         {
             using (var transaction = _dbContext.BeginTransaction())
             {
@@ -499,10 +499,10 @@ namespace Ikhtibar.API.Services
     public interface ITreeNodeTypeService
     {
         Task<IEnumerable<TreeNodeTypeDto>> GetAllAsync();
-        Task<TreeNodeTypeDto> GetByIdAsync(Guid id);
+        Task<TreeNodeTypeDto> GetByIdAsync(int id);
         Task<TreeNodeTypeDto> CreateAsync(CreateTreeNodeTypeDto dto);
-        Task<TreeNodeTypeDto> UpdateAsync(Guid id, UpdateTreeNodeTypeDto dto);
-        Task<bool> DeleteAsync(Guid id);
+        Task<TreeNodeTypeDto> UpdateAsync(int id, UpdateTreeNodeTypeDto dto);
+        Task<bool> DeleteAsync(int id);
     }
 }
 ```
@@ -547,7 +547,7 @@ namespace Ikhtibar.API.Services
             }
         }
 
-        public async Task<TreeNodeTypeDto> GetByIdAsync(Guid id)
+        public async Task<TreeNodeTypeDto> GetByIdAsync(int id)
         {
             try
             {
@@ -583,7 +583,7 @@ namespace Ikhtibar.API.Services
             }
         }
 
-        public async Task<TreeNodeTypeDto> UpdateAsync(Guid id, UpdateTreeNodeTypeDto dto)
+        public async Task<TreeNodeTypeDto> UpdateAsync(int id, UpdateTreeNodeTypeDto dto)
         {
             try
             {
@@ -614,7 +614,7 @@ namespace Ikhtibar.API.Services
             }
         }
 
-        public async Task<bool> DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(int id)
         {
             try
             {
@@ -644,17 +644,17 @@ namespace Ikhtibar.API.Services
     {
         Task<IEnumerable<TreeNodeDto>> GetAllAsync();
         Task<IEnumerable<TreeNodeDto>> GetRootNodesAsync();
-        Task<IEnumerable<TreeNodeDto>> GetChildrenAsync(Guid parentId);
-        Task<TreeNodeDetailDto> GetByIdAsync(Guid id);
+        Task<IEnumerable<TreeNodeDto>> GetChildrenAsync(int parentId);
+        Task<TreeNodeDetailDto> GetByIdAsync(int id);
         Task<TreeNodeDto> GetByCodeAsync(string code);
-        Task<TreeNodeDetailDto> GetTreeAsync(Guid rootId, int levels = 1);
-        Task<IEnumerable<TreeNodeDto>> GetAncestorsAsync(Guid nodeId);
-        Task<IEnumerable<TreeNodeDto>> GetDescendantsAsync(Guid nodeId);
+        Task<TreeNodeDetailDto> GetTreeAsync(int rootId, int levels = 1);
+        Task<IEnumerable<TreeNodeDto>> GetAncestorsAsync(int nodeId);
+        Task<IEnumerable<TreeNodeDto>> GetDescendantsAsync(int nodeId);
         Task<TreeNodeDto> CreateAsync(CreateTreeNodeDto dto);
-        Task<TreeNodeDto> UpdateAsync(Guid id, UpdateTreeNodeDto dto);
-        Task<TreeNodeDto> MoveAsync(Guid id, MoveTreeNodeDto dto);
-        Task<bool> ReorderAsync(Guid parentId, IDictionary<Guid, int> nodeOrders);
-        Task<bool> DeleteAsync(Guid id);
+        Task<TreeNodeDto> UpdateAsync(int id, UpdateTreeNodeDto dto);
+        Task<TreeNodeDto> MoveAsync(int id, MoveTreeNodeDto dto);
+        Task<bool> ReorderAsync(int parentId, IDictionary<int, int> nodeOrders);
+        Task<bool> DeleteAsync(int id);
     }
 }
 ```
@@ -719,7 +719,7 @@ namespace Ikhtibar.API.Services
             }
         }
 
-        public async Task<IEnumerable<TreeNodeDto>> GetChildrenAsync(Guid parentId)
+        public async Task<IEnumerable<TreeNodeDto>> GetChildrenAsync(int parentId)
         {
             try
             {
@@ -733,7 +733,7 @@ namespace Ikhtibar.API.Services
             }
         }
 
-        public async Task<TreeNodeDetailDto> GetByIdAsync(Guid id)
+        public async Task<TreeNodeDetailDto> GetByIdAsync(int id)
         {
             try
             {
@@ -773,7 +773,7 @@ namespace Ikhtibar.API.Services
             }
         }
 
-        public async Task<TreeNodeDetailDto> GetTreeAsync(Guid rootId, int levels = 1)
+        public async Task<TreeNodeDetailDto> GetTreeAsync(int rootId, int levels = 1)
         {
             try
             {
@@ -796,7 +796,7 @@ namespace Ikhtibar.API.Services
             }
         }
 
-        private async Task LoadChildrenRecursively(TreeNodeDetailDto parentDto, Guid parentId, int maxLevels, int currentLevel)
+        private async Task LoadChildrenRecursively(TreeNodeDetailDto parentDto, int parentId, int maxLevels, int currentLevel)
         {
             var children = await _treeNodeRepository.GetChildrenAsync(parentId);
             var childrenDtos = _mapper.Map<IEnumerable<TreeNodeDetailDto>>(children);
@@ -806,12 +806,12 @@ namespace Ikhtibar.API.Services
             {
                 foreach (var childDto in childrenDtos)
                 {
-                    await LoadChildrenRecursively(childDto, Guid.Parse(childDto.Id.ToString()), maxLevels, currentLevel + 1);
+                    await LoadChildrenRecursively(childDto, int.Parse(childDto.Id.ToString()), maxLevels, currentLevel + 1);
                 }
             }
         }
 
-        public async Task<IEnumerable<TreeNodeDto>> GetAncestorsAsync(Guid nodeId)
+        public async Task<IEnumerable<TreeNodeDto>> GetAncestorsAsync(int nodeId)
         {
             try
             {
@@ -825,7 +825,7 @@ namespace Ikhtibar.API.Services
             }
         }
 
-        public async Task<IEnumerable<TreeNodeDto>> GetDescendantsAsync(Guid nodeId)
+        public async Task<IEnumerable<TreeNodeDto>> GetDescendantsAsync(int nodeId)
         {
             try
             {
@@ -888,7 +888,7 @@ namespace Ikhtibar.API.Services
             }
         }
 
-        public async Task<TreeNodeDto> UpdateAsync(Guid id, UpdateTreeNodeDto dto)
+        public async Task<TreeNodeDto> UpdateAsync(int id, UpdateTreeNodeDto dto)
         {
             try
             {
@@ -931,7 +931,7 @@ namespace Ikhtibar.API.Services
             }
         }
 
-        public async Task<TreeNodeDto> MoveAsync(Guid id, MoveTreeNodeDto dto)
+        public async Task<TreeNodeDto> MoveAsync(int id, MoveTreeNodeDto dto)
         {
             try
             {
@@ -978,12 +978,12 @@ namespace Ikhtibar.API.Services
             }
         }
 
-        public async Task<bool> ReorderAsync(Guid parentId, IDictionary<Guid, int> nodeOrders)
+        public async Task<bool> ReorderAsync(int parentId, IDictionary<int, int> nodeOrders)
         {
             try
             {
                 // Validate parent node
-                if (parentId != Guid.Empty)
+                if (parentId != int.Empty)
                 {
                     var parent = await _treeNodeRepository.GetByIdAsync(parentId);
                     if (parent == null)
@@ -1014,7 +1014,7 @@ namespace Ikhtibar.API.Services
             }
         }
 
-        public async Task<bool> DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(int id)
         {
             try
             {
@@ -1086,7 +1086,7 @@ namespace Ikhtibar.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<TreeNodeTypeDto>> GetById(Guid id)
+        public async Task<ActionResult<TreeNodeTypeDto>> GetById(int id)
         {
             try
             {
@@ -1124,7 +1124,7 @@ namespace Ikhtibar.API.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<TreeNodeTypeDto>> Update(Guid id, UpdateTreeNodeTypeDto dto)
+        public async Task<ActionResult<TreeNodeTypeDto>> Update(int id, UpdateTreeNodeTypeDto dto)
         {
             try
             {
@@ -1148,7 +1148,7 @@ namespace Ikhtibar.API.Controllers
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> Delete(Guid id)
+        public async Task<ActionResult> Delete(int id)
         {
             try
             {
@@ -1227,7 +1227,7 @@ namespace Ikhtibar.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<TreeNodeDetailDto>> GetById(Guid id)
+        public async Task<ActionResult<TreeNodeDetailDto>> GetById(int id)
         {
             try
             {
@@ -1261,7 +1261,7 @@ namespace Ikhtibar.API.Controllers
         }
 
         [HttpGet("{id}/children")]
-        public async Task<ActionResult<IEnumerable<TreeNodeDto>>> GetChildren(Guid id)
+        public async Task<ActionResult<IEnumerable<TreeNodeDto>>> GetChildren(int id)
         {
             try
             {
@@ -1276,7 +1276,7 @@ namespace Ikhtibar.API.Controllers
         }
 
         [HttpGet("{id}/tree")]
-        public async Task<ActionResult<TreeNodeDetailDto>> GetTree(Guid id, [FromQuery] int levels = 1)
+        public async Task<ActionResult<TreeNodeDetailDto>> GetTree(int id, [FromQuery] int levels = 1)
         {
             try
             {
@@ -1293,7 +1293,7 @@ namespace Ikhtibar.API.Controllers
         }
 
         [HttpGet("{id}/ancestors")]
-        public async Task<ActionResult<IEnumerable<TreeNodeDto>>> GetAncestors(Guid id)
+        public async Task<ActionResult<IEnumerable<TreeNodeDto>>> GetAncestors(int id)
         {
             try
             {
@@ -1308,7 +1308,7 @@ namespace Ikhtibar.API.Controllers
         }
 
         [HttpGet("{id}/descendants")]
-        public async Task<ActionResult<IEnumerable<TreeNodeDto>>> GetDescendants(Guid id)
+        public async Task<ActionResult<IEnumerable<TreeNodeDto>>> GetDescendants(int id)
         {
             try
             {
@@ -1348,7 +1348,7 @@ namespace Ikhtibar.API.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<TreeNodeDto>> Update(Guid id, UpdateTreeNodeDto dto)
+        public async Task<ActionResult<TreeNodeDto>> Update(int id, UpdateTreeNodeDto dto)
         {
             try
             {
@@ -1372,7 +1372,7 @@ namespace Ikhtibar.API.Controllers
 
         [HttpPut("{id}/move")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<TreeNodeDto>> Move(Guid id, MoveTreeNodeDto dto)
+        public async Task<ActionResult<TreeNodeDto>> Move(int id, MoveTreeNodeDto dto)
         {
             try
             {
@@ -1396,7 +1396,7 @@ namespace Ikhtibar.API.Controllers
 
         [HttpPut("{parentId}/reorder")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> Reorder(Guid parentId, [FromBody] IDictionary<Guid, int> nodeOrders)
+        public async Task<ActionResult> Reorder(int parentId, [FromBody] IDictionary<int, int> nodeOrders)
         {
             try
             {
@@ -1422,7 +1422,7 @@ namespace Ikhtibar.API.Controllers
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> Delete(Guid id)
+        public async Task<ActionResult> Delete(int id)
         {
             try
             {
@@ -1537,7 +1537,7 @@ public class TreeNodeServiceTests
     {
         // Arrange
         // Mock repositories, mapper
-        var parentNode = new TreeNode { Id = Guid.NewGuid(), Path = "-1-" };
+        var parentNode = new TreeNode {  Path = "-1-" };
         var dto = new CreateTreeNodeDto { ParentId = parentNode.Id };
         
         // Act
@@ -1558,9 +1558,9 @@ public class TreeNodeServiceTests
 ### Level 3: Integration
 ```bash
 # Check API endpoints
-curl -X GET http://localhost:5000/api/tree-nodes/roots
+curl -X GET https://localhost:7001/api/tree-nodes/roots
 # Expect: 200 OK and JSON array of root nodes
 
-curl -X GET "http://localhost:5000/api/tree-nodes/{id}/tree?levels=2"
+curl -X GET "https://localhost:7001/api/tree-nodes/{id}/tree?levels=2"
 # Expect: 200 OK and hierarchical JSON object
 ```

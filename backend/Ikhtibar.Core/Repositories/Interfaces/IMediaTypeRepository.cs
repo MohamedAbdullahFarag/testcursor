@@ -5,7 +5,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// <summary>
 /// Repository interface for MediaType lookup operations
 /// </summary>
-public interface IMediaTypeRepository : IRepository<MediaType>
+public interface IMediaTypeRepository : IBaseRepository<MediaType>
 {
     /// <summary>
     /// Gets media type by name

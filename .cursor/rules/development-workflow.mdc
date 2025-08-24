@@ -3,10 +3,10 @@
 ## Runtime Validation
 ```bash
 pnpm run dev
-# Backend: http://localhost:5000
+# Backend: https://localhost:7001
 # Frontend: https://localhost:5173/
-# Health: http://localhost:5000/api/health/ping
-# Swagger: http://localhost:5000/swagger
+# Health: https://localhost:7001/api/health/ping
+# Swagger: https://localhost:7001/swagger
 ```
 
 ## Build Commands

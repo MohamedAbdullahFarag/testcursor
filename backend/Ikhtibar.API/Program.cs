@@ -12,7 +12,7 @@ using Ikhtibar.Infrastructure.Data;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Infrastructure.Repositories;
 using Ikhtibar.API.Middleware;
-using Ikhtibar.API.Models;
+
 using Ikhtibar.API.Extensions;
 using Ikhtibar.Shared.Models;
 using Ikhtibar.Core.Services.Interfaces;
@@ -22,6 +22,43 @@ using Ikhtibar.Core.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
+// Configure CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins", policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            // In development, allow specific origins for credential support
+            policy.WithOrigins(
+                "https://localhost:5173",
+                "http://localhost:5173",
+                "https://localhost:3000",
+                "https://localhost:7001",
+                "https://localhost:7001"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+        }
+        else
+        {
+            // In production, configure specific origins
+            policy.WithOrigins(
+                "https://localhost:5173",
+                "http://localhost:5173",
+                "https://localhost:3000",
+                "https://localhost:7001",
+                "https://localhost:7001",
+                "https://yourdomain.com"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+        }
+    });
+});
+
 
 // Set default culture
 var defaultCulture = new CultureInfo("en-US");
@@ -41,6 +78,8 @@ builder.Services.Configure<OidcSettings>(builder.Configuration.GetSection("OidcS
 var authSettings = new AuthSettings();
 builder.Configuration.GetSection("AuthSettings").Bind(authSettings);
 builder.Services.Configure<AuthSettings>(builder.Configuration.GetSection("AuthSettings"));
+
+builder.Services.AddScoped<IAnalyticsDashboardService, AnalyticsDashboardService>();
 
 // ===== AUTHENTICATION & AUTHORIZATION =====
 builder.Services.AddAuthentication(options =>
@@ -145,30 +184,6 @@ builder.Services.AddControllers()
         options.SuppressModelStateInvalidFilter = false;
     });
 
-// Configure CORS policy
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAllOrigins", policy =>
-    {
-        if (builder.Environment.IsDevelopment())
-        {
-            // In development, allow specific origins for credential support
-            policy.WithOrigins("https://localhost:5173", "http://localhost:5173", "https://localhost:3000")
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
-        }
-        else
-        {
-            // In production, configure specific origins
-            policy.WithOrigins("https://localhost:5173", "http://localhost:5173", "https://localhost:3000", "https://yourdomain.com")
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
-        }
-    });
-});
-
 // Configure Dapper - Register connection factory
 builder.Services.AddTransient<IDbConnection>(provider =>
     new SqlConnection(builder.Configuration.GetConnectionString("IkhtibarDatabase")));
@@ -191,6 +206,8 @@ builder.Services.AddAutoMapper(typeof(Ikhtibar.Core.Services.Interfaces.IUserSer
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
+builder.Services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
 
 // Register tree management repositories
 builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.ITreeNodeTypeRepository, Ikhtibar.Infrastructure.Repositories.TreeNodeTypeRepository>();
@@ -226,15 +243,15 @@ builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IQuestionBankTr
 
 // Register media management repositories
 builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaFileRepository, Ikhtibar.Infrastructure.Repositories.MediaFileRepository>();
-builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaCategoryRepository, Ikhtibar.Infrastructure.Repositories.MediaCategoryRepository>();
-builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaCollectionRepository, Ikhtibar.Infrastructure.Repositories.MediaCollectionRepository>();
-builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaMetadataRepository, Ikhtibar.Infrastructure.Repositories.MediaMetadataRepository>();
-builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaAccessLogRepository, Ikhtibar.Infrastructure.Repositories.MediaAccessLogRepository>();
-builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaThumbnailRepository, Ikhtibar.Infrastructure.Repositories.MediaThumbnailRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaCategoryRepository, MediaCategoryRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaCollectionRepository, MediaCollectionRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaMetadataRepository, MediaMetadataRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaAccessLogRepository, MediaAccessLogRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaThumbnailRepository, MediaThumbnailRepository>();
 
 // Register authentication services
 builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.ITokenService, Ikhtibar.Infrastructure.Services.TokenService>();
-builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.IAuthenticationService, Ikhtibar.Core.Services.Implementations.AuthenticationService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IRefreshTokenRepository, Ikhtibar.Infrastructure.Repositories.RefreshTokenRepository>();
 
 // Register database initialization service

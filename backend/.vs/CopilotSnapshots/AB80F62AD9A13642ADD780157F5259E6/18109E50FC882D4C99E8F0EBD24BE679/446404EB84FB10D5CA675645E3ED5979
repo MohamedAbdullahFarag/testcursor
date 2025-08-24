@@ -1,0 +1,358 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit.Framework;
+using Ikhtibar.API.Controllers;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.DTOs.Authentication;
+
+namespace Ikhtibar.Tests.API.Controllers
+{
+    [TestFixture]
+    public class AuthControllerTests
+    {
+        private Mock<IAuthenticationService> _mockAuthenticationService;
+        private Mock<ILogger<AuthController>> _mockLogger;
+        private AuthController _authController;
+
+        [SetUp]
+        public void Setup()
+        {
+            _mockAuthenticationService = new Mock<IAuthenticationService>();
+            _mockLogger = new Mock<ILogger<AuthController>>();
+            _authController = new AuthController(_mockAuthenticationService.Object, _mockLogger.Object);
+        }
+
+        [Test]
+        public async Task Login_WithValidCredentials_ReturnsOkResult()
+        {
+            // Arrange
+            var loginRequest = new LoginDto
+            {
+                Email = "test@example.com",
+                Password = "password123"
+            };
+
+            var authResult = new AuthResultDto
+            {
+                Success = true,
+                User = new UserDto
+                {
+                    UserId = 1,
+                    Email = "test@example.com",
+                    FirstName = "Test",
+                    LastName = "User",
+                    Username = "testuser",
+                    IsActive = true,
+                    EmailVerified = true,
+                    CreatedAt = DateTime.UtcNow,
+                    ModifiedAt = DateTime.UtcNow
+                },
+                AccessToken = "access_token_123",
+                RefreshTokens = "refresh_token_123",
+                TokenType = "Bearer",
+                ExpiresIn = 3600,
+                ExpiresAt = DateTime.UtcNow.AddHours(1),
+                IssuedAt = DateTime.UtcNow
+            };
+
+            _mockAuthenticationService.Setup(x => x.AuthenticateAsync(loginRequest))
+                .ReturnsAsync(authResult);
+
+            // Act
+            var result = await _authController.Login(loginRequest);
+
+            // Assert
+            var okResult = result.Result as OkObjectResult;
+            Assert.IsNotNull(okResult);
+            var returnedAuthResult = okResult.Value as AuthResultDto;
+            Assert.IsNotNull(returnedAuthResult);
+            Assert.IsTrue(returnedAuthResult.Success);
+            Assert.AreEqual(authResult.AccessToken, returnedAuthResult.AccessToken);
+        }
+
+        [Test]
+        public async Task Login_WithInvalidCredentials_ReturnsUnauthorizedResult()
+        {
+            // Arrange
+            var loginRequest = new LoginDto
+            {
+                Email = "test@example.com",
+                Password = "wrongpassword"
+            };
+
+            _mockAuthenticationService.Setup(x => x.AuthenticateAsync(loginRequest))
+                .ThrowsAsync(new UnauthorizedAccessException("Invalid credentials"));
+
+            // Act
+            var result = await _authController.Login(loginRequest);
+
+            // Assert
+            Assert.IsInstanceOf<UnauthorizedObjectResult>(result.Result);
+        }
+
+        [Test]
+        public async Task Login_WithServiceException_ReturnsInternalServerError()
+        {
+            // Arrange
+            var loginRequest = new LoginDto
+            {
+                Email = "test@example.com",
+                Password = "password123"
+            };
+
+            _mockAuthenticationService.Setup(x => x.AuthenticateAsync(loginRequest))
+                .ThrowsAsync(new Exception("Service error"));
+
+            // Act
+            var result = await _authController.Login(loginRequest);
+
+            // Assert
+            var statusCodeResult = result.Result as ObjectResult;
+            Assert.AreEqual(500, statusCodeResult.StatusCode);
+        }
+
+        [Test]
+        public async Task RefreshToken_WithValidToken_ReturnsOkResult()
+        {
+            // Arrange
+            var refreshToken = "valid_refresh_token";
+            var authResult = new AuthResultDto
+            {
+                Success = true,
+                User = new UserDto
+                {
+                    UserId = 1,
+                    Email = "test@example.com",
+                    FirstName = "Test",
+                    LastName = "User",
+                    Username = "testuser",
+                    IsActive = true,
+                    EmailVerified = true,
+                    CreatedAt = DateTime.UtcNow,
+                    ModifiedAt = DateTime.UtcNow
+                },
+                AccessToken = "new_access_token",
+                RefreshTokens = "new_refresh_token",
+                TokenType = "Bearer",
+                ExpiresIn = 3600,
+                ExpiresAt = DateTime.UtcNow.AddHours(1),
+                IssuedAt = DateTime.UtcNow
+            };
+
+            _mockAuthenticationService.Setup(x => x.RefreshTokenAsync(refreshToken))
+                .ReturnsAsync(authResult);
+
+            // Act
+            var result = await _authController.RefreshToken(refreshToken);
+
+            // Assert
+            var okResult = result.Result as OkObjectResult;
+            Assert.IsNotNull(okResult);
+            var returnedAuthResult = okResult.Value as AuthResultDto;
+            Assert.IsNotNull(returnedAuthResult);
+            Assert.IsTrue(returnedAuthResult.Success);
+            Assert.AreEqual(authResult.AccessToken, returnedAuthResult.AccessToken);
+        }
+
+        [Test]
+        public async Task RefreshToken_WithEmptyToken_ReturnsBadRequest()
+        {
+            // Arrange
+            var refreshToken = "";
+
+            // Act
+            var result = await _authController.RefreshToken(refreshToken);
+
+            // Assert
+            var badRequestResult = result.Result as BadRequestObjectResult;
+            var errorMessage = badRequestResult.Value as Anonymous;
+            Assert.AreEqual("Refresh token is required", errorMessage.GetType().GetProperty("message")?.GetValue(errorMessage));
+        }
+
+        [Test]
+        public async Task RefreshToken_WithServiceException_ReturnsInternalServerError()
+        {
+            // Arrange
+            var refreshToken = "valid_refresh_token";
+            _mockAuthenticationService.Setup(x => x.RefreshTokenAsync(refreshToken))
+                .ThrowsAsync(new Exception("Service error"));
+
+            // Act
+            var result = await _authController.RefreshToken(refreshToken);
+
+            // Assert
+            var statusCodeResult = result.Result as ObjectResult;
+            Assert.AreEqual(500, statusCodeResult.StatusCode);
+        }
+
+        [Test]
+        public async Task SsoCallback_WithValidData_ReturnsOkResult()
+        {
+            // Arrange
+            var ssoCallbackRequest = new SsoCallbackDto
+            {
+                Code = "authorization_code",
+                State = "state_value",
+                RedirectUri = "https://example.com/callback"
+            };
+
+            var authResult = new AuthResultDto
+            {
+                Success = true,
+                User = new UserDto
+                {
+                    UserId = 1,
+                    Email = "sso@example.com",
+                    FirstName = "SSO",
+                    LastName = "User",
+                    Username = "ssouser",
+                    IsActive = true,
+                    EmailVerified = true,
+                    CreatedAt = DateTime.UtcNow,
+                    ModifiedAt = DateTime.UtcNow
+                },
+                AccessToken = "sso_access_token",
+                RefreshTokens = "sso_refresh_token",
+                TokenType = "Bearer",
+                ExpiresIn = 3600,
+                ExpiresAt = DateTime.UtcNow.AddHours(1),
+                IssuedAt = DateTime.UtcNow
+            };
+
+            _mockAuthenticationService.Setup(x => x.ProcessSsoCallbackAsync(ssoCallbackRequest))
+                .ReturnsAsync(authResult);
+
+            // Act
+            var result = await _authController.SsoCallback(ssoCallbackRequest);
+
+            // Assert
+            var okResult = result.Result as OkObjectResult;
+            Assert.IsNotNull(okResult);
+            var returnedAuthResult = okResult.Value as AuthResultDto;
+            Assert.IsNotNull(returnedAuthResult);
+            Assert.IsTrue(returnedAuthResult.Success);
+            Assert.AreEqual(authResult.AccessToken, returnedAuthResult.AccessToken);
+        }
+
+        [Test]
+        public async Task SsoCallback_WithServiceException_ReturnsInternalServerError()
+        {
+            // Arrange
+            var ssoCallbackRequest = new SsoCallbackDto
+            {
+                Code = "authorization_code",
+                State = "state_value",
+                RedirectUri = "https://example.com/callback"
+            };
+
+            _mockAuthenticationService.Setup(x => x.ProcessSsoCallbackAsync(ssoCallbackRequest))
+                .ThrowsAsync(new Exception("SSO service error"));
+
+            // Act
+            var result = await _authController.SsoCallback(ssoCallbackRequest);
+
+            // Assert
+            var statusCodeResult = result.Result as ObjectResult;
+            Assert.AreEqual(500, statusCodeResult.StatusCode);
+        }
+
+        [Test]
+        public async Task Logout_WithValidToken_ReturnsOkResult()
+        {
+            // Arrange
+            var refreshToken = "valid_refresh_token";
+            _mockAuthenticationService.Setup(x => x.RevokeTokenAsync(refreshToken))
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _authController.Logout(refreshToken);
+
+            // Assert
+            var okResult = result as OkObjectResult;
+            var message = okResult.Value as Anonymous;
+            Assert.AreEqual("Successfully logged out", message.GetType().GetProperty("message")?.GetValue(message));
+        }
+
+        [Test]
+        public async Task Logout_WithEmptyToken_ReturnsBadRequest()
+        {
+            // Arrange
+            var refreshToken = "";
+
+            // Act
+            var result = await _authController.Logout(refreshToken);
+
+            // Assert
+            var badRequestResult = result as BadRequestObjectResult;
+            var errorMessage = badRequestResult.Value as Anonymous;
+            Assert.AreEqual("Refresh token is required", errorMessage.GetType().GetProperty("message")?.GetValue(errorMessage));
+        }
+
+        [Test]
+        public async Task Logout_WithFailedRevocation_ReturnsBadRequest()
+        {
+            // Arrange
+            var refreshToken = "valid_refresh_token";
+            _mockAuthenticationService.Setup(x => x.RevokeTokenAsync(refreshToken))
+                .ReturnsAsync(false);
+
+            // Act
+            var result = await _authController.Logout(refreshToken);
+
+            // Assert
+            var badRequestResult = result as BadRequestObjectResult;
+            var errorMessage = badRequestResult.Value as Anonymous;
+            Assert.AreEqual("Failed to logout", errorMessage.GetType().GetProperty("message")?.GetValue(errorMessage));
+        }
+
+        [Test]
+        public async Task ValidateToken_WithValidToken_ReturnsOkResult()
+        {
+            // Arrange
+            var token = "valid_token";
+            _mockAuthenticationService.Setup(x => x.ValidateTokenAsync(token))
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _authController.ValidateToken(token);
+
+            // Assert
+            var okResult = result as OkObjectResult;
+            var validationResult = okResult.Value as Anonymous;
+            Assert.True((bool)validationResult.GetType().GetProperty("isValid")?.GetValue(validationResult)!);
+        }
+
+        [Test]
+        public async Task ValidateToken_WithEmptyToken_ReturnsBadRequest()
+        {
+            // Arrange
+            var token = "";
+
+            // Act
+            var result = await _authController.ValidateToken(token);
+
+            // Assert
+            var badRequestResult = result as BadRequestObjectResult;
+            var errorMessage = badRequestResult.Value as Anonymous;
+            Assert.AreEqual("Token is required", errorMessage.GetType().GetProperty("message")?.GetValue(errorMessage));
+        }
+
+        [Test]
+        public async Task ValidateToken_WithServiceException_ReturnsInternalServerError()
+        {
+            // Arrange
+            var token = "valid_token";
+            _mockAuthenticationService.Setup(x => x.ValidateTokenAsync(token))
+                .ThrowsAsync(new Exception("Validation service error"));
+
+            // Act
+            var result = await _authController.ValidateToken(token);
+
+            // Assert
+            var statusCodeResult = result as ObjectResult;
+            Assert.AreEqual(500, statusCodeResult.StatusCode);
+        }
+    }
+}

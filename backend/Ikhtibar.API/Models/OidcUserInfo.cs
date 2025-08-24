@@ -68,5 +68,5 @@ public class OidcUserInfo
     /// <summary>
     /// Time when user information was last updated
     /// </summary>
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? ModifiedAt { get; set; }
 }

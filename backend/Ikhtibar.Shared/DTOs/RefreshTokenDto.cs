@@ -11,7 +11,7 @@ public class RefreshTokenDto
     /// Refresh token
     /// </summary>
     [Required]
-    public string RefreshToken { get; set; } = string.Empty;
+    public string RefreshTokens { get; set; } = string.Empty;
     
     /// <summary>
     /// Optional access token (may be expired)

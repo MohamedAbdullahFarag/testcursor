@@ -204,7 +204,7 @@ public class DatabaseController : ControllerBase
 // appsettings.Development.json ✅ VERIFIED
 {
   "ConnectionStrings": {
-    "IkhtibarDatabase": "Server=(localdb)\\mssqllocaldb;Database=IkhtibarDb_Development;Trusted_Connection=true;MultipleActiveResultSets=true"
+    "IkhtibarDatabase": "Server=(localdb)\\mssqllocaldb;Database=IkhtibarDb;Trusted_Connection=true;MultipleActiveResultSets=true"
   }
 }
 ```

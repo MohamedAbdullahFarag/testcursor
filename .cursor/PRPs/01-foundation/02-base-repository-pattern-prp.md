@@ -20,12 +20,12 @@ Define and implement a generic repository pattern to centralize data access logi
 1. **Define IRepository Interface** (`Ikhtibar.Core/Repositories/Interfaces/IRepository.cs`)
    - Add methods:
      ```csharp
-     Task<T?> GetByIdAsync(Guid id);
+     Task<T?> GetByIdAsync(int id);
      Task<IEnumerable<T>> GetAllAsync(string? where = null, object? parameters = null);
      Task<T> AddAsync(T entity);
      Task<T> UpdateAsync(T entity);
-     Task<bool> DeleteAsync(Guid id);
-     Task<bool> ExistsAsync(Guid id);
+     Task<bool> DeleteAsync(int id);
+     Task<bool> ExistsAsync(int id);
      Task<IEnumerable<T>> QueryAsync(string sql, object? parameters = null);
      ```
    - ❌ DON'T: Include business logic or validation here.

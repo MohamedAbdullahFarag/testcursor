@@ -1,4 +1,4 @@
-using Ikhtibar.Core.Entities;
+
 using ThumbnailSize = Ikhtibar.Shared.Enums.ThumbnailSize;
 
 namespace Ikhtibar.Infrastructure.Services.Interfaces;

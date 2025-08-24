@@ -54,6 +54,8 @@ export interface ApiRequestConfig {
     retries?: number
     cache?: boolean
     signal?: AbortSignal
+    params?: Record<string, any>
+    responseType?: 'json' | 'blob' | 'text'
 }
 
 /**

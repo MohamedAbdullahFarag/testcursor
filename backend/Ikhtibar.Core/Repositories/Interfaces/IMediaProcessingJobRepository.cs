@@ -1,6 +1,7 @@
-using Ikhtibar.Core.Entities;
-using CoreProcessingJobStatus = Ikhtibar.Core.Entities.ProcessingJobStatus;
-using CoreProcessingJobType = Ikhtibar.Core.Entities.ProcessingJobType;
+
+using Ikhtibar.Shared.Entities;
+using CoreProcessingJobStatus = Ikhtibar.Shared.Entities.ProcessingJobStatus;
+using CoreProcessingJobType = Ikhtibar.Shared.Entities.ProcessingJobType;
 
 namespace Ikhtibar.Core.Repositories.Interfaces;
 
@@ -8,7 +9,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// Repository interface for MediaProcessingJob entity operations
 /// Provides specialized methods for background job queue management
 /// </summary>
-public interface IMediaProcessingJobRepository : IRepository<MediaProcessingJob>
+public interface IMediaProcessingJobRepository : IBaseRepository<MediaProcessingJob>
 {
     /// <summary>
     /// Gets jobs for a specific media file
@@ -17,7 +18,7 @@ public interface IMediaProcessingJobRepository : IRepository<MediaProcessingJob>
     /// <param name="statusFilter">Optional status filter</param>
     /// <param name="jobTypeFilter">Optional job type filter</param>
     /// <returns>Collection of processing jobs for the media file</returns>
-    Task<IEnumerable<MediaProcessingJob>> GetByMediaFileAsync(Guid mediaFileId, CoreProcessingJobStatus? statusFilter = null, CoreProcessingJobType? jobTypeFilter = null);
+    Task<IEnumerable<MediaProcessingJob>> GetByMediaFileAsync(int mediaFileId, CoreProcessingJobStatus? statusFilter = null, CoreProcessingJobType? jobTypeFilter = null);
 
     /// <summary>
     /// Gets jobs by status
@@ -102,7 +103,7 @@ public interface IMediaProcessingJobRepository : IRepository<MediaProcessingJob>
     /// <param name="jobParameters">JSON parameters for the job</param>
     /// <param name="maxAttempts">Maximum retry attempts</param>
     /// <returns>The created processing job</returns>
-    Task<MediaProcessingJob> QueueJobAsync(Guid mediaFileId, CoreProcessingJobType jobType, int priority = 5, string? jobParameters = null, int maxAttempts = 3);
+    Task<MediaProcessingJob> QueueJobAsync(int mediaFileId, CoreProcessingJobType jobType, int priority = 5, string? jobParameters = null, int maxAttempts = 3);
 
     /// <summary>
     /// Marks a job as started
@@ -110,7 +111,7 @@ public interface IMediaProcessingJobRepository : IRepository<MediaProcessingJob>
     /// <param name="jobId">Job identifier</param>
     /// <param name="workerName">Name of the worker processing the job</param>
     /// <returns>True if marked successfully</returns>
-    Task<bool> MarkJobStartedAsync(Guid jobId, string workerName);
+    Task<bool> MarkJobStartedAsync(int jobId, string workerName);
 
     /// <summary>
     /// Updates job progress
@@ -119,7 +120,7 @@ public interface IMediaProcessingJobRepository : IRepository<MediaProcessingJob>
     /// <param name="progressPercentage">Progress percentage (0-100)</param>
     /// <param name="currentStage">Optional description of current stage</param>
     /// <returns>True if updated successfully</returns>
-    Task<bool> UpdateProgressAsync(Guid jobId, int progressPercentage, string? currentStage = null);
+    Task<bool> UpdateProgressAsync(int jobId, int progressPercentage, string? currentStage = null);
 
     /// <summary>
     /// Marks a job as completed successfully
@@ -128,7 +129,7 @@ public interface IMediaProcessingJobRepository : IRepository<MediaProcessingJob>
     /// <param name="jobResults">JSON results from the job</param>
     /// <param name="processingDurationMs">Processing time in milliseconds</param>
     /// <returns>True if marked successfully</returns>
-    Task<bool> MarkJobCompletedAsync(Guid jobId, string? jobResults = null, long? processingDurationMs = null);
+    Task<bool> MarkJobCompletedAsync(int jobId, string? jobResults = null, long? processingDurationMs = null);
 
     /// <summary>
     /// Marks a job as failed
@@ -138,7 +139,7 @@ public interface IMediaProcessingJobRepository : IRepository<MediaProcessingJob>
     /// <param name="errorStackTrace">Optional stack trace</param>
     /// <param name="retryAfterMinutes">Minutes to wait before retry (null for immediate)</param>
     /// <returns>True if marked successfully</returns>
-    Task<bool> MarkJobFailedAsync(Guid jobId, string errorMessage, string? errorStackTrace = null, int? retryAfterMinutes = null);
+    Task<bool> MarkJobFailedAsync(int jobId, string errorMessage, string? errorStackTrace = null, int? retryAfterMinutes = null);
 
     /// <summary>
     /// Cancels a job
@@ -146,7 +147,7 @@ public interface IMediaProcessingJobRepository : IRepository<MediaProcessingJob>
     /// <param name="jobId">Job identifier</param>
     /// <param name="reason">Reason for cancellation</param>
     /// <returns>True if cancelled successfully</returns>
-    Task<bool> CancelJobAsync(Guid jobId, string? reason = null);
+    Task<bool> CancelJobAsync(int jobId, string? reason = null);
 
     /// <summary>
     /// Resets stuck jobs back to queued status
@@ -161,7 +162,7 @@ public interface IMediaProcessingJobRepository : IRepository<MediaProcessingJob>
     /// <param name="jobIds">Collection of job identifiers</param>
     /// <param name="newPriority">New priority value</param>
     /// <returns>Number of jobs updated</returns>
-    Task<int> BulkUpdatePriorityAsync(IEnumerable<Guid> jobIds, int newPriority);
+    Task<int> BulkUpdatePriorityAsync(IEnumerable<int> jobIds, int newPriority);
 
     /// <summary>
     /// Deletes old completed/failed jobs
@@ -192,5 +193,5 @@ public interface IMediaProcessingJobRepository : IRepository<MediaProcessingJob>
     /// <param name="mediaFileId">Media file identifier</param>
     /// <param name="jobType">Optional job type filter</param>
     /// <returns>True if there are pending jobs</returns>
-    Task<bool> HasPendingJobsAsync(Guid mediaFileId, CoreProcessingJobType? jobType = null);
+    Task<bool> HasPendingJobsAsync(int mediaFileId, CoreProcessingJobType? jobType = null);
 }

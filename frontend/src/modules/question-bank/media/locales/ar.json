@@ -1,0 +1,367 @@
+{
+  "media": {
+    "title": "إدارة الوسائط",
+    "description": "رفع وتنظيم وإدارة ملفات الوسائط الخاصة بك بما في ذلك الصور والفيديو والصوت والمستندات",
+    
+    "viewMode": {
+      "grid": "عرض الشبكة",
+      "list": "عرض القائمة",
+      "gallery": "عرض المعرض",
+      "timeline": "عرض الجدول الزمني"
+    },
+    
+    "actions": {
+      "upload": "رفع الوسائط",
+      "manageCategories": "إدارة الفئات",
+      "manageCollections": "إدارة المجموعات",
+      "select": "اختر {{count}} عنصر(ات)",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "download": "تحميل",
+      "preview": "معاينة",
+      "share": "مشاركة",
+      "move": "نقل",
+      "copy": "نسخ",
+      "rename": "إعادة تسمية",
+      "duplicate": "تكرار",
+      "archive": "أرشفة",
+      "restore": "استعادة",
+      "bulkEdit": "تعديل جماعي",
+      "bulkDelete": "حذف جماعي",
+      "bulkMove": "نقل جماعي",
+      "bulkCopy": "نسخ جماعي"
+    },
+    
+    "stats": {
+      "images": "الصور",
+      "videos": "الفيديو",
+      "audio": "الصوت",
+      "documents": "المستندات",
+      "total": "إجمالي الملفات",
+      "size": "إجمالي الحجم",
+      "recentUploads": "الرفوعات الحديثة",
+      "processingJobs": "وظائف المعالجة",
+      "failedJobs": "الوظائف الفاشلة",
+      "completedJobs": "الوظائف المكتملة"
+    },
+    
+    "filters": {
+      "title": "المرشحات",
+      "mediaType": "نوع الوسائط",
+      "status": "الحالة",
+      "category": "الفئة",
+      "collection": "المجموعة",
+      "uploadedBy": "تم الرفع بواسطة",
+      "dateRange": "نطاق التاريخ",
+      "fileSize": "حجم الملف",
+      "tags": "العلامات",
+      "apply": "تطبيق المرشحات",
+      "clear": "مسح المرشحات",
+      "reset": "إعادة تعيين إلى الافتراضي",
+      "activeFilters": "المرشحات النشطة",
+      "noActiveFilters": "لا توجد مرشحات نشطة"
+    },
+    
+    "search": {
+      "placeholder": "البحث في ملفات الوسائط...",
+      "advancedSearch": "بحث متقدم",
+      "searchBy": "البحث بواسطة",
+      "fileName": "اسم الملف",
+      "content": "المحتوى",
+      "metadata": "البيانات الوصفية",
+      "tags": "العلامات",
+      "searchResults": "نتائج البحث",
+      "noResults": "لم يتم العثور على نتائج",
+      "searchHistory": "تاريخ البحث",
+      "recentSearches": "البحث الحديث",
+      "clearHistory": "مسح التاريخ",
+      "suggestions": "الاقتراحات"
+    },
+    
+    "upload": {
+      "title": "رفع الوسائط",
+      "dragAndDrop": "اسحب وأفلت الملفات هنا، أو انقر للتصفح",
+      "browseFiles": "تصفح الملفات",
+      "supportedFormats": "الصيغ المدعومة",
+      "fileSizeLimit": "حد حجم الملف",
+      "uploadProgress": "تقدم الرفع",
+      "uploading": "جاري الرفع...",
+      "processing": "جاري المعالجة...",
+      "completed": "مكتمل",
+      "failed": "فشل",
+      "retry": "إعادة المحاولة",
+      "cancel": "إلغاء",
+      "close": "إغلاق",
+      "uploadSuccess": "تم رفع الملفات بنجاح",
+      "uploadError": "فشل الرفع",
+      "validationError": "فشل التحقق",
+      "fileTooLarge": "الملف كبير جداً",
+      "unsupportedFormat": "صيغة الملف غير مدعومة",
+      "virusDetected": "تم اكتشاف فيروس في الملف",
+      "duplicateFile": "الملف موجود بالفعل"
+    },
+    
+    "categories": {
+      "title": "الفئات",
+      "addCategory": "إضافة فئة",
+      "editCategory": "تعديل الفئة",
+      "deleteCategory": "حذف الفئة",
+      "categoryName": "اسم الفئة",
+      "description": "الوصف",
+      "parentCategory": "الفئة الأصلية",
+      "sortOrder": "ترتيب الفرز",
+      "isActive": "نشط",
+      "mediaCount": "عدد الوسائط",
+      "noCategories": "لم يتم العثور على فئات",
+      "createFirstCategory": "أنشئ فئتك الأولى",
+      "categoryCreated": "تم إنشاء الفئة بنجاح",
+      "categoryUpdated": "تم تحديث الفئة بنجاح",
+      "categoryDeleted": "تم حذف الفئة بنجاح",
+      "confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه الفئة؟",
+      "hasSubcategories": "هذه الفئة لها فئات فرعية",
+      "hasMedia": "هذه الفئة تحتوي على وسائط"
+    },
+    
+    "collections": {
+      "title": "المجموعات",
+      "addCollection": "إضافة مجموعة",
+      "editCollection": "تعديل المجموعة",
+      "deleteCollection": "حذف المجموعة",
+      "collectionName": "اسم المجموعة",
+      "description": "الوصف",
+      "collectionType": "نوع المجموعة",
+      "isPublic": "عام",
+      "coverImage": "صورة الغلاف",
+      "itemCount": "عدد العناصر",
+      "noCollections": "لم يتم العثور على مجموعات",
+      "createFirstCollection": "أنشئ مجموعتك الأولى",
+      "collectionCreated": "تم إنشاء المجموعة بنجاح",
+      "collectionUpdated": "تم تحديث المجموعة بنجاح",
+      "collectionDeleted": "تم حذف المجموعة بنجاح",
+      "confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه المجموعة؟",
+      "hasItems": "هذه المجموعة تحتوي على عناصر وسائط",
+      "addMedia": "إضافة وسائط",
+      "removeMedia": "إزالة الوسائط",
+      "reorderItems": "إعادة ترتيب العناصر"
+    },
+    
+    "mediaFile": {
+      "fileName": "اسم الملف",
+      "originalFileName": "الاسم الأصلي",
+      "fileSize": "حجم الملف",
+      "mimeType": "نوع MIME",
+      "mediaType": "نوع الوسائط",
+      "status": "الحالة",
+      "uploadedBy": "تم الرفع بواسطة",
+      "uploadedAt": "تاريخ الرفع",
+      "modifiedAt": "تاريخ التعديل",
+      "category": "الفئة",
+      "collection": "المجموعة",
+      "metadata": "البيانات الوصفية",
+      "thumbnails": "الصور المصغرة",
+      "accessLogs": "سجلات الوصول",
+      "processingJobs": "وظائف المعالجة",
+      "noThumbnails": "لا توجد صور مصغرة متاحة",
+      "noMetadata": "لا توجد بيانات وصفية متاحة",
+      "noAccessLogs": "لا توجد سجلات وصول متاحة",
+      "noProcessingJobs": "لا توجد وظائف معالجة متاحة"
+    },
+    
+    "status": {
+      "pending": "في الانتظار",
+      "processing": "جاري المعالجة",
+      "ready": "جاهز",
+      "failed": "فشل",
+      "deleted": "محذوف"
+    },
+    
+    "mediaType": {
+      "image": "صورة",
+      "video": "فيديو",
+      "audio": "صوت",
+      "document": "مستند",
+      "archive": "أرشيف",
+      "other": "أخرى"
+    },
+    
+    "collectionType": {
+      "album": "ألبوم",
+      "playlist": "قائمة تشغيل",
+      "gallery": "معرض",
+      "portfolio": "محفظة",
+      "archive": "أرشيف"
+    },
+    
+    "thumbnailSize": {
+      "small": "صغير",
+      "medium": "متوسط",
+      "large": "كبير",
+      "extraLarge": "كبير جداً",
+      "custom": "مخصص"
+    },
+    
+    "processingJob": {
+      "title": "وظائف المعالجة",
+      "jobType": "نوع الوظيفة",
+      "priority": "الأولوية",
+      "progress": "التقدم",
+      "attempts": "المحاولات",
+      "startedAt": "تاريخ البدء",
+      "completedAt": "تاريخ الإكمال",
+      "errorMessage": "رسالة الخطأ",
+      "retry": "إعادة المحاولة",
+      "cancel": "إلغاء",
+      "reset": "إعادة تعيين",
+      "noJobs": "لم يتم العثور على وظائف معالجة",
+      "jobQueued": "تم إضافة الوظيفة إلى الطابور بنجاح",
+      "jobCancelled": "تم إلغاء الوظيفة بنجاح",
+      "jobRetried": "تم إعادة محاولة الوظيفة بنجاح"
+    },
+    
+    "jobType": {
+      "thumbnailGeneration": "إنشاء الصور المصغرة",
+      "videoTranscoding": "تحويل الفيديو",
+      "audioTranscoding": "تحويل الصوت",
+      "imageOptimization": "تحسين الصور",
+      "metadataExtraction": "استخراج البيانات الوصفية",
+      "virusScan": "فحص الفيروسات"
+    },
+    
+    "jobStatus": {
+      "queued": "في الطابور",
+      "processing": "جاري المعالجة",
+      "completed": "مكتمل",
+      "failed": "فشل",
+      "cancelled": "ملغي"
+    },
+    
+    "accessAction": {
+      "view": "عرض",
+      "download": "تحميل",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "share": "مشاركة"
+    },
+    
+    "pagination": {
+      "previous": "السابق",
+      "next": "التالي",
+      "page": "الصفحة",
+      "of": "من",
+      "showing": "عرض",
+      "to": "إلى",
+      "ofTotal": "من {{total}} نتيجة",
+      "itemsPerPage": "العناصر في الصفحة"
+    },
+    
+    "sorting": {
+      "sortBy": "الفرز بواسطة",
+      "sortOrder": "ترتيب الفرز",
+      "ascending": "تصاعدي",
+      "descending": "تنازلي",
+      "fileName": "اسم الملف",
+      "fileSize": "حجم الملف",
+      "uploadDate": "تاريخ الرفع",
+      "modifiedDate": "تاريخ التعديل",
+      "mediaType": "نوع الوسائط",
+      "status": "الحالة"
+    },
+    
+    "bulkActions": {
+      "title": "الإجراءات الجماعية",
+      "selectedItems": "{{count}} عنصر(ات) محدد(ة)",
+      "selectAll": "تحديد الكل",
+      "deselectAll": "إلغاء تحديد الكل",
+      "moveToCategory": "نقل إلى الفئة",
+      "addToCollection": "إضافة إلى المجموعة",
+      "changeStatus": "تغيير الحالة",
+      "deleteSelected": "حذف المحدد",
+      "downloadSelected": "تحميل المحدد",
+      "shareSelected": "مشاركة المحدد"
+    },
+    
+    "errors": {
+      "general": "حدث خطأ",
+      "network": "خطأ في الشبكة",
+      "unauthorized": "وصول غير مصرح",
+      "forbidden": "الوصول محظور",
+      "notFound": "لم يتم العثور على المورد",
+      "serverError": "خطأ في الخادم",
+      "validation": "خطأ في التحقق",
+      "fileNotFound": "لم يتم العثور على الملف",
+      "categoryNotFound": "لم يتم العثور على الفئة",
+      "collectionNotFound": "لم يتم العثور على المجموعة",
+      "uploadFailed": "فشل الرفع",
+      "deleteFailed": "فشل الحذف",
+      "updateFailed": "فشل التحديث",
+      "searchFailed": "فشل البحث"
+    },
+    
+    "success": {
+      "upload": "تم رفع الملفات بنجاح",
+      "delete": "تم حذف الملفات بنجاح",
+      "update": "تم تحديث الملفات بنجاح",
+      "categoryCreated": "تم إنشاء الفئة بنجاح",
+      "categoryUpdated": "تم تحديث الفئة بنجاح",
+      "categoryDeleted": "تم حذف الفئة بنجاح",
+      "collectionCreated": "تم إنشاء المجموعة بنجاح",
+      "collectionUpdated": "تم تحديث المجموعة بنجاح",
+      "collectionDeleted": "تم حذف المجموعة بنجاح"
+    },
+    
+    "confirmations": {
+      "deleteFile": "هل أنت متأكد من أنك تريد حذف هذا الملف؟",
+      "deleteFiles": "هل أنت متأكد من أنك تريد حذف {{count}} ملفات؟",
+      "deleteCategory": "هل أنت متأكد من أنك تريد حذف هذه الفئة؟",
+      "deleteCollection": "هل أنت متأكد من أنك تريد حذف هذه المجموعة؟",
+      "cancelJob": "هل أنت متأكد من أنك تريد إلغاء هذه الوظيفة؟",
+      "retryJob": "هل أنت متأكد من أنك تريد إعادة محاولة هذه الوظيفة؟",
+      "resetJob": "هل أنت متأكد من أنك تريد إعادة تعيين هذه الوظيفة؟",
+      "clearHistory": "هل أنت متأكد من أنك تريد مسح تاريخ البحث؟",
+      "clearFilters": "هل أنت متأكد من أنك تريد مسح جميع المرشحات؟"
+    },
+    
+    "tooltips": {
+      "upload": "رفع ملفات وسائط جديدة",
+      "search": "البحث في ملفات الوسائط",
+      "filter": "تطبيق المرشحات",
+      "viewMode": "تغيير وضع العرض",
+      "refresh": "تحديث البيانات",
+      "help": "الحصول على المساعدة",
+      "settings": "الإعدادات",
+      "preview": "معاينة ملف الوسائط",
+      "download": "تحميل ملف الوسائط",
+      "edit": "تعديل ملف الوسائط",
+      "delete": "حذف ملف الوسائط",
+      "share": "مشاركة ملف الوسائط",
+      "move": "نقل إلى فئة مختلفة",
+      "copy": "نسخ إلى موقع مختلف"
+    },
+    
+    "placeholders": {
+      "search": "البحث في ملفات الوسائط...",
+      "fileName": "أدخل اسم الملف",
+      "categoryName": "أدخل اسم الفئة",
+      "collectionName": "أدخل اسم المجموعة",
+      "description": "أدخل الوصف",
+      "tags": "أدخل العلامات (مفصولة بفواصل)",
+      "selectCategory": "اختر الفئة",
+      "selectCollection": "اختر المجموعة",
+      "selectMediaType": "اختر نوع الوسائط",
+      "selectStatus": "اختر الحالة"
+    },
+    
+    "validation": {
+      "required": "هذا الحقل مطلوب",
+      "minLength": "الحد الأدنى للطول هو {{min}} حرف",
+      "maxLength": "الحد الأقصى للطول هو {{max}} حرف",
+      "invalidFormat": "صيغة غير صحيحة",
+      "fileTooLarge": "حجم الملف يتجاوز الحد الأقصى",
+      "unsupportedType": "نوع الملف غير مدعوم",
+      "duplicateName": "الاسم موجود بالفعل",
+      "invalidDate": "صيغة تاريخ غير صحيحة",
+      "invalidNumber": "صيغة رقم غير صحيحة"
+    }
+  }
+}
+

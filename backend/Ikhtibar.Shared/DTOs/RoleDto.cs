@@ -43,7 +43,7 @@ public class RoleDto
     /// <summary>
     /// Last modification timestamp
     /// </summary>
-    public DateTime UpdatedAt { get; set; }
+    public DateTime ModifiedAt { get; set; }
 
     /// <summary>
     /// Number of users assigned to this role

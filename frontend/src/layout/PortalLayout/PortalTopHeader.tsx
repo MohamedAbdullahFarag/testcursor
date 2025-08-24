@@ -33,8 +33,8 @@ const PortalTopHeader = () => {
     
     // Enhanced menu items with more navigation options
     const menuItems = [
-        { title: strings.shared?.home || 'Home', id: 1, href: '/' },
-        { title: strings.support.title, id: 2, href: '/support' },
+        { title: strings.common?.home || 'Home', id: 1, href: '/' },
+        { title: strings.support?.title || 'Support', id: 2, href: '/support' },
         { title: 'FAQ', id: 3, href: '/faq' },
         { title: 'E-Participation', id: 4, href: '/eparticipation' }
     ]
@@ -74,7 +74,7 @@ const PortalTopHeader = () => {
                         <NavigationAction className="gap-space-01" asChild>
                             <NavLink to={'/login'}>
                                 <Person />
-                                <span className="sr-only lg:not-sr-only">{strings.auth.login}</span>
+                                <span className="sr-only lg:not-sr-only">{strings.login?.title || 'Login'}</span>
                             </NavLink>
                         </NavigationAction>
                         <NavigationMobileSideBar open={open} onOpenChange={toggle}>
@@ -98,7 +98,7 @@ const PortalTopHeader = () => {
                                 <Button rounded={'default'} asChild>
                                     <NavigationMobileLink asChild>
                                         <NavLink to={'/login'}>
-                                            <span>{strings.auth.login}</span>
+                                            <span>{strings.login?.title || 'Login'}</span>
                                         </NavLink>
                                     </NavigationMobileLink>
                                 </Button>

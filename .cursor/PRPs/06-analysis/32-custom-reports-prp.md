@@ -60,7 +60,7 @@ public class CustomReportEntity : BaseEntity
     public Dictionary<string, object> Parameters { get; set; }
     public string Status { get; set; }
     public DateTime LastGenerated { get; set; }
-    public Guid CreatedBy { get; set; }
+    public int CreatedBy { get; set; }
     public List<string> SharedWith { get; set; }
     public string Version { get; set; }
 }
@@ -99,7 +99,7 @@ public class ReportSchedule
 
 public class ReportGeneration : BaseEntity
 {
-    public Guid ReportId { get; set; }
+    public int ReportId { get; set; }
     public DateTime GeneratedAt { get; set; }
     public string Status { get; set; }
     public Dictionary<string, object> Parameters { get; set; }
@@ -115,13 +115,13 @@ public class ReportGeneration : BaseEntity
 public interface ICustomReportService
 {
     Task<CustomReportDto> CreateReportAsync(CreateReportDto dto);
-    Task<CustomReportDto> UpdateReportAsync(Guid reportId, UpdateReportDto dto);
-    Task<ReportGenerationDto> GenerateReportAsync(Guid reportId, Dictionary<string, object> parameters);
+    Task<CustomReportDto> UpdateReportAsync(int reportId, UpdateReportDto dto);
+    Task<ReportGenerationDto> GenerateReportAsync(int reportId, Dictionary<string, object> parameters);
     Task<List<CustomReportDto>> GetUserReportsAsync();
-    Task<bool> ScheduleReportAsync(Guid reportId, ReportScheduleDto schedule);
-    Task<byte[]> GetReportOutputAsync(Guid generationId, string format);
+    Task<bool> ScheduleReportAsync(int reportId, ReportScheduleDto schedule);
+    Task<byte[]> GetReportOutputAsync(int generationId, string format);
     Task<List<ReportTemplateDto>> GetTemplatesAsync();
-    Task<bool> ShareReportAsync(Guid reportId, List<string> users);
+    Task<bool> ShareReportAsync(int reportId, List<string> users);
 }
 
 public class CustomReportService : ICustomReportService
@@ -142,9 +142,9 @@ public class CustomReportService : ICustomReportService
 \`\`\`csharp
 public interface ICustomReportRepository : IBaseRepository<CustomReportEntity>
 {
-    Task<List<CustomReportEntity>> GetUserReportsAsync(Guid userId);
+    Task<List<CustomReportEntity>> GetUserReportsAsync(int userId);
     Task<List<ReportTemplate>> GetTemplatesAsync();
-    Task<List<ReportGeneration>> GetGenerationHistoryAsync(Guid reportId);
+    Task<List<ReportGeneration>> GetGenerationHistoryAsync(int reportId);
     Task<ReportDataResult> ExecuteDataSourceAsync(ReportDataSource source);
 }
 
@@ -172,7 +172,7 @@ public class CustomReportController : ControllerBase
 
     [HttpPost("reports/{reportId}/generate")]
     public async Task<ActionResult<ReportGenerationDto>> GenerateReport(
-        Guid reportId,
+        int reportId,
         [FromBody] Dictionary<string, object> parameters)
     {
         // Implementation...
@@ -180,7 +180,7 @@ public class CustomReportController : ControllerBase
 
     [HttpGet("reports/{reportId}/output")]
     public async Task<FileResult> GetReportOutput(
-        Guid reportId,
+        int reportId,
         [FromQuery] string format)
     {
         // Implementation...
@@ -463,13 +463,13 @@ npm run test src/modules/reports/components/ReportDesignerComponent.test.ts
 
 \`\`\`bash
 # Create report
-curl -X POST http://localhost:5000/api/CustomReport/reports -d '{reportData}'
+curl -X POST https://localhost:7001/api/CustomReport/reports -d '{reportData}'
 
 # Generate report
-curl -X POST http://localhost:5000/api/CustomReport/reports/{reportId}/generate -d '{parameters}'
+curl -X POST https://localhost:7001/api/CustomReport/reports/{reportId}/generate -d '{parameters}'
 
 # Get report output
-curl -X GET http://localhost:5000/api/CustomReport/reports/{reportId}/output?format=pdf
+curl -X GET https://localhost:7001/api/CustomReport/reports/{reportId}/output?format=pdf
 \`\`\`
 
 ## 📋 Acceptance Criteria

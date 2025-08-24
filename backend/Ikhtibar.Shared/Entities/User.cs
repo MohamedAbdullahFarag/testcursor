@@ -101,7 +101,7 @@ public class User : BaseEntity
     /// <summary>
     /// Navigation property for refresh tokens
     /// </summary>
-    public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public virtual ICollection<RefreshTokens> RefreshTokens { get; set; } = new List<RefreshTokens>();
 
     /// <summary>
     /// Navigation property for login attempts

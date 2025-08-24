@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Ikhtibar.Core.Services.Interfaces;
 using Ikhtibar.Core.DTOs;
-using Ikhtibar.Core.Entities;
+
 
 namespace Ikhtibar.API.Controllers;
 

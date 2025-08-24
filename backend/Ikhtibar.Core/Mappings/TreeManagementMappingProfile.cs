@@ -16,11 +16,11 @@ public class TreeManagementMappingProfile : Profile
         CreateMap<TreeNodeType, TreeNodeTypeDto>();
 
         CreateMap<CreateTreeNodeTypeDto, TreeNodeType>()
-            .ForMember(dest => dest.TreeNodeTypeId, opt => opt.Ignore())
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.TreeNodes, opt => opt.Ignore());
 
         CreateMap<UpdateTreeNodeTypeDto, TreeNodeType>()
-            .ForMember(dest => dest.TreeNodeTypeId, opt => opt.Ignore())
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.TreeNodes, opt => opt.Ignore());
 
         // TreeNode mappings
@@ -33,14 +33,14 @@ public class TreeManagementMappingProfile : Profile
             .ForMember(dest => dest.CurriculumAlignments, opt => opt.Ignore()); // Will be loaded separately
 
         CreateMap<CreateTreeNodeDto, TreeNode>()
-            .ForMember(dest => dest.TreeNodeId, opt => opt.Ignore())
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.Path, opt => opt.Ignore()) // Will be calculated by service
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.ModifiedAt, opt => opt.Ignore())
             .ForMember(dest => dest.IsDeleted, opt => opt.MapFrom(src => false));
 
         CreateMap<UpdateTreeNodeDto, TreeNode>()
-            .ForMember(dest => dest.TreeNodeId, opt => opt.Ignore())
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.Path, opt => opt.Ignore()) // Path should not be updated directly
             .ForMember(dest => dest.ParentId, opt => opt.Ignore()) // Use move operation for parent changes
             .ForMember(dest => dest.OrderIndex, opt => opt.Ignore()) // Use reorder operation for order changes

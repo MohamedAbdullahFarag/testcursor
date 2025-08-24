@@ -1,0 +1,322 @@
+﻿using Xunit.Framework;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Ikhtibar.API.Controllers;
+using Ikhtibar.Core.Services.Interfaces;
+
+namespace Ikhtibar.Tests.API.Controllers
+{
+    /// <summary>
+    /// Tests for SampleController functionality
+    /// </summary>
+    [TestFixture]
+    public class SampleControllerTests
+    {
+        private Mock<IUserService> _mockUserService;
+        private Mock<ILogger<SampleController>> _mockLogger;
+        private SampleController _controller;
+
+        [SetUp]
+        public void Setup()
+        {
+            _mockUserService = new Mock<IUserService>();
+            _mockLogger = new Mock<ILogger<SampleController>>();
+            _controller = new SampleController(_mockUserService.Object, _mockLogger.Object);
+        }
+
+        [Test]
+        public void Constructor_WithValidDependencies_ShouldCreateInstance()
+        {
+            // Act & Assert
+            Assert.That(_controller, Is.Not.Null);
+            Assert.That(_controller, Is.InstanceOf<SampleController>());
+        }
+
+        [Test]
+        public void Constructor_WithNullUserService_ShouldThrowArgumentNullException()
+            // Act & Assert
+            var ex = Assert.Throws<ArgumentNullException>(() =>
+                 new SampleController(null!, _mockLogger.Object));
+            Assert.That(ex.ParamName, Is.EqualTo("userService"));
+        }
+
+        [Test]
+        public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
+        {
+            // Act & Assert
+            var ex = Assert.Throws<ArgumentNullException>(() =>
+                 new SampleController(_mockUserService.Object, null!));
+            Assert.That(ex.ParamName, Is.EqualTo("logger"));
+        }
+
+        [Test]
+        public void Get_ShouldReturn200Ok()
+        {
+            // Act
+            var result = _controller.Get();
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult?.StatusCode, Is.EqualTo(200));
+        }
+
+        [Test]
+        public void Get_ShouldReturnSuccessResponse()
+        {
+            // Act
+            var result = _controller.Get();
+            var okResult = result as OkObjectResult;
+            var responseData = okResult?.Value;
+
+            // Assert
+            Assert.That(responseData, Is.Not.Null);
+
+            var responseType = responseData?.GetType();
+            var successProperty = responseType?.GetProperty("success");
+            var messageProperty = responseType?.GetProperty("message");
+            var dataProperty = responseType?.GetProperty("data");
+            var timestampProperty = responseType?.GetProperty("timestamp");
+
+            Assert.That(successProperty, Is.Not.Null);
+            Assert.That(messageProperty, Is.Not.Null);
+            Assert.That(dataProperty, Is.Not.Null);
+            Assert.That(timestampProperty, Is.Not.Null);
+        }
+
+        [Test]
+        public void Get_ShouldReturnServiceInformation()
+        {
+            // Act
+            var result = _controller.Get();
+            var okResult = result as OkObjectResult;
+            var responseData = okResult?.Value;
+
+            // Assert
+            var dataProperty = responseData?.GetType().GetProperty("data");
+            var dataValue = dataProperty?.GetValue(responseData);
+
+            Assert.That(dataValue, Is.Not.Null);
+
+            var dataType = dataValue?.GetType();
+            var messageProperty = dataType?.GetProperty("Message");
+            var serviceTypeProperty = dataType?.GetProperty("ServiceType");
+            var controllerNameProperty = dataType?.GetProperty("ControllerName");
+            var baseControllerProperty = dataType?.GetProperty("BaseController");
+
+            Assert.That(messageProperty, Is.Not.Null);
+            Assert.That(serviceTypeProperty, Is.Not.Null);
+            Assert.That(controllerNameProperty, Is.Not.Null);
+            Assert.That(baseControllerProperty, Is.Not.Null);
+        }
+
+        [Test]
+        public void Get_ShouldLogInformation()
+        {
+            // Act
+            _controller.Get();
+
+            // Assert
+            _mockLogger.Verify(
+                x => x.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => true),
+            // Assert
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult?.StatusCode, Is.EqualTo(200));
+        }
+
+        [Test]
+        public void Post_WithNullRequest_ShouldReturn400BadRequest()
+        {
+            // Act
+            var result = _controller.Post(null!);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult?.StatusCode, Is.EqualTo(400));
+        }
+
+        [Test]
+        public void Post_WithEmptyMessage_ShouldReturn400BadRequest()
+        {
+            // Arrange
+            var request = new SampleRequest { Message = "" };
+
+            // Act
+            var result = _controller.Post(request);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult?.StatusCode, Is.EqualTo(400));
+        }
+
+        [Test]
+        public void Post_WithWhitespaceMessage_ShouldReturn400BadRequest()
+        {
+            // Arrange
+            var request = new SampleRequest { Message = "   " };
+
+            // Act
+            var result = _controller.Post(request);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(dataValue, Is.Not.Null);
+
+            var dataType = dataValue?.GetType();
+            var receivedMessageProperty = dataType?.GetProperty("ReceivedMessage");
+            var processedAtProperty = dataType?.GetProperty("ProcessedAt");
+            var isValidProperty = dataType?.GetProperty("IsValid");
+
+            Assert.That(receivedMessageProperty, Is.Not.Null);
+            Assert.That(processedAtProperty, Is.Not.Null);
+            Assert.That(messageLengthProperty, Is.Not.Null);
+            Assert.That(isValidProperty, Is.Not.Null);
+
+            var receivedMessage = receivedMessageProperty?.GetValue(dataValue);
+            var messageLength = messageLengthProperty?.GetValue(dataValue);
+            var isValid = isValidProperty?.GetValue(dataValue);
+
+            Assert.That(receivedMessage, Is.EqualTo("Test message"));
+            Assert.That(messageLength, Is.EqualTo(12));
+            Assert.That(isValid, Is.EqualTo(true));
+        }
+
+        [Test]
+        public void Post_ShouldLogInformation()
+        {
+            // Arrange
+            var request = new SampleRequest { Message = "Test message" };
+
+            // Act
+            _controller.Post(request);
+
+            // Assert
+
+        [Test]
+        public async Task GetUserInfo_WithValidUserId_ShouldReturn200Ok()
+        {
+            // Act
+            var result = await _controller.GetUserInfo(1);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult?.StatusCode, Is.EqualTo(200));
+        }
+
+        [Test]
+        public async Task GetUserInfo_ShouldReturnUserInformation()
+        {
+            // Act
+            var result = await _controller.GetUserInfo(1);
+            var okResult = result as OkObjectResult;
+            var responseData = okResult?.Value;
+
+            // Assert
+            var dataProperty = responseData?.GetType().GetProperty("data");
+            var dataValue = dataProperty?.GetValue(responseData);
+
+            Assert.That(dataValue, Is.Not.Null);
+
+            var dataType = dataValue?.GetType();
+            var userIdProperty = dataType?.GetProperty("UserId");
+            var serviceAvailableProperty = dataType?.GetProperty("ServiceAvailable");
+            var serviceTypeProperty = dataType?.GetProperty("ServiceType");
+            var retrievedAtProperty = dataType?.GetProperty("RetrievedAt");
+
+            Assert.That(userIdProperty, Is.Not.Null);
+            Assert.That(serviceAvailableProperty, Is.Not.Null);
+            Assert.That(serviceTypeProperty, Is.Not.Null);
+        }
+
+        [Test]
+        public void TestErrorHandling_WithShouldErrorFalse_ShouldReturn200Ok()
+        {
+            // Act
+            var result = _controller.TestErrorHandling(false);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            var okResult = result as OkObjectResult;
+            Assert.That(okResult?.StatusCode, Is.EqualTo(200));
+        }
+
+        [Test]
+        public void TestErrorHandling_WithShouldErrorTrue_ShouldReturn400BadRequest()
+        {
+            // Act
+            var result = _controller.TestErrorHandling(true);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequestResult = result as BadRequestObjectResult;
+            Assert.That(badRequestResult?.StatusCode, Is.EqualTo(400));
+        }
+
+        [Test]
+        public void TestErrorHandling_WithShouldErrorFalse_ShouldReturnSuccessResponse()
+        {
+            // Act
+            var result = _controller.TestErrorHandling(false);
+            var okResult = result as OkObjectResult;
+            var responseData = okResult?.Value;
+
+            // Assert
+            var dataProperty = responseData?.GetType().GetProperty("data");
+            var dataValue = dataProperty?.GetValue(responseData);
+
+            Assert.That(dataValue, Is.Not.Null);
+
+            Assert.That(messageProperty, Is.Not.Null);
+            Assert.That(timestampProperty, Is.Not.Null);
+            Assert.That(errorSimulatedProperty, Is.Not.Null);
+
+            var message = messageProperty?.GetValue(dataValue);
+            var errorSimulated = errorSimulatedProperty?.GetValue(dataValue);
+
+            Assert.That(message, Is.EqualTo("Error handling test completed successfully"));
+            Assert.That(errorSimulated, Is.False);
+        }
+
+        [Test]
+        public void TestErrorHandling_WithShouldErrorTrue_ShouldReturnErrorResponse()
+        {
+            // Act
+            var result = _controller.TestErrorHandling(true);
+            var badRequestResult = result as BadRequestObjectResult;
+            var responseData = badRequestResult?.Value;
+
+            // Assert
+        public void TestErrorHandling_ShouldLogAppropriateLevel()
+        {
+            // Act - Test success case
+            _controller.TestErrorHandling(false);
+
+            // Assert - Should log information
+            _mockLogger.Verify(
+                x => x.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => true),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                Times.Once);
+
+            var result = _controller.TestErrorHandling(false);
+
+            // Act - Test error case
+            _controller.TestErrorHandling(true);
+
+            // Assert - Should log warning
+        }
+    }
+}
+

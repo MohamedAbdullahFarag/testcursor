@@ -14,7 +14,7 @@ public class CreateNotificationHistoryDto
     /// Associated notification ID
     /// </summary>
     [Required]
-    public Guid NotificationId { get; set; }
+    public int NotificationId { get; set; }
 
     /// <summary>
     /// Delivery channel used
@@ -137,12 +137,12 @@ public class NotificationHistoryDto
     /// <summary>
     /// Unique identifier for the history entry
     /// </summary>
-    public Guid Id { get; set; }
+    public int id { get; set; }
 
     /// <summary>
     /// Associated notification ID
     /// </summary>
-    public Guid NotificationId { get; set; }
+    public int NotificationId { get; set; }
 
     /// <summary>
     /// Delivery channel used
@@ -218,12 +218,12 @@ public class HistoryFilterDto
     /// <summary>
     /// Filter by notification ID
     /// </summary>
-    public Guid? NotificationId { get; set; }
+    public int? NotificationId { get; set; }
 
     /// <summary>
     /// Filter by user ID
     /// </summary>
-    public Guid? UserId { get; set; }
+    public int? UserId { get; set; }
 
     /// <summary>
     /// Filter by delivery channel
@@ -651,12 +651,12 @@ public class RetryableFailureDto
     /// <summary>
     /// History entry ID
     /// </summary>
-    public Guid HistoryId { get; set; }
+    public int HistoryId { get; set; }
 
     /// <summary>
     /// Notification ID
     /// </summary>
-    public Guid NotificationId { get; set; }
+    public int NotificationId { get; set; }
 
     /// <summary>
     /// Delivery channel
@@ -740,7 +740,7 @@ public class BulkRetryDto
     /// </summary>
     [Required]
     [MinLength(1)]
-    public List<Guid> HistoryIds { get; set; } = new();
+    public List<int> HistoryIds { get; set; } = new();
 
     /// <summary>
     /// Whether to force retry even if not typically retryable
@@ -788,7 +788,7 @@ public class RetryResultDto
     /// <summary>
     /// History ID that was retried
     /// </summary>
-    public Guid HistoryId { get; set; }
+    public int HistoryId { get; set; }
 
     /// <summary>
     /// Whether the retry was successful
@@ -803,7 +803,7 @@ public class RetryResultDto
     /// <summary>
     /// New history ID created for the retry
     /// </summary>
-    public Guid? NewHistoryId { get; set; }
+    public int? NewHistoryId { get; set; }
 }
 
 /// <summary>

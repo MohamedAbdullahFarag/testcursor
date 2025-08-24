@@ -19,7 +19,7 @@ interface AppConfigState extends AppConfig {
 
 // Default configuration
 const defaultConfig: AppConfig = {
-    apiBaseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+    apiBaseUrl: import.meta.env.VITE_API_URL || 'https://localhost:7001/api',
     environment: 'development',
     features: {
         darkMode: true,

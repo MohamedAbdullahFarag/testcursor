@@ -181,7 +181,7 @@ public class QuestionBankTreeRepository : IQuestionBankTreeRepository
                 UPDATE QuestionBankCategories 
                 SET ParentId = @NewParentId, 
                     SortOrder = COALESCE(@NewSortOrder, (SELECT COALESCE(MAX(SortOrder), 0) + 1 FROM QuestionBankCategories WHERE ParentId = @NewParentId)),
-                    UpdatedAt = GETUTCDATE()
+                    ModifiedAt = GETUTCDATE()
                 WHERE CategoryId = @CategoryId";
 
             await connection.ExecuteAsync(updateSql, new { CategoryId = categoryId, NewParentId = newParentId, NewSortOrder = newSortOrder }, transaction);
@@ -581,7 +581,7 @@ public class QuestionBankTreeRepository : IQuestionBankTreeRepository
                     FROM QuestionBankCategories
                     WHERE (@ParentId IS NULL AND ParentId IS NULL) OR ParentId = @ParentId
                 )
-                UPDATE c SET SortOrder = s.NewSortOrder, UpdatedAt = GETUTCDATE()
+                UPDATE c SET SortOrder = s.NewSortOrder, ModifiedAt = GETUTCDATE()
                 FROM QuestionBankCategories c
                 INNER JOIN SortedCategories s ON c.CategoryId = s.CategoryId
                 WHERE c.SortOrder != s.NewSortOrder";
@@ -782,8 +782,8 @@ public class QuestionBankTreeRepository : IQuestionBankTreeRepository
         var sql = @"
             SELECT TOP (@MaxResults) *
             FROM QuestionBankCategories
-            WHERE UpdatedAt > @SinceDate AND IsActive = 1
-            ORDER BY UpdatedAt DESC";
+            WHERE ModifiedAt > @SinceDate AND IsActive = 1
+            ORDER BY ModifiedAt DESC";
 
         var categories = await connection.QueryAsync<QuestionBankCategory>(sql, new { SinceDate = sinceDate, MaxResults = maxResults });
         return categories;
@@ -1067,7 +1067,7 @@ public class QuestionBankTreeRepository : IQuestionBankTreeRepository
                     break;
                 case MergeStrategy.Overwrite:
                     await connection.ExecuteAsync(
-                        "UPDATE QuestionBankCategories SET Name = @Name, Description = @Description, UpdatedAt = GETUTCDATE() WHERE CategoryId = @Id",
+                        "UPDATE QuestionBankCategories SET Name = @Name, Description = @Description, ModifiedAt = GETUTCDATE() WHERE CategoryId = @Id",
                         new { node.Name, node.Description, Id = existingId.Value }, transaction);
                     categoryId = existingId.Value;
                     result.CategoriesUpdated++;

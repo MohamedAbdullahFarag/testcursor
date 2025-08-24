@@ -137,7 +137,7 @@ public class NotificationTemplateDto
     /// <summary>
     /// Unique identifier for the template
     /// </summary>
-    public Guid Id { get; set; }
+    public int id { get; set; }
 
     /// <summary>
     /// Type of notification this template is for
@@ -262,7 +262,7 @@ public class ProcessTemplateDto
     /// Template ID to process
     /// </summary>
     [Required]
-    public Guid TemplateId { get; set; }
+    public int TemplateId { get; set; }
 
     /// <summary>
     /// Variables to substitute in the template
@@ -468,7 +468,7 @@ public class DuplicateTemplateDto
     /// Source template ID to duplicate
     /// </summary>
     [Required]
-    public Guid SourceTemplateId { get; set; }
+    public int SourceTemplateId { get; set; }
 
     /// <summary>
     /// Target language for the duplicated template

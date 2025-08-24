@@ -26,10 +26,17 @@ export const useAuditLogs = (initialFilter?: Partial<AuditLogFilter>): UseAuditL
   // Default filter state
   const defaultFilter: AuditLogFilter = {
     page: 0,
-    pageSize: 20,
+    pageSize: 25,
     sortBy: 'timestamp',
     sortDirection: 'desc',
-    ...initialFilter
+    searchText: '',
+    severity: undefined,
+    category: undefined,
+    userId: undefined,
+    entityType: undefined,
+    entityId: undefined,
+    fromDate: undefined,
+    toDate: undefined
   };
 
   // State
@@ -37,14 +44,27 @@ export const useAuditLogs = (initialFilter?: Partial<AuditLogFilter>): UseAuditL
     data: [],
     total: 0,
     page: 0,
-    pageSize: 20,
+    pageSize: 25,
     totalPages: 0,
     hasNext: false,
     hasPrevious: false
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<AuditLogFilter>(defaultFilter);
+  const [filter, setFilter] = useState<AuditLogFilter>({
+    page: 0,
+    pageSize: 25,
+    sortBy: 'timestamp',
+    sortDirection: 'desc',
+    searchText: '',
+    severity: undefined,
+    category: undefined,
+    userId: undefined,
+    entityType: undefined,
+    entityId: undefined,
+    fromDate: undefined,
+    toDate: undefined
+  });
 
   /**
    * Load audit logs based on current filter
@@ -55,7 +75,7 @@ export const useAuditLogs = (initialFilter?: Partial<AuditLogFilter>): UseAuditL
 
     try {
       const result = await auditLogService.getAuditLogs(filter);
-      const pageSize = result.pageSize || 20;
+      const pageSize = result.pageSize || 25;
       const total = result.total || 0;
       const page = result.page || 0;
       const totalPages = Math.ceil(total / pageSize);

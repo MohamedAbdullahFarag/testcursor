@@ -240,7 +240,7 @@ public class ExamPublicationService : IExamPublicationService
     private string GenerateAccessCode()
     {
         // Implement secure access code generation
-        return Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+        return int.NewGuid().ToString("N").Substring(0, 8).ToUpper();
     }
 }
 ```

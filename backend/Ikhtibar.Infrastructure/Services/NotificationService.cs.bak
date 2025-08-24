@@ -45,7 +45,7 @@ public class NotificationService : INotificationService
 
         var notification = new Notification
         {
-            Id = Guid.NewGuid(),
+            
             UserId = dto.UserId,
             Type = dto.NotificationType,
             Title = dto.Subject,
@@ -55,7 +55,7 @@ public class NotificationService : INotificationService
             ScheduledAt = dto.ScheduledAt ?? DateTime.UtcNow,
             EntityType = dto.EntityType,
             EntityId = dto.EntityId,
-            TemplateId = dto.TemplateId?.GetHashCode(), // Convert Guid to int
+            TemplateId = dto.TemplateId?.GetHashCode(), // Convert int to int
             MetadataJson = dto.Variables.Any() || dto.ChannelData.Any() || dto.Metadata.Any() ? 
                 JsonSerializer.Serialize(new { Variables = dto.Variables, ChannelData = dto.ChannelData, Metadata = dto.Metadata }) : null,
             CreatedAt = DateTime.UtcNow
@@ -70,7 +70,7 @@ public class NotificationService : INotificationService
     /// <summary>
     /// Sends a notification through appropriate channels based on user preferences
     /// </summary>
-    public async Task<bool> SendNotificationAsync(Guid notificationId)
+    public async Task<bool> SendNotificationAsync(int notificationId)
     {
         using var scope = _logger.BeginScope("Sending notification {NotificationId}", notificationId);
 
@@ -147,7 +147,7 @@ public class NotificationService : INotificationService
     /// <summary>
     /// Marks a notification as read
     /// </summary>
-    public async Task<bool> MarkAsReadAsync(Guid notificationId, int userId)
+    public async Task<bool> MarkAsReadAsync(int notificationId, int userId)
     {
         using var scope = _logger.BeginScope("Marking notification {NotificationId} as read for user {UserId}", 
             notificationId, userId);
@@ -234,7 +234,7 @@ public class NotificationService : INotificationService
     /// <summary>
     /// Cancels a pending or scheduled notification
     /// </summary>
-    public async Task<bool> CancelNotificationAsync(Guid notificationId)
+    public async Task<bool> CancelNotificationAsync(int notificationId)
     {
         using var scope = _logger.BeginScope("Cancelling notification {NotificationId}", notificationId);
 
@@ -260,7 +260,7 @@ public class NotificationService : INotificationService
     /// <summary>
     /// Gets a notification by ID for a specific user
     /// </summary>
-    public async Task<NotificationDto?> GetNotificationByIdAsync(Guid notificationId, int userId)
+    public async Task<NotificationDto?> GetNotificationByIdAsync(int notificationId, int userId)
     {
         using var scope = _logger.BeginScope("Getting notification {NotificationId} for user {UserId}", 
             notificationId, userId);
@@ -278,7 +278,7 @@ public class NotificationService : INotificationService
     /// <summary>
     /// Deletes a notification for a specific user
     /// </summary>
-    public async Task<bool> DeleteNotificationAsync(Guid notificationId, int userId)
+    public async Task<bool> DeleteNotificationAsync(int notificationId, int userId)
     {
         using var scope = _logger.BeginScope("Deleting notification {NotificationId} for user {UserId}", 
             notificationId, userId);
@@ -696,7 +696,7 @@ public class NotificationService : INotificationService
             ScheduledAt = notification.ScheduledAt,
             EntityType = notification.EntityType,
             EntityId = notification.EntityId,
-            TemplateId = notification.TemplateId.HasValue ? new Guid(notification.TemplateId.Value, 0, 0, new byte[8]) : null,
+            TemplateId = notification.TemplateId.HasValue ? new int(notification.TemplateId.Value, 0, 0, new byte[8]) : null,
             Variables = variables,
             ChannelData = channelData,
             Metadata = metadata,

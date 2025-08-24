@@ -7,6 +7,6 @@ namespace Ikhtibar.Shared.Entities
     {
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        // Note: CreatedAt and UpdatedAt are inherited from BaseEntity
+        // Note: CreatedAt and ModifiedAt are inherited from BaseEntity
     }
 }

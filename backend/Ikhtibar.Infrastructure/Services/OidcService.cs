@@ -1,370 +1,153 @@
-using System.Text;
-using System.Text.Json;
+using System.Net.Http.Json;
 using System.Security.Cryptography;
-using Microsoft.Extensions.Options;
+using System.Text;
 using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Shared.DTOs.Authentication;
 using Ikhtibar.Shared.Models;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 
-namespace Ikhtibar.Infrastructure.Services;
-
-/// <summary>
-/// Implementation of OpenID Connect authentication services
-/// </summary>
-public class OidcService : IOidcService
+namespace Ikhtibar.Infrastructure.Services
 {
-    private readonly HttpClient _httpClient;
-    private readonly OidcSettings _oidcSettings;
-    // private readonly ILogger<OidcService> _logger;
-
-    public OidcService(
-        HttpClient httpClient,
-        IOptions<OidcSettings> oidcSettings)
-    // ILogger<OidcService> logger)
+    public class OidcService : IOidcService
     {
-        _httpClient = httpClient;
-        _oidcSettings = oidcSettings.Value;
-        // _logger = logger;
-    }
+        private readonly HttpClient _httpClient;
+        private readonly OidcSettings _oidcSettings;
+        private readonly ILogger<OidcService> _logger;
 
-    /// <summary>
-    /// Exchange authorization code for access token
-    /// </summary>
-    /// <param name="code">Authorization code from OIDC provider</param>
-    /// <param name="redirectUri">Redirect URI used in authorization request</param>
-    /// <param name="codeVerifier">PKCE code verifier (optional)</param>
-    /// <returns>Token response from OIDC provider</returns>
-    public async Task<OidcTokenResponse> ExchangeCodeAsync(string code, string redirectUri, string? codeVerifier = null)
-    {
-        try
+        public OidcService(
+            HttpClient httpClient,
+            IOptions<OidcSettings> oidcSettings,
+            ILogger<OidcService> logger)
         {
-            // //             // _logger.LogInformation("Exchanging authorization code for access token");
+            _httpClient = httpClient;
+            _oidcSettings = oidcSettings.Value;
+            _logger = logger;
+        }
 
-            var tokenEndpoint = $"{_oidcSettings.Authority.TrimEnd('/')}/protocol/openid-connect/token";
-
-            var parameters = new Dictionary<string, string>
+        public async Task<OidcTokenResponse> ExchangeCodeAsync(string code)
+        {
+            try
             {
-                {"grant_type", "authorization_code"},
-                {"client_id", _oidcSettings.ClientId},
-                {"client_secret", _oidcSettings.ClientSecret},
-                {"code", code},
-                {"redirect_uri", redirectUri}
-            };
-
-            // Add PKCE code verifier if provided
-            if (!string.IsNullOrEmpty(codeVerifier))
-            {
-                parameters.Add("code_verifier", codeVerifier);
-            }
-
-            var content = new FormUrlEncodedContent(parameters);
-
-            var response = await _httpClient.PostAsync(tokenEndpoint, content);
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                // _logger.LogError("Token exchange failed. Status: {StatusCode}, Response: {Response}", 
-                //     response.StatusCode, responseContent);
-
-                var errorResponse = JsonSerializer.Deserialize<OidcTokenResponse>(responseContent, new JsonSerializerOptions
+                var tokenRequest = new FormUrlEncodedContent(new[]
                 {
-                    PropertyNameCaseInsensitive = true
+                    new KeyValuePair<string, string>("grant_type", "authorization_code"),
+                    new KeyValuePair<string, string>("client_id", _oidcSettings.ClientId),
+                    new KeyValuePair<string, string>("client_secret", _oidcSettings.ClientSecret),
+                    new KeyValuePair<string, string>("code", code),
+                    new KeyValuePair<string, string>("redirect_uri", _oidcSettings.Authority + "/callback")
                 });
 
-                return errorResponse ?? new OidcTokenResponse
+                var response = await _httpClient.PostAsync("/token", tokenRequest);
+                response.EnsureSuccessStatusCode();
+
+                var tokenResponse = await response.Content.ReadFromJsonAsync<OidcTokenResponse>();
+                if (tokenResponse == null)
                 {
-                    Error = "token_exchange_failed",
-                    ErrorDescription = $"HTTP {response.StatusCode}: {response.ReasonPhrase}"
+                    throw new InvalidOperationException("Failed to deserialize token response");
+                }
+
+                _logger.LogInformation("Successfully exchanged authorization code for tokens");
+                return tokenResponse;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exchanging authorization code for tokens");
+                throw;
+            }
+        }
+
+        public async Task<OidcUserInfo> GetUserInfoAsync(string accessToken)
+        {
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = 
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                var response = await _httpClient.GetAsync("/userinfo");
+                response.EnsureSuccessStatusCode();
+
+                var userInfo = await response.Content.ReadFromJsonAsync<OidcUserInfo>();
+                if (userInfo == null)
+                {
+                    throw new InvalidOperationException("Failed to deserialize user info response");
+                }
+
+                _logger.LogInformation("Successfully retrieved user info from OIDC provider");
+                return userInfo;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving user info from OIDC provider");
+                throw;
+            }
+        }
+
+        public async Task<string> GetAuthorizationUrlAsync(string state, string redirectUri)
+        {
+            try
+            {
+                var codeChallenge = await GenerateCodeChallengeAsync();
+                
+                var queryParams = new List<string>
+                {
+                    $"client_id={Uri.EscapeDataString(_oidcSettings.ClientId)}",
+                    $"response_type={Uri.EscapeDataString(_oidcSettings.ResponseType)}",
+                    $"scope={Uri.EscapeDataString(string.Join(" ", _oidcSettings.Scopes))}",
+                    $"redirect_uri={Uri.EscapeDataString(redirectUri)}",
+                    $"state={Uri.EscapeDataString(state)}"
                 };
-            }
 
-            var tokenResponse = JsonSerializer.Deserialize<OidcTokenResponse>(responseContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            //             _logger.LogInformation("Token exchange successful");
-            return tokenResponse ?? throw new InvalidOperationException("Failed to deserialize token response");
-        }
-        catch (Exception)
-        {
-            //             _logger.LogError(ex, "Error during token exchange");
-            return new OidcTokenResponse
-            {
-                Error = "internal_error",
-                ErrorDescription = "An internal error occurred during token exchange"
-            };
-        }
-    }
-
-    /// <summary>
-    /// Get user information from OIDC provider
-    /// </summary>
-    /// <param name="accessToken">Access token from OIDC provider</param>
-    /// <returns>User information from OIDC provider</returns>
-    public async Task<OidcUserInfo> GetUserInfoAsync(string accessToken)
-    {
-        try
-        {
-            //             _logger.LogInformation("Retrieving user information from OIDC provider");
-
-            var userInfoEndpoint = $"{_oidcSettings.Authority.TrimEnd('/')}/protocol/openid-connect/userinfo";
-
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-
-            var response = await _httpClient.GetAsync(userInfoEndpoint);
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                // _logger.LogError("UserInfo request failed. Status: {StatusCode}, Response: {Response}", 
-                //     response.StatusCode, responseContent);
-                throw new HttpRequestException($"UserInfo request failed: {response.StatusCode}");
-            }
-
-            var userInfo = JsonSerializer.Deserialize<OidcUserInfo>(responseContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            //             _logger.LogInformation("User information retrieved successfully for subject: {Subject}", userInfo?.Sub);
-            return userInfo ?? throw new InvalidOperationException("Failed to deserialize user info response");
-        }
-        catch (Exception)
-        {
-            //             _logger.LogError(ex, "Error retrieving user information");
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// Validate access token with OIDC provider
-    /// </summary>
-    /// <param name="accessToken">Access token to validate</param>
-    /// <returns>True if token is valid, false otherwise</returns>
-    public async Task<bool> ValidateTokenAsync(string accessToken)
-    {
-        try
-        {
-            //             _logger.LogDebug("Validating access token with OIDC provider");
-
-            var introspectionEndpoint = $"{_oidcSettings.Authority.TrimEnd('/')}/protocol/openid-connect/token/introspect";
-
-            var parameters = new Dictionary<string, string>
-            {
-                {"token", accessToken},
-                {"client_id", _oidcSettings.ClientId},
-                {"client_secret", _oidcSettings.ClientSecret}
-            };
-
-            var content = new FormUrlEncodedContent(parameters);
-            var response = await _httpClient.PostAsync(introspectionEndpoint, content);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                //                 _logger.LogWarning("Token introspection failed. Status: {StatusCode}", response.StatusCode);
-                return false;
-            }
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var introspectionResult = JsonSerializer.Deserialize<JsonElement>(responseContent);
-
-            if (introspectionResult.TryGetProperty("active", out var activeProperty))
-            {
-                var isActive = activeProperty.GetBoolean();
-                //                 _logger.LogDebug("Token validation result: {IsActive}", isActive);
-                return isActive;
-            }
-
-            return false;
-        }
-        catch (Exception)
-        {
-            //             _logger.LogError(ex, "Error validating access token");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Refresh access token using refresh token
-    /// </summary>
-    /// <param name="refreshToken">Refresh token</param>
-    /// <returns>New token response</returns>
-    public async Task<OidcTokenResponse> RefreshTokenAsync(string refreshToken)
-    {
-        try
-        {
-            //             _logger.LogInformation("Refreshing access token using refresh token");
-
-            var tokenEndpoint = $"{_oidcSettings.Authority.TrimEnd('/')}/protocol/openid-connect/token";
-
-            var parameters = new Dictionary<string, string>
-            {
-                {"grant_type", "refresh_token"},
-                {"client_id", _oidcSettings.ClientId},
-                {"client_secret", _oidcSettings.ClientSecret},
-                {"refresh_token", refreshToken}
-            };
-
-            var content = new FormUrlEncodedContent(parameters);
-            var response = await _httpClient.PostAsync(tokenEndpoint, content);
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                // _logger.LogError("Token refresh failed. Status: {StatusCode}, Response: {Response}", 
-                //     response.StatusCode, responseContent);
-
-                var errorResponse = JsonSerializer.Deserialize<OidcTokenResponse>(responseContent, new JsonSerializerOptions
+                if (_oidcSettings.UsePkce)
                 {
-                    PropertyNameCaseInsensitive = true
-                });
+                    queryParams.Add($"code_challenge={Uri.EscapeDataString(codeChallenge)}");
+                    queryParams.Add("code_challenge_method=S256");
+                }
 
-                return errorResponse ?? new OidcTokenResponse
-                {
-                    Error = "token_refresh_failed",
-                    ErrorDescription = $"HTTP {response.StatusCode}: {response.ReasonPhrase}"
-                };
+                var authorizationUrl = $"{_oidcSettings.Authority}/authorize?{string.Join("&", queryParams)}";
+                
+                _logger.LogDebug("Generated OIDC authorization URL");
+                return authorizationUrl;
             }
-
-            var tokenResponse = JsonSerializer.Deserialize<OidcTokenResponse>(responseContent, new JsonSerializerOptions
+            catch (Exception ex)
             {
-                PropertyNameCaseInsensitive = true
-            });
-
-            //             _logger.LogInformation("Token refresh successful");
-            return tokenResponse ?? throw new InvalidOperationException("Failed to deserialize token response");
-        }
-        catch (Exception)
-        {
-            //             _logger.LogError(ex, "Error during token refresh");
-            return new OidcTokenResponse
-            {
-                Error = "internal_error",
-                ErrorDescription = "An internal error occurred during token refresh"
-            };
-        }
-    }
-
-    /// <summary>
-    /// Revoke token at OIDC provider
-    /// </summary>
-    /// <param name="token">Token to revoke</param>
-    /// <param name="tokenType">Type of token (access_token or refresh_token)</param>
-    /// <returns>True if revocation successful, false otherwise</returns>
-    public async Task<bool> RevokeTokenAsync(string token, string tokenType = "access_token")
-    {
-        try
-        {
-            //             _logger.LogInformation("Revoking {TokenType} at OIDC provider", tokenType);
-
-            var revocationEndpoint = $"{_oidcSettings.Authority.TrimEnd('/')}/protocol/openid-connect/revoke";
-
-            var parameters = new Dictionary<string, string>
-            {
-                {"token", token},
-                {"token_type_hint", tokenType},
-                {"client_id", _oidcSettings.ClientId},
-                {"client_secret", _oidcSettings.ClientSecret}
-            };
-
-            var content = new FormUrlEncodedContent(parameters);
-            var response = await _httpClient.PostAsync(revocationEndpoint, content);
-
-            if (response.IsSuccessStatusCode)
-            {
-                //                 _logger.LogInformation("Token revocation successful");
-                return true;
-            }
-            else
-            {
-                //                 _logger.LogWarning("Token revocation failed. Status: {StatusCode}", response.StatusCode);
-                return false;
+                _logger.LogError(ex, "Error generating OIDC authorization URL");
+                throw;
             }
         }
-        catch (Exception)
+
+        private async Task<string> GenerateCodeChallengeAsync()
         {
-            //             _logger.LogError(ex, "Error during token revocation");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Get authorization URL for OIDC flow
-    /// </summary>
-    /// <param name="state">State parameter for CSRF protection</param>
-    /// <param name="codeChallenge">PKCE code challenge (optional)</param>
-    /// <param name="codeChallengeMethod">PKCE code challenge method (optional)</param>
-    /// <returns>Authorization URL</returns>
-    public Task<string> GetAuthorizationUrlAsync(string state, string? codeChallenge = null, string? codeChallengeMethod = null)
-    {
-        try
-        {
-            var authEndpoint = $"{_oidcSettings.Authority.TrimEnd('/')}/protocol/openid-connect/auth";
-
-            var parameters = new Dictionary<string, string>
+            try
             {
-                {"response_type", _oidcSettings.ResponseType},
-                {"client_id", _oidcSettings.ClientId},
-                {"redirect_uri", _oidcSettings.RedirectUri},
-                {"scope", string.Join(" ", _oidcSettings.Scopes)},
-                {"state", state},
-                {"response_mode", _oidcSettings.ResponseMode}
-            };
-
-            // Add PKCE parameters if provided
-            if (!string.IsNullOrEmpty(codeChallenge))
-            {
-                parameters.Add("code_challenge", codeChallenge);
-                parameters.Add("code_challenge_method", codeChallengeMethod ?? "S256");
+                var codeVerifier = GenerateRandomString(128);
+                var codeChallenge = await GenerateSha256HashAsync(codeVerifier);
+                return codeChallenge;
             }
-
-            var queryString = string.Join("&", parameters.Select(p => $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}"));
-            var authorizationUrl = $"{authEndpoint}?{queryString}";
-
-            //             _logger.LogDebug("Generated authorization URL");
-            return Task.FromResult(authorizationUrl);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating PKCE code challenge");
+                throw;
+            }
         }
-        catch (Exception)
+
+        private string GenerateRandomString(int length)
         {
-            //             _logger.LogError(ex, "Error generating authorization URL");
-            throw;
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
         }
-    }
 
-    /// <summary>
-    /// Generate PKCE code verifier and challenge
-    /// </summary>
-    /// <returns>Tuple of (code verifier, code challenge)</returns>
-    public Task<(string codeVerifier, string codeChallenge)> GeneratePkceParametersAsync()
-    {
-        try
+        private async Task<string> GenerateSha256HashAsync(string input)
         {
-            // Generate code verifier (43-128 characters, URL-safe)
-            var codeVerifierBytes = new byte[32];
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(codeVerifierBytes);
-            var codeVerifier = Convert.ToBase64String(codeVerifierBytes)
-                .TrimEnd('=')
-                .Replace('+', '-')
-                .Replace('/', '_');
-
-            // Generate code challenge (SHA256 hash of code verifier)
             using var sha256 = SHA256.Create();
-            var challengeBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(codeVerifier));
-            var codeChallenge = Convert.ToBase64String(challengeBytes)
-                .TrimEnd('=')
+            var bytes = Encoding.UTF8.GetBytes(input);
+            var hash = await Task.Run(() => sha256.ComputeHash(bytes));
+            return Convert.ToBase64String(hash)
                 .Replace('+', '-')
-                .Replace('/', '_');
-
-            //             _logger.LogDebug("Generated PKCE parameters");
-            return Task.FromResult((codeVerifier, codeChallenge));
-        }
-        catch (Exception)
-        {
-            //             _logger.LogError(ex, "Error generating PKCE parameters");
-            throw;
+                .Replace('/', '_')
+                .TrimEnd('=');
         }
     }
 }

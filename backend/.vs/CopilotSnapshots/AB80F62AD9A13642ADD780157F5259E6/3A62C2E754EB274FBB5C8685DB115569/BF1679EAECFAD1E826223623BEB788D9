@@ -1,0 +1,389 @@
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.OpenApi.Models;
+using System.Data;
+using System.Reflection;
+using System.Globalization;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Http;
+using Ikhtibar.Infrastructure.Data;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Infrastructure.Repositories;
+using Ikhtibar.API.Middleware;
+using Ikhtibar.API.Models;
+using Ikhtibar.API.Extensions;
+using Ikhtibar.Shared.Models;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Core.Services.Implementations;
+using Ikhtibar.Infrastructure.Services;
+using Ikhtibar.Core.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Set default culture
+var defaultCulture = new CultureInfo("en-US");
+CultureInfo.DefaultThreadCurrentCulture = defaultCulture;
+CultureInfo.DefaultThreadCurrentUICulture = defaultCulture;
+
+// ===== CONFIGURATION BINDINGS =====
+// Bind settings classes from configuration
+var jwtSettings = new JwtSettings();
+builder.Configuration.GetSection("JwtSettings").Bind(jwtSettings);
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
+var oidcSettings = new OidcSettings();
+builder.Configuration.GetSection("OidcSettings").Bind(oidcSettings);
+builder.Services.Configure<OidcSettings>(builder.Configuration.GetSection("OidcSettings"));
+
+var authSettings = new AuthSettings();
+builder.Configuration.GetSection("AuthSettings").Bind(authSettings);
+builder.Services.Configure<AuthSettings>(builder.Configuration.GetSection("AuthSettings"));
+
+// ===== AUTHENTICATION & AUTHORIZATION =====
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+        ClockSkew = TimeSpan.FromMinutes(5) // Allow 5 minute clock skew
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+            {
+                context.Response.Headers["Token-Expired"] = "true";
+            }
+            return Task.CompletedTask;
+        }
+    };
+})
+.AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
+{
+    options.Authority = oidcSettings.Authority;
+    options.ClientId = oidcSettings.ClientId;
+    options.ClientSecret = oidcSettings.ClientSecret;
+    options.CallbackPath = new PathString("/signin-oidc"); // Standard callback path
+    options.ResponseType = "code";
+    options.SaveTokens = true;
+    options.GetClaimsFromUserInfoEndpoint = true;
+
+    // Add required scopes
+    foreach (var scope in oidcSettings.Scopes)
+    {
+        options.Scope.Add(scope);
+    }
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    // Default policy requires authentication
+    options.DefaultPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+
+    // Role-based policies for educational assessment platform
+    options.AddPolicy("SystemAdmin", policy =>
+        policy.RequireRole("system-admin"));
+    
+    options.AddPolicy("ContentManager", policy =>
+        policy.RequireRole("system-admin", "exam-manager", "creator"));
+    
+    options.AddPolicy("ExamStaff", policy =>
+        policy.RequireRole("system-admin", "exam-manager", "supervisor", "grader"));
+        
+    options.AddPolicy("QualityControl", policy =>
+        policy.RequireRole("system-admin", "reviewer", "quality-reviewer"));
+    
+    options.AddPolicy("QuestionManagement", policy =>
+        policy.RequireRole("system-admin", "creator", "reviewer"));
+    
+    options.AddPolicy("ExamManagement", policy =>
+        policy.RequireRole("system-admin", "exam-manager", "supervisor"));
+    
+    options.AddPolicy("GradingAccess", policy =>
+        policy.RequireRole("system-admin", "grader", "quality-reviewer"));
+    
+    options.AddPolicy("StudentAccess", policy =>
+        policy.RequireRole("student"));
+    
+    options.AddPolicy("SupervisorAccess", policy =>
+        policy.RequireRole("system-admin", "supervisor"));
+    
+    options.AddPolicy("ReviewerAccess", policy =>
+        policy.RequireRole("system-admin", "reviewer", "quality-reviewer"));
+    
+    // Legacy policies for backward compatibility
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireRole("Admin", "system-admin"));
+
+    options.AddPolicy("UserOrAdmin", policy =>
+        policy.RequireRole("User", "Admin", "system-admin"));
+});
+
+// Add services to the container.
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.SuppressModelStateInvalidFilter = false;
+    });
+
+// Configure CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins", policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            // In development, allow specific origins for credential support
+            policy.WithOrigins("https://localhost:5173", "http://localhost:5173", "https://localhost:3000")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        }
+        else
+        {
+            // In production, configure specific origins
+            policy.WithOrigins("https://localhost:5173", "http://localhost:5173", "https://localhost:3000", "https://yourdomain.com")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        }
+    });
+});
+
+// Configure Dapper - Register connection factory
+builder.Services.AddTransient<IDbConnection>(provider =>
+    new SqlConnection(builder.Configuration.GetConnectionString("IkhtibarDatabase")));
+
+// Register connection string for repositories
+builder.Services.AddScoped<IDbConnectionFactory, DbConnectionFactory>();
+
+
+
+// ===== AUTHENTICATION SERVICES REGISTRATION =====
+// Register specific repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+
+// ===== USER MANAGEMENT SERVICES REGISTRATION =====
+// Register AutoMapper - using assemblies approach
+builder.Services.AddAutoMapper(typeof(Ikhtibar.Core.Services.Interfaces.IUserService).Assembly);
+
+// Register user management repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
+builder.Services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
+
+// Register tree management repositories
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.ITreeNodeTypeRepository, Ikhtibar.Infrastructure.Repositories.TreeNodeTypeRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.ITreeNodeRepository, Ikhtibar.Infrastructure.Repositories.TreeNodeRepository>();
+
+// Register service implementations
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IUserRoleService, UserRoleService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+
+// Register role management configuration service
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.IRoleManagementConfigurationService, Ikhtibar.Infrastructure.Services.RoleManagementConfigurationService>();
+
+// Register tree management services
+builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.ITreeNodeTypeService, Ikhtibar.Core.Services.Implementations.TreeNodeTypeService>();
+builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.ITreeNodeService, Ikhtibar.Core.Services.Implementations.TreeNodeService>();
+
+// Register question bank tree services
+builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.IQuestionBankTreeService, Ikhtibar.Infrastructure.Services.QuestionBankTreeService>();
+
+// Register media management services
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.Interfaces.IMediaService, Ikhtibar.Infrastructure.Services.MediaService>();
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.Interfaces.IFileUploadService, Ikhtibar.Infrastructure.Services.FileUploadService>();
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.Interfaces.IMediaStorageService, Ikhtibar.Infrastructure.Services.LocalFileStorageService>();
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.Interfaces.IThumbnailService, Ikhtibar.Infrastructure.Services.ThumbnailService>();
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.Interfaces.IMediaValidationService, Ikhtibar.Infrastructure.Services.MediaValidationService>();
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.Interfaces.IMediaSearchService, Ikhtibar.Infrastructure.Services.MediaSearchService>();
+
+// Register question bank repositories
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IQuestionBankCategoryRepository, Ikhtibar.Infrastructure.Repositories.QuestionBankCategoryRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IQuestionBankTreeRepository, Ikhtibar.Infrastructure.Repositories.QuestionBankTreeRepository>();
+
+// Register media management repositories
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaFileRepository, Ikhtibar.Infrastructure.Repositories.MediaFileRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaCategoryRepository, MediaCategoryRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaCollectionRepository, MediaCollectionRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaMetadataRepository, MediaMetadataRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaAccessLogRepository, MediaAccessLogRepository>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IMediaThumbnailRepository, MediaThumbnailRepository>();
+
+// Register authentication services
+builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.ITokenService, Ikhtibar.Infrastructure.Services.TokenService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<Ikhtibar.Core.Repositories.Interfaces.IRefreshTokenRepository, Ikhtibar.Infrastructure.Repositories.RefreshTokenRepository>();
+
+// Register database initialization service
+builder.Services.AddScoped<Ikhtibar.Infrastructure.Services.IDatabaseInitializationService, Ikhtibar.Infrastructure.Services.DatabaseInitializationService>();
+
+// Register notification system repositories (temporarily disabled for core functionality focus)
+// builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+// builder.Services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
+// builder.Services.AddScoped<INotificationHistoryRepository, NotificationHistoryRepository>();
+// builder.Services.AddScoped<INotificationPreferenceRepository, Ikhtibar.Infrastructure.Repositories.NotificationPreferenceRepository>();
+
+// Register notification system services (temporarily disabled for core functionality focus)
+// builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.INotificationService, Ikhtibar.Infrastructure.Services.NotificationService>();
+// builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.INotificationTemplateService, Ikhtibar.Infrastructure.Services.NotificationTemplateService>();
+// builder.Services.AddScoped<Ikhtibar.Core.Services.Interfaces.INotificationPreferenceService, Ikhtibar.Infrastructure.Services.NotificationPreferenceService>();
+
+// Register audit logging services
+builder.Services.AddAuditServices();
+
+// Register HttpClient for OIDC service
+builder.Services.AddHttpClient<IOidcService, OidcService>(client =>
+{
+    client.BaseAddress = new Uri(oidcSettings.Authority);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+// Add Health Checks
+builder.Services.AddHealthChecks()
+    .AddCheck("database", () =>
+    {
+        try
+        {
+            using var connection = new SqlConnection(builder.Configuration.GetConnectionString("IkhtibarDatabase"));
+            connection.Open();
+            return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy("Database connection successful");
+        }
+        catch (Exception ex)
+        {
+            return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy("Database connection failed", ex);
+        }
+    });
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Ikhtibar API",
+        Version = "v1",
+        Description = "API for the Ikhtibar platform - A comprehensive assessment and evaluation system",
+        Contact = new OpenApiContact
+        {
+            Name = "Ikhtibar Team",
+            Email = "support@ikhtibar.com"
+        }
+    });
+
+    // Add JWT Authentication to Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter 'Bearer' [space] and then your valid token in the text input below.\n\nExample: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+    // Include XML comments
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+});
+
+var app = builder.Build();
+
+// Initialize database on startup
+using (var scope = app.Services.CreateScope())
+{
+    var dbInitService = scope.ServiceProvider.GetRequiredService<Ikhtibar.Infrastructure.Services.IDatabaseInitializationService>();
+    try
+    {
+        await dbInitService.InitializeDatabaseAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Failed to initialize database during startup");
+        // Don't throw - let the application start so you can debug the issue
+    }
+}
+
+// Configure the HTTP request pipeline.
+
+// Global error handling middleware (must be first)
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
+// Enable Swagger in all environments for API documentation
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ikhtibar API v1");
+    c.RoutePrefix = "swagger";
+    c.DisplayRequestDuration();
+    c.EnableDeepLinking();
+});
+
+// CORS must be before authentication and authorization
+app.UseCors("AllowAllOrigins");
+
+app.UseHttpsRedirection();
+
+// Add health checks endpoint
+app.MapHealthChecks("/health");
+
+app.UseAuthentication();
+
+// Optional: Add refresh token rotation middleware
+app.UseMiddleware<RefreshTokenMiddleware>();
+
+// Add audit logging middleware
+app.UseAuditLogging();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
+
+// Make Program class accessible for integration tests
+public partial class Program { }

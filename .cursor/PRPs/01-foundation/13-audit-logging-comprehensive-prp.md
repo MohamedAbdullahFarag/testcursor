@@ -323,13 +323,13 @@ describe('AuditLogViewer', () => {
 ### Level 5: End-to-End Validation
 ```bash
 # User creation with audit logging
-curl -X POST http://localhost:5000/api/users \
+curl -X POST https://localhost:7001/api/users \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"email":"audit-test@example.com","username":"audituser","firstName":"Audit","lastName":"Test"}'
 
 # Verify audit log creation
-curl -X GET "http://localhost:5000/api/audit-logs?action=CREATE_USER" \
+curl -X GET "https://localhost:7001/api/audit-logs?action=CREATE_USER" \
   -H "Authorization: Bearer $TOKEN"
 
 # Expected response:

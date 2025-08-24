@@ -6,7 +6,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// Repository interface for User entity operations
 /// Following SRP: ONLY User data operations
 /// </summary>
-public interface IUserRepository : IRepository<User>
+public interface IUserRepository : IBaseRepository<User>
 {
     /// <summary>
     /// Get user by email address

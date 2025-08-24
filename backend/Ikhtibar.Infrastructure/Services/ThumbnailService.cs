@@ -1,4 +1,4 @@
-using Ikhtibar.Core.Entities;
+
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Infrastructure.Services.Interfaces;
 using Ikhtibar.Shared.Enums;
@@ -34,7 +34,7 @@ public class ThumbnailService : IThumbnailService
                 mediaFile.Id, mediaFile.MediaType);
 
             // Only generate thumbnails for images and videos
-            if (mediaFile.MediaType != Ikhtibar.Core.Entities.MediaType.Image && mediaFile.MediaType != Ikhtibar.Core.Entities.MediaType.Video)
+            if (mediaFile.MediaType != Shared.Enums.MediaType.Image && mediaFile.MediaType != Shared.Enums.MediaType.Video)
             {
                 _logger.LogInformation("Skipping thumbnail generation for non-image/video file: {MediaId}", mediaFile.Id);
                 return true;
@@ -59,9 +59,9 @@ public class ThumbnailService : IThumbnailService
                         _logger.LogWarning("Failed to generate thumbnail for size {Size}: {MediaId}", size, mediaFile.Id);
                     }
                 }
-                catch (Exception ex)
+                catch
                 {
-                    _logger.LogError(ex, "Error generating thumbnail for size {Size}: {MediaId}", size, mediaFile.Id);
+                    _logger.LogError(0, "Error generating thumbnail for size {Size}: {MediaId}", size, mediaFile.Id);
                     success = false;
                 }
             }
@@ -71,9 +71,9 @@ public class ThumbnailService : IThumbnailService
 
             return success;
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError(ex, "Error generating thumbnails for media file: {MediaId}", mediaFile.Id);
+            _logger.LogError(0, "Error generating thumbnails for media file: {MediaId}", mediaFile.Id);
             return false;
         }
     }
@@ -102,9 +102,9 @@ public class ThumbnailService : IThumbnailService
 
             return string.Empty;
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError(ex, "Error getting thumbnail URL for media file: {MediaId}, Size: {Size}", mediaFileId, size);
+            _logger.LogError(0, "Error getting thumbnail URL for media file: {MediaId}, Size: {Size}", mediaFileId, size);
             return string.Empty;
         }
     }
@@ -127,9 +127,9 @@ public class ThumbnailService : IThumbnailService
 
             return false;
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError("Error regenerating thumbnails for media file: {MediaId}", mediaFileId);
+            _logger.LogError(0, "Error regenerating thumbnails for media file: {MediaId}", mediaFileId);
             return false;
         }
     }
@@ -144,12 +144,12 @@ public class ThumbnailService : IThumbnailService
                 await _thumbnailRepository.DeleteAsync(thumbnail.Id);
             }
 
-            _logger.LogInformation("Deleted {Count} thumbnails for media file: {MediaId}", thumbnails.Count, mediaFileId);
+            _logger.LogInformation("Deleted {Count} thumbnails for media file: {MediaId}", thumbnails.Count(), mediaFileId);
             return true;
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError("Error deleting thumbnails for media file: {MediaId}", mediaFileId);
+            _logger.LogError(0, "Error deleting thumbnails for media file: {MediaId}", mediaFileId);
             return false;
         }
     }
@@ -161,9 +161,9 @@ public class ThumbnailService : IThumbnailService
             var thumbnails = await _thumbnailRepository.GetByMediaFileIdAsync(mediaFileId);
             return thumbnails.Any();
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError("Error checking thumbnails existence for media file: {MediaId}", mediaFileId);
+            _logger.LogError(0, "Error checking thumbnails existence for media file: {MediaId}", mediaFileId);
             return false;
         }
     }
@@ -209,9 +209,9 @@ public class ThumbnailService : IThumbnailService
 
             return thumbnail;
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError("Error generating thumbnail for media file: {MediaId}, Size: {Size}", 
+            _logger.LogError(0, "Error generating thumbnail for media file: {MediaId}, Size: {Size}", 
                 mediaFile.Id, size);
             return null;
         }

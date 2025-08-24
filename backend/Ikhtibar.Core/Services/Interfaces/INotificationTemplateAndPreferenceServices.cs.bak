@@ -25,14 +25,14 @@ public interface INotificationTemplateService
     /// <param name="templateId">Template ID</param>
     /// <param name="dto">Template update data</param>
     /// <returns>Updated template data</returns>
-    Task<NotificationTemplateDto> UpdateTemplateAsync(Guid templateId, UpdateNotificationTemplateDto dto);
+    Task<NotificationTemplateDto> UpdateTemplateAsync(int templateId, UpdateNotificationTemplateDto dto);
 
     /// <summary>
     /// Gets a template by ID
     /// </summary>
     /// <param name="templateId">Template ID</param>
     /// <returns>Template data if found</returns>
-    Task<NotificationTemplateDto?> GetTemplateAsync(Guid templateId);
+    Task<NotificationTemplateDto?> GetTemplateAsync(int templateId);
 
     /// <summary>
     /// Gets template by notification type and language
@@ -55,14 +55,14 @@ public interface INotificationTemplateService
     /// <param name="templateId">Template ID</param>
     /// <param name="isActive">New active status</param>
     /// <returns>True if successfully updated</returns>
-    Task<bool> SetTemplateActiveStatusAsync(Guid templateId, bool isActive);
+    Task<bool> SetTemplateActiveStatusAsync(int templateId, bool isActive);
 
     /// <summary>
     /// Deletes a template (soft delete)
     /// </summary>
     /// <param name="templateId">Template ID</param>
     /// <returns>True if successfully deleted</returns>
-    Task<bool> DeleteTemplateAsync(Guid templateId);
+    Task<bool> DeleteTemplateAsync(int templateId);
 
     /// <summary>
     /// Processes template with variable substitution
@@ -124,7 +124,7 @@ public interface INotificationTemplateService
     /// <param name="fromDate">Start date for statistics</param>
     /// <param name="toDate">End date for statistics</param>
     /// <returns>Template usage statistics</returns>
-    Task<TemplateUsageStats> GetTemplateUsageStatsAsync(Guid templateId, DateTime fromDate, DateTime toDate);
+    Task<TemplateUsageStats> GetTemplateUsageStatsAsync(int templateId, DateTime fromDate, DateTime toDate);
 
     /// <summary>
     /// Duplicates a template with new language
@@ -133,7 +133,7 @@ public interface INotificationTemplateService
     /// <param name="targetLanguage">Target language code</param>
     /// <param name="translateContent">Whether to auto-translate content</param>
     /// <returns>Duplicated template data</returns>
-    Task<NotificationTemplateDto> DuplicateTemplateAsync(Guid sourceTemplateId, string targetLanguage, bool translateContent = false);
+    Task<NotificationTemplateDto> DuplicateTemplateAsync(int sourceTemplateId, string targetLanguage, bool translateContent = false);
 }
 
 /// <summary>

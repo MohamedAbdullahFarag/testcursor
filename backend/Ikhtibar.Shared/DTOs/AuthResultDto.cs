@@ -25,7 +25,7 @@ public class AuthResultDto
     /// <summary>
     /// Refresh token
     /// </summary>
-    public string? RefreshToken { get; set; }
+    public string? RefreshTokens { get; set; }
     
     /// <summary>
     /// Token expiration time

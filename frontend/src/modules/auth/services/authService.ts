@@ -3,14 +3,14 @@
 
 import { LoginRequest, AuthResult } from '../models/auth.types';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7001';
 
 export const authService = {
   /**
    * Authenticate user with email and password
    */
   login: async (data: LoginRequest): Promise<AuthResult> => {
-    const response = await fetch(`${API}/api/auth/login`, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ export const authService = {
    * Refresh access token using refresh token
    */
   refresh: async (): Promise<AuthResult> => {
-    const response = await fetch(`${API}/api/auth/refresh`, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -48,7 +48,7 @@ export const authService = {
    * Logout user and invalidate tokens
    */
   logout: async (): Promise<void> => {
-    const response = await fetch(`${API}/api/auth/logout`, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -59,38 +59,19 @@ export const authService = {
   },
 
   /**
-   * Get current user information
+   * Validate current access token
    */
-  getCurrentUser: async (): Promise<AuthResult['user'] | null> => {
+  validateToken: async (token: string): Promise<boolean> => {
     try {
-      const response = await fetch(`${API}/api/auth/me`, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        return null;
-      }
-
-      const userData = await response.json();
-      return userData.user;
-    } catch (error) {
-      console.error('Error getting current user:', error);
-      return null;
-    }
-  },
-
-  /**
-   * Validate if current token is still valid
-   */
-  validateToken: async (): Promise<boolean> => {
-    try {
-      const response = await fetch(`${API}/api/auth/validate`, {
-        credentials: 'include',
+      const response = await fetch(`${API_BASE_URL}/api/auth/validate`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       return response.ok;
-    } catch (error) {
-      console.error('Error validating token:', error);
+    } catch {
       return false;
     }
   },

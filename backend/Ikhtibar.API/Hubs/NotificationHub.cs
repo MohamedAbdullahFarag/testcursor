@@ -74,7 +74,7 @@ public class NotificationHub : Hub
     /// <summary>
     /// Marks a notification as read from the client side.
     /// </summary>
-    public async Task MarkAsRead(Guid notificationId)
+    public async Task MarkAsRead(int notificationId)
     {
         var userIdClaim = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int userId))

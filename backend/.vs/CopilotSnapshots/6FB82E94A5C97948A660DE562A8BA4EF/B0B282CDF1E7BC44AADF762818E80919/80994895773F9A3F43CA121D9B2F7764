@@ -1,0 +1,236 @@
+﻿using Dapper;
+
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Infrastructure.Data;
+using Microsoft.Extensions.Logging;
+
+namespace Ikhtibar.Infrastructure.Repositories;
+
+/// <summary>
+/// Repository implementation for Role entity operations
+/// Following SRP: ONLY Role data operations
+/// </summary>
+public class RoleRepository : BaseRepository<Role>, IRoleRepository
+{
+    private new readonly ILogger<RoleRepository> _logger;
+
+    public RoleRepository(IDbConnectionFactory connectionFactory, ILogger<RoleRepository> logger)
+        : base(connectionFactory, logger, "Roles", "RoleId")
+    {
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Get role by code
+    /// </summary>
+    public async Task<Role?> GetByCodeAsync(string code)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                SELECT RoleId, Code, Name, Description, IsActive, IsSystemRole, 
+                       CreatedAt, ModifiedAt
+                FROM Roles 
+                WHERE Code = @Code AND IsDeleted = 0";
+
+            var role = await connection.QueryFirstOrDefaultAsync<Role>(sql, new { Code = code });
+            return role;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting role by code: {Code}", code);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Get role by name
+    /// </summary>
+    public async Task<Role?> GetByNameAsync(string name)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                SELECT RoleId, Code, Name, Description, IsActive, IsSystemRole, 
+                       CreatedAt, ModifiedAt
+                FROM Roles 
+                WHERE Name = @Name AND IsDeleted = 0";
+
+            var role = await connection.QueryFirstOrDefaultAsync<Role>(sql, new { Name = name });
+            return role;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting role by name: {Name}", name);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Get all active roles
+    /// </summary>
+    public async Task<IEnumerable<Role>> GetActiveRolesAsync()
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                SELECT RoleId, Code, Name, Description, IsActive, IsSystemRole, 
+                       CreatedAt, ModifiedAt
+                FROM Roles 
+                WHERE IsActive = 1 AND IsDeleted = 0
+                ORDER BY Name";
+
+            var roles = await connection.QueryAsync<Role>(sql);
+            return roles;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting active roles");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Get roles by user ID
+    /// </summary>
+    public async Task<IEnumerable<Role>> GetByUserIdAsync(int userId)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                SELECT r.RoleId, r.Code, r.Name, r.Description, r.IsActive, r.IsSystemRole, 
+                       r.CreatedAt, r.ModifiedAt
+                FROM Roles r
+                INNER JOIN UserRoles ur ON r.RoleId = ur.RoleId
+                WHERE ur.UserId = @UserId AND r.IsDeleted = 0 AND r.IsActive = 1
+                ORDER BY r.Name";
+
+            var roles = await connection.QueryAsync<Role>(sql, new { UserId = userId });
+            return roles;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting roles by user ID: {UserId}", userId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Check if role code exists
+    /// </summary>
+    public async Task<bool> CodeExistsAsync(string code, int? excludeRoleId = null)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            var sql = excludeRoleId.HasValue
+                ? "SELECT COUNT(1) FROM Roles WHERE Code = @Code AND RoleId != @ExcludeRoleId AND IsDeleted = 0"
+                : "SELECT COUNT(1) FROM Roles WHERE Code = @Code AND IsDeleted = 0";
+
+            var parameters = excludeRoleId.HasValue
+                ? new { Code = code, ExcludeRoleId = excludeRoleId.Value }
+                : new { Code = code, ExcludeRoleId = 0 };
+
+            var count = await connection.ExecuteScalarAsync<int>(sql, parameters);
+            return count > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking if role code exists: {Code}", code);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Override base GetByIdAsync to include soft delete check
+    /// </summary>
+    public override async Task<Role?> GetByIdAsync(int id)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                SELECT RoleId, Code, Name, Description, IsActive, IsSystemRole, 
+                       CreatedAt, ModifiedAt
+                FROM Roles 
+                WHERE RoleId = @Id AND IsDeleted = 0";
+
+            var role = await connection.QueryFirstOrDefaultAsync<Role>(sql, new { Id = id });
+            return role;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting role by ID: {Id}", id);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Override base GetAllAsync to include soft delete check
+    /// </summary>
+    public override async Task<IEnumerable<Role>> GetAllAsync(string? where = null, object? parameters = null)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            
+            // Build base SQL with soft delete check
+            var baseWhere = "IsDeleted = 0";
+            if (!string.IsNullOrEmpty(where))
+            {
+                baseWhere += $" AND {where}";
+            }
+            
+            var sql = $@"
+                SELECT RoleId, Code, Name, Description, IsActive, IsSystemRole, 
+                       CreatedAt, ModifiedAt
+                FROM Roles 
+                WHERE {baseWhere}
+                ORDER BY Name";
+
+            var roles = await connection.QueryAsync<Role>(sql, parameters);
+            return roles;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting all roles");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Check if role code is in use
+    /// </summary>
+    public async Task<bool> IsRoleCodeInUseAsync(string code, int? excludeRoleId = null)
+    {
+        return await CodeExistsAsync(code, excludeRoleId);
+    }
+
+    /// <summary>
+    /// Create a new role
+    /// </summary>
+    public async Task<Role> CreateAsync(Role role)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                INSERT INTO Roles (Code, Name, Description, IsActive, IsSystemRole, CreatedAt, ModifiedAt)
+                VALUES (@Code, @Name, @Description, @IsActive, @IsSystemRole, GETUTCDATE(), GETUTCDATE());
+                SELECT CAST(SCOPE_IDENTITY() as int);";
+
+            var roleId = await connection.ExecuteScalarAsync<int>(sql, role);
+            role.RoleId = roleId;
+            return role;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating role: {Role}", role);
+            throw;
+        }
+    }
+}

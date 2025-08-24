@@ -2,7 +2,7 @@ using Ikhtibar.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
-using MediaType = Ikhtibar.Core.Entities.MediaType;
+using MediaType = Ikhtibar.Shared.Entities.MediaType;
 
 namespace Ikhtibar.Infrastructure.Services;
 
@@ -62,44 +62,42 @@ public class FileUploadService : IFileUploadService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generating unique filename for {OriginalFileName}", originalFileName);
-            // Fallback to GUID-based filename
+            // Fallback to int-based filename
             var extension = Path.GetExtension(originalFileName);
             return $"{Guid.NewGuid()}{extension}";
         }
     }
 
-    public MediaType DetermineMediaType(string contentType, string fileName)
+    public Shared.Enums.MediaType DetermineMediaType(string contentType, string fileName)
     {
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
         
         // Check by content type first
         if (contentType.StartsWith("image/"))
-            return MediaType.Image;
+            return Shared.Enums.MediaType.Image;
         if (contentType.StartsWith("video/"))
-            return MediaType.Video;
+            return Shared.Enums.MediaType.Video;
         if (contentType.StartsWith("audio/"))
-            return MediaType.Audio;
+            return Shared.Enums.MediaType.Audio;
         if (contentType.StartsWith("application/pdf") || 
             contentType.StartsWith("application/msword") ||
             contentType.StartsWith("application/vnd.openxmlformats"))
-            return MediaType.Document;
+            return Shared.Enums.MediaType.Document;
         if (contentType.StartsWith("application/zip") ||
             contentType.StartsWith("application/x-rar-compressed"))
-            return MediaType.Archive;
+            return Shared.Enums.MediaType.Document;
         
         // Fallback to file extension
         if (_allowedImageExtensions.Contains(extension))
-            return MediaType.Image;
+            return Shared.Enums.MediaType.Image;
         if (_allowedVideoExtensions.Contains(extension))
-            return MediaType.Video;
+            return Shared.Enums.MediaType.Video;
         if (_allowedAudioExtensions.Contains(extension))
-            return MediaType.Audio;
+            return Shared.Enums.MediaType.Audio;
         if (_allowedDocumentExtensions.Contains(extension))
-            return MediaType.Document;
-        if (_allowedArchiveExtensions.Contains(extension))
-            return MediaType.Archive;
+            return Shared.Enums.MediaType.Document;
         
-        return MediaType.Other;
+        return Shared.Enums.MediaType.Document;
     }
 
     public async Task<bool> ValidateFileConstraintsAsync(IFormFile file, long maxSizeBytes, string[] allowedExtensions)

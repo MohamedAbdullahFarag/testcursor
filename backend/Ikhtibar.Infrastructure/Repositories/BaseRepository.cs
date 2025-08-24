@@ -11,7 +11,7 @@ namespace Ikhtibar.Infrastructure.Repositories;
 /// Provides CRUD operations and query capabilities for all entities
 /// </summary>
 /// <typeparam name="T">Entity type</typeparam>
-public abstract class BaseRepository<T> : IRepository<T> where T : class
+public abstract class BaseRepository<T> : IBaseRepository<T> where T : class
 {
     protected readonly IDbConnectionFactory _connectionFactory;
     protected readonly ILogger<BaseRepository<T>> _logger;
@@ -220,6 +220,8 @@ public abstract class BaseRepository<T> : IRepository<T> where T : class
             throw;
         }
     }
+
+
 
     public virtual async Task<IEnumerable<T>> QueryAsync(string sql, object? parameters = null)
     {

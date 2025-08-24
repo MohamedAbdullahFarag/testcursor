@@ -13,7 +13,7 @@ public class NotificationResponseDto
     /// <summary>
     /// Notification unique identifier
     /// </summary>
-    public Guid Id { get; set; }
+    public int id { get; set; }
 
     /// <summary>
     /// Notification type
@@ -38,7 +38,7 @@ public class NotificationResponseDto
     /// <summary>
     /// Template ID used (if any)
     /// </summary>
-    public Guid? TemplateId { get; set; }
+    public int? TemplateId { get; set; }
 
     /// <summary>
     /// Template name (if template was used)
@@ -159,7 +159,7 @@ public class NotificationTemplateResponseDto
     /// <summary>
     /// Template unique identifier
     /// </summary>
-    public Guid Id { get; set; }
+    public int id { get; set; }
 
     /// <summary>
     /// Template name/key
@@ -219,7 +219,7 @@ public class NotificationTemplateResponseDto
     /// <summary>
     /// Parent template ID (for versioning)
     /// </summary>
-    public Guid? ParentTemplateId { get; set; }
+    public int? ParentTemplateId { get; set; }
 
     /// <summary>
     /// Usage statistics
@@ -270,7 +270,7 @@ public class NotificationPreferenceResponseDto
     /// <summary>
     /// Preference unique identifier
     /// </summary>
-    public Guid Id { get; set; }
+    public int id { get; set; }
 
     /// <summary>
     /// User ID this preference belongs to
@@ -383,7 +383,7 @@ public class DeliveryAttemptDto
     /// <summary>
     /// Attempt ID
     /// </summary>
-    public Guid Id { get; set; }
+    public int id { get; set; }
 
     /// <summary>
     /// Delivery channel used
@@ -516,7 +516,7 @@ public class DeliveryRuleDto
     /// <summary>
     /// Rule ID
     /// </summary>
-    public Guid Id { get; set; }
+    public int id { get; set; }
 
     /// <summary>
     /// Rule name

@@ -44,7 +44,7 @@ public class AuthResultDto
     /// <summary>
     /// Refresh token for getting new access tokens
     /// </summary>
-    public string RefreshToken { get; set; } = string.Empty;
+    public string RefreshTokens { get; set; } = string.Empty;
 
     /// <summary>
     /// Token type (usually "Bearer")
@@ -81,7 +81,7 @@ public class RefreshTokenDto
     /// Refresh token to exchange for new access token
     /// </summary>
     [Required]
-    public string RefreshToken { get; set; } = string.Empty;
+    public string RefreshTokens { get; set; } = string.Empty;
 
     /// <summary>
     /// Client IP address for security logging

@@ -1,4 +1,6 @@
-using Ikhtibar.Core.Entities;
+
+
+using Ikhtibar.Shared.Entities;
 
 namespace Ikhtibar.Core.Repositories.Interfaces;
 
@@ -6,9 +8,9 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// Repository interface for MediaAccessLog entity operations
 /// Provides specialized methods for access tracking and analytics
 /// </summary>
-public interface IMediaAccessLogRepository : IRepository<MediaAccessLog>
+public interface IMediaAccessLogRepository : IBaseRepository<MediaAccessLog>
 {
-    /// <summary>
+    /// <summary>1
     /// Gets access logs for a specific media file
     /// </summary>
     /// <param name="mediaFileId">Media file identifier</param>
@@ -17,7 +19,7 @@ public interface IMediaAccessLogRepository : IRepository<MediaAccessLog>
     /// <param name="startDate">Optional start date filter</param>
     /// <param name="endDate">Optional end date filter</param>
     /// <returns>Collection of access logs for the media file</returns>
-    Task<IEnumerable<MediaAccessLog>> GetByMediaFileAsync(Guid mediaFileId, int offset = 0, int limit = 100, DateTime? startDate = null, DateTime? endDate = null);
+    Task<IEnumerable<MediaAccessLog>> GetByMediaFileAsync(int mediaFileId, int offset = 0, int limit = 100, DateTime? startDate = null, DateTime? endDate = null);
 
     /// <summary>
     /// Gets access logs for a specific user
@@ -28,7 +30,7 @@ public interface IMediaAccessLogRepository : IRepository<MediaAccessLog>
     /// <param name="startDate">Optional start date filter</param>
     /// <param name="endDate">Optional end date filter</param>
     /// <returns>Collection of access logs for the user</returns>
-    Task<IEnumerable<MediaAccessLog>> GetByUserAsync(Guid userId, int offset = 0, int limit = 100, DateTime? startDate = null, DateTime? endDate = null);
+    Task<IEnumerable<MediaAccessLog>> GetByUserAsync(int userId, int offset = 0, int limit = 100, DateTime? startDate = null, DateTime? endDate = null);
 
     /// <summary>
     /// Gets access logs by access type
@@ -72,7 +74,7 @@ public interface IMediaAccessLogRepository : IRepository<MediaAccessLog>
     /// <param name="mediaFileId">Media file identifier</param>
     /// <param name="days">Number of days to look back</param>
     /// <returns>Dictionary with dates and access counts</returns>
-    Task<Dictionary<DateTime, int>> GetDailyAccessCountsAsync(Guid mediaFileId, int days = 30);
+    Task<Dictionary<DateTime, int>> GetDailyAccessCountsAsync(int mediaFileId, int days = 30);
 
     /// <summary>
     /// Gets hourly access pattern for a media file
@@ -80,7 +82,7 @@ public interface IMediaAccessLogRepository : IRepository<MediaAccessLog>
     /// <param name="mediaFileId">Media file identifier</param>
     /// <param name="days">Number of days to analyze</param>
     /// <returns>Dictionary with hours (0-23) and access counts</returns>
-    Task<Dictionary<int, int>> GetHourlyAccessPatternAsync(Guid mediaFileId, int days = 7);
+    Task<Dictionary<int, int>> GetHourlyAccessPatternAsync(int mediaFileId, int days = 7);
 
     /// <summary>
     /// Gets most accessed media files
@@ -114,7 +116,7 @@ public interface IMediaAccessLogRepository : IRepository<MediaAccessLog>
     /// <param name="startDate">Optional start date filter</param>
     /// <param name="endDate">Optional end date filter</param>
     /// <returns>Number of unique users who accessed the file</returns>
-    Task<int> GetUniqueUserCountAsync(Guid mediaFileId, DateTime? startDate = null, DateTime? endDate = null);
+    Task<int> GetUniqueUserCountAsync(int mediaFileId, DateTime? startDate = null, DateTime? endDate = null);
 
     /// <summary>
     /// Gets bandwidth usage statistics
@@ -156,7 +158,7 @@ public interface IMediaAccessLogRepository : IRepository<MediaAccessLog>
     /// <param name="duration">Access duration</param>
     /// <param name="errorMessage">Error message if access failed</param>
     /// <returns>The created access log entry</returns>
-    Task<MediaAccessLog> LogAccessAsync(Guid mediaFileId, Guid? userId, AccessType accessType, string? ipAddress, string? userAgent, string? referrer, string? sessionId, bool success = true, long? bytesTransferred = null, TimeSpan? duration = null, string? errorMessage = null);
+    Task<MediaAccessLog> LogAccessAsync(int mediaFileId, int? userId, AccessType accessType, string? ipAddress, string? userAgent, string? referrer, string? sessionId, bool success = true, long? bytesTransferred = null, TimeSpan? duration = null, string? errorMessage = null);
 
     /// <summary>
     /// Bulk inserts access logs (for batch processing)

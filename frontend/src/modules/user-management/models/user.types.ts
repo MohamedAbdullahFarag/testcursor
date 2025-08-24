@@ -14,6 +14,37 @@ export type {
   ApiResponse,
 } from '../../../shared/types/core-entities';
 
+export interface User {
+  id: string;
+  fullName: string;
+  email: string;
+  roles: string[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CreateUserRequest {
+  fullName: string;
+  email: string;
+  password: string;
+  roles: string[];
+}
+
+export interface UpdateUserRequest {
+  id: string;
+  fullName?: string;
+  email?: string;
+  roles?: string[];
+  isActive?: boolean;
+}
+
+export interface UserListResponse {
+  items: User[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 /**
  * User form validation errors
  */

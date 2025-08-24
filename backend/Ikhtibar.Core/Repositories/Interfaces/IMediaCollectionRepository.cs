@@ -1,4 +1,6 @@
-using Ikhtibar.Core.Entities;
+
+
+using Ikhtibar.Shared.Entities;
 
 namespace Ikhtibar.Core.Repositories.Interfaces;
 
@@ -6,7 +8,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// Repository interface for MediaCollection entity operations
 /// Provides specialized methods for collection and album management
 /// </summary>
-public interface IMediaCollectionRepository : IRepository<MediaCollection>
+public interface IMediaCollectionRepository : IBaseRepository<MediaCollection>
 {
     /// <summary>
     /// Gets collections created by a specific user
@@ -16,7 +18,7 @@ public interface IMediaCollectionRepository : IRepository<MediaCollection>
     /// <param name="offset">Number of records to skip</param>
     /// <param name="limit">Maximum number of records to return</param>
     /// <returns>Collection of user's media collections</returns>
-    Task<IEnumerable<MediaCollection>> GetByUserAsync(Guid userId, bool includePrivate = true, int offset = 0, int limit = 50);
+    Task<IEnumerable<MediaCollection>> GetByUserAsync(int userId, bool includePrivate = true, int offset = 0, int limit = 50);
 
     /// <summary>
     /// Gets collections by type
@@ -88,7 +90,7 @@ public interface IMediaCollectionRepository : IRepository<MediaCollection>
     /// <param name="mediaFileId">Media file identifier</param>
     /// <param name="publicOnly">Whether to return only public collections</param>
     /// <returns>Collection of media collections containing the file</returns>
-    Task<IEnumerable<MediaCollection>> GetContainingMediaFileAsync(Guid mediaFileId, bool publicOnly = true);
+    Task<IEnumerable<MediaCollection>> GetContainingMediaFileAsync(int mediaFileId, bool publicOnly = true);
 
     /// <summary>
     /// Gets collections by tags
@@ -104,14 +106,14 @@ public interface IMediaCollectionRepository : IRepository<MediaCollection>
     /// </summary>
     /// <param name="collectionId">Collection identifier</param>
     /// <returns>Number of media files in the collection</returns>
-    Task<int> GetMediaFileCountAsync(Guid collectionId);
+    Task<int> GetMediaFileCountAsync(int collectionId);
 
     /// <summary>
     /// Gets the total size of all media files in a collection
     /// </summary>
     /// <param name="collectionId">Collection identifier</param>
     /// <returns>Total size in bytes</returns>
-    Task<long> GetTotalSizeAsync(Guid collectionId);
+    Task<long> GetTotalSizeAsync(int collectionId);
 
     /// <summary>
     /// Checks if a slug is available for a new collection
@@ -119,14 +121,14 @@ public interface IMediaCollectionRepository : IRepository<MediaCollection>
     /// <param name="slug">Slug to check</param>
     /// <param name="excludeId">Optional collection ID to exclude from check</param>
     /// <returns>True if the slug is available</returns>
-    Task<bool> IsSlugAvailableAsync(string slug, Guid? excludeId = null);
+    Task<bool> IsSlugAvailableAsync(string slug, int? excludeId = null);
 
     /// <summary>
     /// Updates the view count for a collection
     /// </summary>
     /// <param name="collectionId">Collection identifier</param>
     /// <returns>New view count</returns>
-    Task<int> IncrementViewCountAsync(Guid collectionId);
+    Task<int> IncrementViewCountAsync(int collectionId);
 
     /// <summary>
     /// Adds a media file to a collection
@@ -137,7 +139,7 @@ public interface IMediaCollectionRepository : IRepository<MediaCollection>
     /// <param name="caption">Optional caption for the item</param>
     /// <param name="isFeatured">Whether this item is featured</param>
     /// <returns>True if added successfully</returns>
-    Task<bool> AddMediaFileAsync(Guid collectionId, Guid mediaFileId, int sortOrder = 0, string? caption = null, bool isFeatured = false);
+    Task<bool> AddMediaFileAsync(int collectionId, int mediaFileId, int sortOrder = 0, string? caption = null, bool isFeatured = false);
 
     /// <summary>
     /// Removes a media file from a collection
@@ -145,7 +147,7 @@ public interface IMediaCollectionRepository : IRepository<MediaCollection>
     /// <param name="collectionId">Collection identifier</param>
     /// <param name="mediaFileId">Media file identifier</param>
     /// <returns>True if removed successfully</returns>
-    Task<bool> RemoveMediaFileAsync(Guid collectionId, Guid mediaFileId);
+    Task<bool> RemoveMediaFileAsync(int collectionId, int mediaFileId);
 
     /// <summary>
     /// Updates the sort order of media files in a collection
@@ -153,7 +155,7 @@ public interface IMediaCollectionRepository : IRepository<MediaCollection>
     /// <param name="collectionId">Collection identifier</param>
     /// <param name="mediaFileIds">Ordered list of media file IDs</param>
     /// <returns>Number of items updated</returns>
-    Task<int> UpdateSortOrderAsync(Guid collectionId, IEnumerable<Guid> mediaFileIds);
+    Task<int> UpdateSortOrderAsync(int collectionId, IEnumerable<int> mediaFileIds);
 
     /// <summary>
     /// Gets all collection items for a collection with their details
@@ -162,7 +164,7 @@ public interface IMediaCollectionRepository : IRepository<MediaCollection>
     /// <param name="offset">Number of records to skip</param>
     /// <param name="limit">Maximum number of records to return</param>
     /// <returns>Collection items with media file details</returns>
-    Task<IEnumerable<MediaCollectionItem>> GetCollectionItemsAsync(Guid collectionId, int offset = 0, int limit = 100);
+    Task<IEnumerable<MediaCollectionItem>> GetCollectionItemsAsync(int collectionId, int offset = 0, int limit = 100);
 
     /// <summary>
     /// Gets featured items from a collection
@@ -170,7 +172,7 @@ public interface IMediaCollectionRepository : IRepository<MediaCollection>
     /// <param name="collectionId">Collection identifier</param>
     /// <param name="limit">Maximum number of items to return</param>
     /// <returns>Featured collection items</returns>
-    Task<IEnumerable<MediaCollectionItem>> GetFeaturedItemsAsync(Guid collectionId, int limit = 5);
+    Task<IEnumerable<MediaCollectionItem>> GetFeaturedItemsAsync(int collectionId, int limit = 5);
 
     /// <summary>
     /// Duplicates a collection with all its items
@@ -180,7 +182,7 @@ public interface IMediaCollectionRepository : IRepository<MediaCollection>
     /// <param name="newSlug">Slug for the new collection</param>
     /// <param name="userId">User creating the duplicate</param>
     /// <returns>The new collection</returns>
-    Task<MediaCollection> DuplicateCollectionAsync(Guid collectionId, string newName, string newSlug, Guid userId);
+    Task<MediaCollection> DuplicateCollectionAsync(int collectionId, string newName, string newSlug, int userId);
 
     /// <summary>
     /// Gets collection statistics

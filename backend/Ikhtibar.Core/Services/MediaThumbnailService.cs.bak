@@ -3,19 +3,19 @@ using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Shared.DTOs;
 using Ikhtibar.Shared.Models;
 using Microsoft.Extensions.Logging;
-using CoreThumbnailSize = Ikhtibar.Core.Entities.ThumbnailSize;
+using CoreThumbnailSize = Ikhtibar.Shared.Entities.ThumbnailSize;
 
 namespace Ikhtibar.Core.Services;
 
 public interface IMediaThumbnailService
 {
-    Task<IEnumerable<MediaThumbnailDto>> GetThumbnailsByMediaFileIdAsync(Guid mediaFileId);
-    Task<MediaThumbnailDto?> GetThumbnailByIdAsync(Guid id);
+    Task<IEnumerable<MediaThumbnailDto>> GetThumbnailsByMediaFileIdAsync(int mediaFileId);
+    Task<MediaThumbnailDto?> GetThumbnailByIdAsync(int id);
     Task<MediaThumbnailDto> CreateThumbnailAsync(CreateMediaThumbnailDto createDto);
-    Task<MediaThumbnailDto> UpdateThumbnailAsync(Guid id, CreateMediaThumbnailDto updateDto);
-    Task<bool> DeleteThumbnailAsync(Guid id);
-    Task<bool> DeleteThumbnailsByMediaFileIdAsync(Guid mediaFileId);
-    Task<MediaThumbnailDto?> GetThumbnailBySizeAsync(Guid mediaFileId, Ikhtibar.Shared.Enums.ThumbnailSize size);
+    Task<MediaThumbnailDto> UpdateThumbnailAsync(int id, CreateMediaThumbnailDto updateDto);
+    Task<bool> DeleteThumbnailAsync(int id);
+    Task<bool> DeleteThumbnailsByMediaFileIdAsync(int mediaFileId);
+    Task<MediaThumbnailDto?> GetThumbnailBySizeAsync(int mediaFileId, Ikhtibar.Shared.Enums.ThumbnailSize size);
 }
 
 public class MediaThumbnailService : IMediaThumbnailService
@@ -34,7 +34,7 @@ public class MediaThumbnailService : IMediaThumbnailService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<MediaThumbnailDto>> GetThumbnailsByMediaFileIdAsync(Guid mediaFileId)
+    public async Task<IEnumerable<MediaThumbnailDto>> GetThumbnailsByMediaFileIdAsync(int mediaFileId)
     {
         using var scope = _logger.BeginScope("Getting thumbnails for media file: {MediaFileId}", mediaFileId);
         
@@ -55,7 +55,7 @@ public class MediaThumbnailService : IMediaThumbnailService
         }
     }
 
-    public async Task<MediaThumbnailDto?> GetThumbnailByIdAsync(Guid id)
+    public async Task<MediaThumbnailDto?> GetThumbnailByIdAsync(int id)
     {
         using var scope = _logger.BeginScope("Getting thumbnail by ID: {ThumbnailId}", id);
         
@@ -95,8 +95,8 @@ public class MediaThumbnailService : IMediaThumbnailService
                 throw new InvalidOperationException($"Thumbnail with size '{createDto.Size}' already exists for media file {createDto.MediaFileId}");
             }
 
-            var thumbnail = _mapper.Map<Ikhtibar.Core.Entities.MediaThumbnail>(createDto);
-            thumbnail.Id = Guid.NewGuid();
+            var thumbnail = _mapper.Map<Ikhtibar.Shared.Entities.MediaThumbnail>(createDto);
+            thumbnail.Id = int.Newint();
             thumbnail.CreatedAt = DateTime.UtcNow;
 
             var createdThumbnail = await _repository.AddAsync(thumbnail);
@@ -115,7 +115,7 @@ public class MediaThumbnailService : IMediaThumbnailService
         }
     }
 
-    public async Task<MediaThumbnailDto> UpdateThumbnailAsync(Guid id, CreateMediaThumbnailDto updateDto)
+    public async Task<MediaThumbnailDto> UpdateThumbnailAsync(int id, CreateMediaThumbnailDto updateDto)
     {
         using var scope = _logger.BeginScope("Updating thumbnail: {ThumbnailId}", id);
         
@@ -150,7 +150,7 @@ public class MediaThumbnailService : IMediaThumbnailService
         }
     }
 
-    public async Task<bool> DeleteThumbnailAsync(Guid id)
+    public async Task<bool> DeleteThumbnailAsync(int id)
     {
         using var scope = _logger.BeginScope("Deleting thumbnail: {ThumbnailId}", id);
         
@@ -183,7 +183,7 @@ public class MediaThumbnailService : IMediaThumbnailService
         }
     }
 
-    public async Task<bool> DeleteThumbnailsByMediaFileIdAsync(Guid mediaFileId)
+    public async Task<bool> DeleteThumbnailsByMediaFileIdAsync(int mediaFileId)
     {
         using var scope = _logger.BeginScope("Deleting all thumbnails for media file: {MediaFileId}", mediaFileId);
         
@@ -211,7 +211,7 @@ public class MediaThumbnailService : IMediaThumbnailService
         }
     }
 
-    public async Task<MediaThumbnailDto?> GetThumbnailBySizeAsync(Guid mediaFileId, Ikhtibar.Shared.Enums.ThumbnailSize size)
+    public async Task<MediaThumbnailDto?> GetThumbnailBySizeAsync(int mediaFileId, Ikhtibar.Shared.Enums.ThumbnailSize size)
     {
         using var scope = _logger.BeginScope("Getting thumbnail by size: {Size} for media file: {MediaFileId}", 
             size, mediaFileId);

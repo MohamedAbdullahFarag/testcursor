@@ -461,23 +461,23 @@ cd backend
 dotnet run --project Ikhtibar.API
 
 # Test role management endpoints
-curl -X GET http://localhost:5000/api/roles \
+curl -X GET https://localhost:7001/api/roles \
   -H "Authorization: Bearer admin-jwt-token"
 # Expected: 200 OK with list of roles
 
-curl -X POST http://localhost:5000/api/roles \
+curl -X POST https://localhost:7001/api/roles \
   -H "Authorization: Bearer admin-jwt-token" \
   -H "Content-Type: application/json" \
   -d '{"code": "test-role", "name": "Test Role", "description": "Test Description"}'
 # Expected: 201 Created with role details
 
-curl -X POST http://localhost:5000/api/user-roles/assign \
+curl -X POST https://localhost:7001/api/user-roles/assign \
   -H "Authorization: Bearer admin-jwt-token" \
   -H "Content-Type: application/json" \
   -d '{"userId": 1, "roleId": 2}'
 # Expected: 200 OK with assignment confirmation
 
-curl -X GET http://localhost:5000/api/user-roles/user/1 \
+curl -X GET https://localhost:7001/api/user-roles/user/1 \
   -H "Authorization: Bearer admin-jwt-token"
 # Expected: 200 OK with user's roles
 ```

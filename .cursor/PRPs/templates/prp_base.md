@@ -145,14 +145,14 @@ public class ExampleEntity : BaseEntity
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     // Navigation properties
-    public Guid CategoryId { get; set; }
+    public int CategoryId { get; set; }
     public virtual CategoryEntity Category { get; set; }
 }
 
 // Backend DTO
 public class ExampleDto
 {
-    public Guid Id { get; set; }
+    public int id { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
     public decimal Price { get; set; }
@@ -175,7 +175,7 @@ public class CreateExampleRequest
     public decimal Price { get; set; }
     
     [Required(ErrorMessage = "Category is required")]
-    public Guid CategoryId { get; set; }
+    public int CategoryId { get; set; }
 }
 ```
 
@@ -406,7 +406,7 @@ public class ExampleServiceTests
     public async Task GetByIdAsync_WhenExampleExists_ReturnsExample()
     {
         // Arrange
-        var id = Guid.NewGuid();
+        var id = int.NewGuid();
         var entity = new ExampleEntity { Id = id, Name = "Test" };
         _repositoryMock.Setup(repo => repo.GetByIdAsync(id)).ReturnsAsync(entity);
         
@@ -422,7 +422,7 @@ public class ExampleServiceTests
     public async Task GetByIdAsync_WhenExampleDoesNotExist_ReturnsNull()
     {
         // Arrange
-        var id = Guid.NewGuid();
+        var id = int.NewGuid();
         _repositoryMock.Setup(repo => repo.GetByIdAsync(id)).ReturnsAsync((ExampleEntity)null);
         
         // Act
@@ -502,7 +502,7 @@ cd frontend
 npm run cypress:run -- --spec "cypress/integration/example/**/*.spec.js"
 
 # Manual API Testing
-curl -X GET http://localhost:5000/api/examples \
+curl -X GET https://localhost:7001/api/examples \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 

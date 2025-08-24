@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
 using Ikhtibar.Core.Services.Interfaces;
 using Ikhtibar.Core.Repositories.Interfaces;
 using Ikhtibar.Shared.Models;
+using Ikhtibar.Shared.DTOs;
 using Microsoft.AspNetCore.Builder;
 using System.Linq;
 
@@ -20,18 +22,15 @@ public class RefreshTokenMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<RefreshTokenMiddleware> _logger;
-    private readonly IAuthenticationService _authenticationService;
     private readonly AuthSettings _authSettings;
 
     public RefreshTokenMiddleware(
         RequestDelegate next,
         ILogger<RefreshTokenMiddleware> logger,
-        IAuthenticationService authenticationService,
         IOptions<AuthSettings> authSettings)
     {
         _next = next ?? throw new ArgumentNullException(nameof(next));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
         _authSettings = authSettings?.Value ?? throw new ArgumentNullException(nameof(authSettings));
     }
 
@@ -77,9 +76,12 @@ public class RefreshTokenMiddleware
                 return;
             }
 
+            // Resolve IAuthenticationService from request services
+            var authenticationService = context.RequestServices.GetRequiredService<IAuthenticationService>();
+
             // Attempt to refresh the token
-            var authResult = await _authenticationService.RefreshTokenAsync(refreshToken);
-            if (authResult == null)
+            var authResult = await authenticationService.RefreshTokenAsync(refreshToken);
+            if (authResult == null || !authResult.Success)
             {
                 _logger.LogWarning("Token refresh failed for request: {Path}", context.Request.Path);
                 await ReturnUnauthorizedResponse(context, "Token refresh failed");
@@ -88,13 +90,13 @@ public class RefreshTokenMiddleware
 
             // Set new tokens in response headers
             context.Response.Headers["New-Access-Token"] = authResult.AccessToken;
-            context.Response.Headers["New-Refresh-Token"] = authResult.RefreshToken;
-            context.Response.Headers["Token-Expires-At"] = authResult.ExpiresAt.ToString("O");
+            context.Response.Headers["New-Refresh-Token"] = authResult.RefreshTokens;
+            context.Response.Headers["Token-Expires-At"] = authResult.ExpiresAt?.ToString("O");
 
             // Set new refresh token in cookie if using cookie-based storage
             if (_authSettings.UseHttpOnlyCookies)
             {
-                SetRefreshTokenCookie(context, authResult.RefreshToken);
+                SetRefreshTokenCookie(context, authResult.RefreshTokens);
             }
 
             _logger.LogInformation("Token refreshed successfully for request: {Path}", context.Request.Path);

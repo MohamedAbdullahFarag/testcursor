@@ -257,7 +257,7 @@ public class NotificationPreferenceService : INotificationPreferenceService
         // This is a design inconsistency that should be addressed in future refactoring
         var summary = new PreferenceSummary
         {
-            UserId = Guid.Empty, // Not applicable for system-wide stats
+            UserId = int.Empty, // Not applicable for system-wide stats
             TotalNotificationTypes = stats.PreferencesByType.Count,
             EnabledNotificationTypes = stats.PreferencesByType.Count, // All types that have preferences
             DisabledNotificationTypes = 0,

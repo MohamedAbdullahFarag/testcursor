@@ -1,4 +1,5 @@
-using Ikhtibar.Core.Entities;
+
+using Ikhtibar.Shared.Entities;
 using Ikhtibar.Shared.Enums;
 
 namespace Ikhtibar.Core.Repositories.Interfaces;
@@ -7,7 +8,7 @@ namespace Ikhtibar.Core.Repositories.Interfaces;
 /// Repository interface for MediaThumbnail entity operations
 /// Provides specialized methods for thumbnail management and optimization
 /// </summary>
-public interface IMediaThumbnailRepository : IRepository<MediaThumbnail>
+public interface IMediaThumbnailRepository : IBaseRepository<MediaThumbnail>
 {
     /// <summary>
     /// Gets all thumbnails for a specific media file
@@ -108,7 +109,7 @@ public interface IMediaThumbnailRepository : IRepository<MediaThumbnail>
     /// </summary>
     /// <param name="thumbnailId">Thumbnail identifier</param>
     /// <returns>True if set successfully</returns>
-    Task<bool> SetAsDefaultAsync(Guid thumbnailId);
+    Task<bool> SetAsDefaultAsync(int thumbnailId);
 
     /// <summary>
     /// Updates thumbnail status and error information
@@ -118,7 +119,7 @@ public interface IMediaThumbnailRepository : IRepository<MediaThumbnail>
     /// <param name="errorMessage">Optional error message</param>
     /// <param name="generationTimeMs">Optional generation time</param>
     /// <returns>True if updated successfully</returns>
-    Task<bool> UpdateStatusAsync(Guid thumbnailId, ThumbnailStatus status, string? errorMessage = null, int? generationTimeMs = null);
+    Task<bool> UpdateStatusAsync(int thumbnailId, ThumbnailStatus status, string? errorMessage = null, int? generationTimeMs = null);
 
     /// <summary>
     /// Bulk updates thumbnail status
@@ -126,7 +127,7 @@ public interface IMediaThumbnailRepository : IRepository<MediaThumbnail>
     /// <param name="thumbnailIds">Collection of thumbnail identifiers</param>
     /// <param name="status">New status</param>
     /// <returns>Number of thumbnails updated</returns>
-    Task<int> BulkUpdateStatusAsync(IEnumerable<Guid> thumbnailIds, ThumbnailStatus status);
+    Task<int> BulkUpdateStatusAsync(IEnumerable<int> thumbnailIds, ThumbnailStatus status);
 
     /// <summary>
     /// Deletes all thumbnails for a specific media file

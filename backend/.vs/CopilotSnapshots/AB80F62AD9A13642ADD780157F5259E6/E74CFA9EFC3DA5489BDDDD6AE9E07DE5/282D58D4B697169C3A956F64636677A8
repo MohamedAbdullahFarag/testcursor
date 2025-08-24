@@ -1,0 +1,787 @@
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Ikhtibar.Core.Services.Implementations;
+using Ikhtibar.Core.Services.Interfaces;
+using Ikhtibar.Core.Repositories.Interfaces;
+using Ikhtibar.Shared.DTOs;
+using Ikhtibar.Shared.Entities;
+using Ikhtibar.Shared.Models;
+
+namespace Ikhtibar.Tests.Core.Services;
+
+/// <summary>
+/// Comprehensive test suite for TreeNodeService business logic.
+/// Tests all CRUD operations, tree operations, validation rules, and error scenarios.
+/// Uses AAA pattern (Arrange, Act, Assert) with descriptive test names.
+/// Includes integration with mocked dependencies and database.
+/// </summary>
+
+public class TreeNodeServiceTests
+{
+    private Mock<ITreeNodeRepository> _mockTreeNodeRepository;
+    private Mock<ITreeNodeTypeRepository> _mockTreeNodeTypeRepository;
+    private Mock<IMapper> _mockMapper;
+    private Mock<ILogger<TreeNodeService>> _mockLogger;
+    private TreeNodeService _treeNodeService;
+
+    
+    public void Setup()
+    {
+        _mockTreeNodeRepository = new Mock<ITreeNodeRepository>();
+        _mockTreeNodeTypeRepository = new Mock<ITreeNodeTypeRepository>();
+        _mockMapper = new Mock<IMapper>();
+        _mockLogger = new Mock<ILogger<TreeNodeService>>();
+
+        _treeNodeService = new TreeNodeService(
+            _mockTreeNodeRepository.Object,
+            _mockTreeNodeTypeRepository.Object,
+            _mockMapper.Object,
+            _mockLogger.Object
+        );
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ShouldReturnAllTreeNodes_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var entities = new List<TreeNode>
+        {
+            new TreeNode { TreeNodeId = 1, Name = "Root 1", Code = "R1" },
+            new TreeNode { TreeNodeId = 2, Name = "Root 2", Code = "R2" }
+        };
+
+        var dtos = new List<TreeNodeDto>
+        {
+            new TreeNodeDto { TreeNodeId = 1, Name = "Root 1", Code = "R1" },
+            new TreeNodeDto { TreeNodeId = 2, Name = "Root 2", Code = "R2" }
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(entities);
+        _mockMapper.Setup(m => m.Map<IEnumerable<TreeNodeDto>>(entities)).Returns(dtos);
+
+        // Act
+        var result = await _treeNodeService.GetAllAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
+        _mockTreeNodeRepository.Verify(r => r.GetAllAsync(), Times.Once);
+        _mockMapper.Verify(m => m.Map<IEnumerable<TreeNodeDto>>(entities), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetRootNodesAsync_ShouldReturnRootNodes_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var entities = new List<TreeNode>
+        {
+            new TreeNode { TreeNodeId = 1, Name = "Root 1", Code = "R1", ParentId = null },
+            new TreeNode { TreeNodeId = 2, Name = "Root 2", Code = "R2", ParentId = null }
+        };
+
+        var dtos = new List<TreeNodeDto>
+        {
+            new TreeNodeDto { TreeNodeId = 1, Name = "Root 1", Code = "R1" },
+            new TreeNodeDto { TreeNodeId = 2, Name = "Root 2", Code = "R2" }
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetRootNodesAsync()).ReturnsAsync(entities);
+        _mockMapper.Setup(m => m.Map<IEnumerable<TreeNodeDto>>(entities)).Returns(dtos);
+
+        // Act
+        var result = await _treeNodeService.GetRootNodesAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
+        _mockTreeNodeRepository.Verify(r => r.GetRootNodesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetChildrenAsync_ShouldReturnChildren_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var parentId = 1;
+        var entities = new List<TreeNode>
+        {
+            new TreeNode { TreeNodeId = 2, Name = "Child 1", Code = "C1", ParentId = parentId },
+            new TreeNode { TreeNodeId = 3, Name = "Child 2", Code = "C2", ParentId = parentId }
+        };
+
+        var dtos = new List<TreeNodeDto>
+        {
+            new TreeNodeDto { TreeNodeId = 2, Name = "Child 1", Code = "C1" },
+            new TreeNodeDto { TreeNodeId = 3, Name = "Child 2", Code = "C2" }
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetChildrenAsync(parentId)).ReturnsAsync(entities);
+        _mockMapper.Setup(m => m.Map<IEnumerable<TreeNodeDto>>(entities)).Returns(dtos);
+
+        // Act
+        var result = await _treeNodeService.GetChildrenAsync(parentId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
+        _mockTreeNodeRepository.Verify(r => r.GetChildrenAsync(parentId), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetTreeNodeAsync_ShouldReturnTreeNodeDetail_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var treeNodeId = 1;
+        var entity = new TreeNode 
+        { 
+            TreeNodeId = treeNodeId, 
+            Name = "Test Node", 
+            Code = "TN1",
+            TreeNodeTypeId = 1
+        };
+
+        var dto = new TreeNodeDetailDto 
+        { 
+            TreeNodeId = treeNodeId, 
+            Name = "Test Node", 
+            Code = "TN1",
+            TreeNodeTypeId = 1
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetByIdAsync(treeNodeId)).ReturnsAsync(entity);
+        _mockMapper.Setup(m => m.Map<TreeNodeDetailDto>(entity)).Returns(dto);
+        _mockTreeNodeRepository.Setup(r => r.GetChildrenAsync(treeNodeId)).ReturnsAsync(new List<TreeNode>());
+
+        // Act
+        var result = await _treeNodeService.GetTreeNodeAsync(treeNodeId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(treeNodeId, result.TreeNodeId);
+        _mockTreeNodeRepository.Verify(r => r.GetByIdAsync(treeNodeId), Times.Once);
+        _mockMapper.Verify(m => m.Map<TreeNodeDetailDto>(entity), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetTreeNodeAsync_ShouldReturnNull_WhenRepositoryReturnsNull()
+    {
+        // Arrange
+        var treeNodeId = 999;
+        _mockTreeNodeRepository.Setup(r => r.GetByIdAsync(treeNodeId)).ReturnsAsync((TreeNode)null);
+
+        // Act
+        var result = await _treeNodeService.GetTreeNodeAsync(treeNodeId);
+
+        // Assert
+        Assert.That(result, Is.Null);
+        _mockTreeNodeRepository.Verify(r => r.GetByIdAsync(treeNodeId), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetTreeNodeByCodeAsync_ShouldReturnTreeNode_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var code = "TN1";
+        var entity = new TreeNode 
+        { 
+            TreeNodeId = 1, 
+            Name = "Test Node", 
+            Code = code 
+        };
+
+        var dto = new TreeNodeDto 
+        { 
+            TreeNodeId = 1, 
+            Name = "Test Node", 
+            Code = code 
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetByCodeAsync(code)).ReturnsAsync(entity);
+        _mockMapper.Setup(m => m.Map<TreeNodeDto>(entity)).Returns(dto);
+
+        // Act
+        var result = await _treeNodeService.GetTreeNodeByCodeAsync(code);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(code, result.Code);
+        _mockTreeNodeRepository.Verify(r => r.GetByCodeAsync(code), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetTreeStructureAsync_ShouldReturnTreeStructure_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var rootId = 1;
+        var levels = 2;
+        var entity = new TreeNode 
+        { 
+            TreeNodeId = rootId, 
+            Name = "Root", 
+            Code = "R1" 
+        };
+
+        var dto = new TreeNodeDetailDto 
+        { 
+            TreeNodeId = rootId, 
+            Name = "Root", 
+            Code = "R1" 
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetByIdAsync(rootId)).ReturnsAsync(entity);
+        _mockMapper.Setup(m => m.Map<TreeNodeDetailDto>(entity)).Returns(dto);
+        _mockTreeNodeRepository.Setup(r => r.GetChildrenAsync(rootId)).ReturnsAsync(new List<TreeNode>());
+
+        // Act
+        var result = await _treeNodeService.GetTreeStructureAsync(rootId, levels);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(rootId, result.TreeNodeId);
+        _mockTreeNodeRepository.Verify(r => r.GetByIdAsync(rootId), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetAncestorsAsync_ShouldReturnAncestors_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var nodeId = 3;
+        var entities = new List<TreeNode>
+        {
+            new TreeNode { TreeNodeId = 1, Name = "Ancestor 1", Code = "A1" },
+            new TreeNode { TreeNodeId = 2, Name = "Ancestor 2", Code = "A2" }
+        };
+
+        var dtos = new List<TreeNodeDto>
+        {
+            new TreeNodeDto { TreeNodeId = 1, Name = "Ancestor 1", Code = "A1" },
+            new TreeNodeDto { TreeNodeId = 2, Name = "Ancestor 2", Code = "A2" }
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetAncestorsAsync(nodeId)).ReturnsAsync(entities);
+        _mockMapper.Setup(m => m.Map<IEnumerable<TreeNodeDto>>(entities)).Returns(dtos);
+
+        // Act
+        var result = await _treeNodeService.GetAncestorsAsync(nodeId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
+        _mockTreeNodeRepository.Verify(r => r.GetAncestorsAsync(nodeId), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetDescendantsAsync_ShouldReturnDescendants_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var nodeId = 1;
+        var entities = new List<TreeNode>
+        {
+            new TreeNode { TreeNodeId = 2, Name = "Descendant 1", Code = "D1" },
+            new TreeNode { TreeNodeId = 3, Name = "Descendant 2", Code = "D2" }
+        };
+
+        var dtos = new List<TreeNodeDto>
+        {
+            new TreeNodeDto { TreeNodeId = 2, Name = "Descendant 1", Code = "D1" },
+            new TreeNodeDto { TreeNodeId = 3, Name = "Descendant 2", Code = "D2" }
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetDescendantsAsync(nodeId)).ReturnsAsync(entities);
+        _mockMapper.Setup(m => m.Map<IEnumerable<TreeNodeDto>>(entities)).Returns(dtos);
+
+        // Act
+        var result = await _treeNodeService.GetDescendantsAsync(nodeId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
+        _mockTreeNodeRepository.Verify(r => r.GetDescendantsAsync(nodeId), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateTreeNodeAsync_ShouldCreateTreeNode_WhenValidDataProvided()
+    {
+        // Arrange
+        var createDto = new CreateTreeNodeDto
+        {
+            Name = "New Node",
+            Code = "NN1",
+            TreeNodeTypeId = 1,
+            ParentId = null,
+            OrderIndex = 1,
+            IsActive = true
+        };
+
+        var entity = new TreeNode
+        {
+            TreeNodeId = 1,
+            Name = "New Node",
+            Code = "NN1",
+            TreeNodeTypeId = 1,
+            ParentId = null,
+            OrderIndex = 1,
+            IsActive = true,
+            Path = "-"
+        };
+
+        var dto = new TreeNodeDto
+        {
+            TreeNodeId = 1,
+            Name = "New Node",
+            Code = "NN1",
+            TreeNodeTypeId = 1,
+            ParentId = null,
+            OrderIndex = 1,
+            IsActive = true,
+            Path = "-"
+        };
+
+        var nodeType = new TreeNodeType { TreeNodeTypeId = 1, Name = "Category" };
+
+        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(nodeType);
+        _mockTreeNodeRepository.Setup(r => r.GetByCodeAsync("NN1")).ReturnsAsync((TreeNode)null);
+        _mockTreeNodeRepository.Setup(r => r.GetMaxOrderIndexAsync(null)).ReturnsAsync(0);
+        _mockMapper.Setup(m => m.Map<TreeNode>(createDto)).Returns(entity);
+        _mockTreeNodeRepository.Setup(r => r.CreateAsync(entity)).ReturnsAsync(entity);
+        _mockMapper.Setup(m => m.Map<TreeNodeDto>(entity)).Returns(dto);
+
+        // Act
+        var result = await _treeNodeService.CreateTreeNodeAsync(createDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("New Node", result.Name);
+        Assert.Equal("NN1", result.Code);
+        _mockTreeNodeTypeRepository.Verify(r => r.GetByIdAsync(1), Times.Once);
+        _mockTreeNodeRepository.Verify(r => r.GetByCodeAsync("NN1"), Times.Once);
+        _mockTreeNodeRepository.Verify(r => r.CreateAsync(entity), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateTreeNodeAsync_ShouldThrowException_WhenTreeNodeTypeNotFound()
+    {
+        // Arrange
+        var createDto = new CreateTreeNodeDto
+        {
+            Name = "New Node",
+            Code = "NN1",
+            TreeNodeTypeId = 999,
+            ParentId = null,
+            OrderIndex = 1,
+            IsActive = true
+        };
+
+        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((TreeNodeType)null);
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<KeyNotFoundException>(() => 
+            _treeNodeService.CreateTreeNodeAsync(createDto));
+        Assert.That(ex.Message, Contains.Substring("Tree node type with ID 999 not found"));
+    }
+
+    [Fact]
+    public async Task CreateTreeNodeAsync_ShouldThrowException_WhenCodeAlreadyExists()
+    {
+        // Arrange
+        var createDto = new CreateTreeNodeDto
+        {
+            Name = "New Node",
+            Code = "EXISTING",
+            TreeNodeTypeId = 1,
+            ParentId = null,
+            OrderIndex = 1,
+            IsActive = true
+        };
+
+        var existingNode = new TreeNode { TreeNodeId = 1, Code = "EXISTING" };
+        var nodeType = new TreeNodeType { TreeNodeTypeId = 1, Name = "Category" };
+
+        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(nodeType);
+        _mockTreeNodeRepository.Setup(r => r.GetByCodeAsync("EXISTING")).ReturnsAsync(existingNode);
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => 
+            _treeNodeService.CreateTreeNodeAsync(createDto));
+        Assert.That(ex.Message, Contains.Substring("Tree node with code 'EXISTING' already exists"));
+    }
+
+    [Fact]
+    public async Task UpdateTreeNodeAsync_ShouldUpdateTreeNode_WhenValidDataProvided()
+    {
+        // Arrange
+        var treeNodeId = 1;
+        var updateDto = new UpdateTreeNodeDto
+        {
+            Name = "Updated Node",
+            Code = "UN1",
+            TreeNodeTypeId = 1,
+            OrderIndex = 2,
+            IsActive = true
+        };
+
+        var existingEntity = new TreeNode
+        {
+            TreeNodeId = treeNodeId,
+            Name = "Old Node",
+            Code = "ON1",
+            TreeNodeTypeId = 1,
+            OrderIndex = 1,
+            IsActive = true
+        };
+
+        var updatedEntity = new TreeNode
+        {
+            TreeNodeId = treeNodeId,
+            Name = "Updated Node",
+            Code = "UN1",
+            TreeNodeTypeId = 1,
+            OrderIndex = 2,
+            IsActive = true
+        };
+
+        var dto = new TreeNodeDto
+        {
+            TreeNodeId = treeNodeId,
+            Name = "Updated Node",
+            Code = "UN1",
+            TreeNodeTypeId = 1,
+            OrderIndex = 2,
+            IsActive = true
+        };
+
+        var nodeType = new TreeNodeType { TreeNodeTypeId = 1, Name = "Category" };
+
+        _mockTreeNodeRepository.Setup(r => r.GetByIdAsync(treeNodeId)).ReturnsAsync(existingEntity);
+        _mockTreeNodeTypeRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(nodeType);
+        _mockTreeNodeRepository.Setup(r => r.GetByCodeAsync("UN1")).ReturnsAsync((TreeNode)null);
+        _mockMapper.Setup(m => m.Map(updateDto, existingEntity)).Returns(updatedEntity);
+        _mockTreeNodeRepository.Setup(r => r.UpdateAsync(updatedEntity)).ReturnsAsync(updatedEntity);
+        _mockMapper.Setup(m => m.Map<TreeNodeDto>(updatedEntity)).Returns(dto);
+
+        // Act
+        var result = await _treeNodeService.UpdateTreeNodeAsync(treeNodeId, updateDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Updated Node", result.Name);
+        Assert.Equal("UN1", result.Code);
+        _mockTreeNodeRepository.Verify(r => r.GetByIdAsync(treeNodeId), Times.Once);
+        _mockTreeNodeRepository.Verify(r => r.UpdateAsync(updatedEntity), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateTreeNodeAsync_ShouldThrowException_WhenTreeNodeNotFound()
+    {
+        // Arrange
+        var treeNodeId = 999;
+        var updateDto = new UpdateTreeNodeDto
+        {
+            Name = "Updated Node",
+            Code = "UN1",
+            TreeNodeTypeId = 1,
+            OrderIndex = 2,
+            IsActive = true
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetByIdAsync(treeNodeId)).ReturnsAsync((TreeNode)null);
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<KeyNotFoundException>(() => 
+            _treeNodeService.UpdateTreeNodeAsync(treeNodeId, updateDto));
+        Assert.That(ex.Message, Contains.Substring("Tree node with ID 999 not found"));
+    }
+
+    [Fact]
+    public async Task MoveTreeNodeAsync_ShouldMoveTreeNode_WhenValidDataProvided()
+    {
+        // Arrange
+        var treeNodeId = 2;
+        var moveDto = new MoveTreeNodeDto
+        {
+            NewParentId = 3,
+            NewOrderIndex = 1
+        };
+
+        var node = new TreeNode
+        {
+            TreeNodeId = treeNodeId,
+            Name = "Node to Move",
+            Code = "NTM",
+            ParentId = 1,
+            Path = "-1-"
+        };
+
+        var newParent = new TreeNode
+        {
+            TreeNodeId = 3,
+            Name = "New Parent",
+            Code = "NP",
+            Path = "-3-"
+        };
+
+        var updatedNode = new TreeNode
+        {
+            TreeNodeId = treeNodeId,
+            Name = "Node to Move",
+            Code = "NTM",
+            ParentId = 3,
+            Path = "-3-3-"
+        };
+
+        var dto = new TreeNodeDto
+        {
+            TreeNodeId = treeNodeId,
+            Name = "Node to Move",
+            Code = "NTM",
+            ParentId = 3,
+            Path = "-3-3-"
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetByIdAsync(treeNodeId)).ReturnsAsync(node);
+        _mockTreeNodeRepository.Setup(r => r.GetByIdAsync(3)).ReturnsAsync(newParent);
+        _mockTreeNodeRepository.Setup(r => r.GetMaxOrderIndexAsync(3)).ReturnsAsync(0);
+        _mockTreeNodeRepository.Setup(r => r.UpdateAsync(It.IsAny<TreeNode>())).ReturnsAsync(updatedNode);
+        _mockTreeNodeRepository.Setup(r => r.UpdatePathsAsync("-1-", "-3-3-")).ReturnsAsync(true);
+        _mockMapper.Setup(m => m.Map<TreeNodeDto>(updatedNode)).Returns(dto);
+
+        // Act
+        var result = await _treeNodeService.MoveTreeNodeAsync(treeNodeId, moveDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(3, result.ParentId);
+        _mockTreeNodeRepository.Verify(r => r.GetByIdAsync(treeNodeId), Times.Once);
+        _mockTreeNodeRepository.Verify(r => r.GetByIdAsync(3), Times.Once);
+        _mockTreeNodeRepository.Verify(r => r.UpdateAsync(It.IsAny<TreeNode>()), Times.Once);
+        _mockTreeNodeRepository.Verify(r => r.UpdatePathsAsync("-1-", "-3-3-"), Times.Once);
+    }
+
+    [Fact]
+    public async Task MoveTreeNodeAsync_ShouldThrowException_WhenCreatingCircularReference()
+    {
+        // Arrange
+        var treeNodeId = 2;
+        var moveDto = new MoveTreeNodeDto
+        {
+            NewParentId = 4,
+            NewOrderIndex = 1
+        };
+
+        var node = new TreeNode
+        {
+            TreeNodeId = treeNodeId,
+            Name = "Node to Move",
+            Code = "NTM",
+            Path = "-1-2-"
+        };
+
+        var newParent = new TreeNode
+        {
+            TreeNodeId = 4,
+            Name = "New Parent",
+            Code = "NP",
+            Path = "-1-2-4-"
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetByIdAsync(treeNodeId)).ReturnsAsync(node);
+        _mockTreeNodeRepository.Setup(r => r.GetByIdAsync(4)).ReturnsAsync(newParent);
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => 
+            _treeNodeService.MoveTreeNodeAsync(treeNodeId, moveDto));
+        Assert.That(ex.Message, Contains.Substring("Cannot move a node to one of its descendants"));
+    }
+
+    [Fact]
+    public async Task ReorderNodesAsync_ShouldReorderNodes_WhenValidDataProvided()
+    {
+        // Arrange
+        var parentId = 1;
+        var nodeOrders = new Dictionary<int, int>
+        {
+            { 2, 1 },
+            { 3, 2 }
+        };
+
+        var children = new List<TreeNode>
+        {
+            new TreeNode { TreeNodeId = 2, ParentId = parentId },
+            new TreeNode { TreeNodeId = 3, ParentId = parentId }
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetByIdAsync(parentId)).ReturnsAsync(new TreeNode { TreeNodeId = parentId });
+        _mockTreeNodeRepository.Setup(r => r.GetChildrenAsync(parentId)).ReturnsAsync(children);
+        _mockTreeNodeRepository.Setup(r => r.ReorderNodesAsync(parentId, nodeOrders)).ReturnsAsync(true);
+
+        // Act
+        var result = await _treeNodeService.ReorderNodesAsync(parentId, nodeOrders);
+
+        // Assert
+        Assert.That(result, Is.True);
+        _mockTreeNodeRepository.Verify(r => r.GetByIdAsync(parentId), Times.Once);
+        _mockTreeNodeRepository.Verify(r => r.GetChildrenAsync(parentId), Times.Once);
+        _mockTreeNodeRepository.Verify(r => r.ReorderNodesAsync(parentId, nodeOrders), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteTreeNodeAsync_ShouldDeleteTreeNode_WhenNoChildrenExist()
+    {
+        // Arrange
+        var treeNodeId = 1;
+        var node = new TreeNode
+        {
+            TreeNodeId = treeNodeId,
+            Name = "Node to Delete",
+            Code = "NTD"
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetByIdAsync(treeNodeId)).ReturnsAsync(node);
+        _mockTreeNodeRepository.Setup(r => r.GetChildrenAsync(treeNodeId)).ReturnsAsync(new List<TreeNode>());
+        _mockTreeNodeRepository.Setup(r => r.DeleteAsync(treeNodeId)).ReturnsAsync(true);
+
+        // Act
+        var result = await _treeNodeService.DeleteTreeNodeAsync(treeNodeId);
+
+        // Assert
+        Assert.That(result, Is.True);
+        _mockTreeNodeRepository.Verify(r => r.GetByIdAsync(treeNodeId), Times.Once);
+        _mockTreeNodeRepository.Verify(r => r.GetChildrenAsync(treeNodeId), Times.Once);
+        _mockTreeNodeRepository.Verify(r => r.DeleteAsync(treeNodeId), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteTreeNodeAsync_ShouldThrowException_WhenNodeHasChildren()
+    {
+        // Arrange
+        var treeNodeId = 1;
+        var node = new TreeNode
+        {
+            TreeNodeId = treeNodeId,
+            Name = "Node to Delete",
+            Code = "NTD"
+        };
+
+        var children = new List<TreeNode>
+        {
+            new TreeNode { TreeNodeId = 2, Name = "Child", Code = "CH" }
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetByIdAsync(treeNodeId)).ReturnsAsync(node);
+        _mockTreeNodeRepository.Setup(r => r.GetChildrenAsync(treeNodeId)).ReturnsAsync(children);
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => 
+            _treeNodeService.DeleteTreeNodeAsync(treeNodeId));
+        Assert.That(ex.Message, Contains.Substring("Cannot delete a node with children"));
+    }
+
+    [Fact]
+    public async Task ExistsAsync_ShouldReturnTrue_WhenTreeNodeExists()
+    {
+        // Arrange
+        var treeNodeId = 1;
+        _mockTreeNodeRepository.Setup(r => r.ExistsAsync(treeNodeId)).ReturnsAsync(true);
+
+        // Act
+        var result = await _treeNodeService.ExistsAsync(treeNodeId);
+
+        // Assert
+        Assert.That(result, Is.True);
+        _mockTreeNodeRepository.Verify(r => r.ExistsAsync(treeNodeId), Times.Once);
+    }
+
+    [Fact]
+    public async Task HasChildrenAsync_ShouldReturnTrue_WhenTreeNodeHasChildren()
+    {
+        // Arrange
+        var treeNodeId = 1;
+        _mockTreeNodeRepository.Setup(r => r.HasChildrenAsync(treeNodeId)).ReturnsAsync(true);
+
+        // Act
+        var result = await _treeNodeService.HasChildrenAsync(treeNodeId);
+
+        // Assert
+        Assert.That(result, Is.True);
+        _mockTreeNodeRepository.Verify(r => r.HasChildrenAsync(treeNodeId), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetStatisticsAsync_ShouldReturnStatistics_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var nodeId = 1;
+        var repoStatistics = new TreeNodeStatistics
+        {
+            DirectChildrenCount = 3,
+            TotalDescendantsCount = 10,
+            MaxDepth = 2,
+            Level = 1,
+            TotalQuestionsCount = 25
+        };
+
+        var dtoStatistics = new TreeNodeStatistics
+        {
+            DirectChildrenCount = 3,
+            TotalDescendantsCount = 10,
+            MaxDepth = 2,
+            Level = 1,
+            TotalQuestionsCount = 25
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetStatisticsAsync(nodeId)).ReturnsAsync(repoStatistics);
+        _mockMapper.Setup(m => m.Map<TreeNodeStatistics>(repoStatistics)).Returns(dtoStatistics);
+
+        // Act
+        var result = await _treeNodeService.GetStatisticsAsync(nodeId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(3, result.DirectChildrenCount);
+        Assert.Equal(10, result.TotalDescendantsCount);
+        _mockTreeNodeRepository.Verify(r => r.GetStatisticsAsync(nodeId), Times.Once);
+        _mockMapper.Verify(m => m.Map<TreeNodeStatistics>(repoStatistics), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetCompleteTreeAsync_ShouldReturnCompleteTree_WhenRepositoryReturnsData()
+    {
+        // Arrange
+        var rootNodes = new List<TreeNode>
+        {
+            new TreeNode { TreeNodeId = 1, Name = "Root 1", Code = "R1" },
+            new TreeNode { TreeNodeId = 2, Name = "Root 2", Code = "R2" }
+        };
+
+        var rootDtos = new List<TreeNodeDetailDto>
+        {
+            new TreeNodeDetailDto { TreeNodeId = 1, Name = "Root 1", Code = "R1" },
+            new TreeNodeDetailDto { TreeNodeId = 2, Name = "Root 2", Code = "R2" }
+        };
+
+        var treeStructure = new TreeStructureDto
+        {
+            Roots = rootDtos,
+            TotalNodesCount = 10,
+            MaxDepth = 3
+        };
+
+        _mockTreeNodeRepository.Setup(r => r.GetRootNodesAsync()).ReturnsAsync(rootNodes);
+        _mockMapper.Setup(m => m.Map<IEnumerable<TreeNodeDetailDto>>(rootNodes)).Returns(rootDtos);
+        _mockTreeNodeRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(rootNodes);
+
+        // Act
+        var result = await _treeNodeService.GetCompleteTreeAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Roots.Count());
+        _mockTreeNodeRepository.Verify(r => r.GetRootNodesAsync(), Times.Once);
+        _mockMapper.Verify(m => m.Map<IEnumerable<TreeNodeDetailDto>>(rootNodes), Times.Once);
+    }
+}

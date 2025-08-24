@@ -19,7 +19,7 @@ public interface INotificationJobService
     /// <param name="scheduleTime">When to deliver the notification</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Job ID for tracking</returns>
-    Task<string> ScheduleNotificationAsync(Guid notificationId, DateTime scheduleTime, CancellationToken cancellationToken = default);
+    Task<string> ScheduleNotificationAsync(int notificationId, DateTime scheduleTime, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Schedules a recurring notification
@@ -29,7 +29,7 @@ public interface INotificationJobService
     /// <param name="endTime">Optional end time for recurring notifications</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Job ID for tracking</returns>
-    Task<string> ScheduleRecurringNotificationAsync(Guid notificationId, string cronExpression, DateTime? endTime = null, CancellationToken cancellationToken = default);
+    Task<string> ScheduleRecurringNotificationAsync(int notificationId, string cronExpression, DateTime? endTime = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Cancels a scheduled notification job
@@ -62,7 +62,7 @@ public interface INotificationJobService
     /// <param name="notificationId">Notification ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of scheduled jobs</returns>
-    Task<List<ScheduledJobDto>> GetScheduledJobsForNotificationAsync(Guid notificationId, CancellationToken cancellationToken = default);
+    Task<List<ScheduledJobDto>> GetScheduledJobsForNotificationAsync(int notificationId, CancellationToken cancellationToken = default);
     
     /// <summary>
     /// Gets all scheduled jobs for a user

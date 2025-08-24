@@ -69,8 +69,8 @@ public enum ExamPublishState
 // Define the workflow entity
 public class ExamPublishWorkflow
 {
-    public Guid Id { get; set; }
-    public Guid ExamId { get; set; }
+    public int id { get; set; }
+    public int ExamId { get; set; }
     public ExamPublishState CurrentState { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -86,8 +86,8 @@ public class ExamPublishWorkflow
 // Define the transition entity for audit trail
 public class ExamPublishTransition
 {
-    public Guid Id { get; set; }
-    public Guid WorkflowId { get; set; }
+    public int id { get; set; }
+    public int WorkflowId { get; set; }
     public ExamPublishState FromState { get; set; }
     public ExamPublishState ToState { get; set; }
     public string TransitionedBy { get; set; }
@@ -102,14 +102,14 @@ public class ExamPublishTransition
 // Service interface
 public interface IExamPublishService
 {
-    Task<ExamPublishWorkflowDto> GetExamPublishWorkflowAsync(Guid examId);
-    Task<ExamPublishWorkflowDto> CreateWorkflowAsync(Guid examId, ExamPublishConfigDto configDto);
-    Task<ExamPublishWorkflowDto> TransitionStateAsync(Guid examId, ExamPublishTransitionDto transitionDto);
-    Task<ExamPublishWorkflowDto> AssignStudentsAsync(Guid examId, List<Guid> studentIds);
-    Task<ExamPublishWorkflowDto> UpdateScheduleAsync(Guid examId, ExamScheduleDto scheduleDto);
-    Task<List<ActiveExamSessionDto>> GetActiveSessionsAsync(Guid examId);
-    Task<bool> TerminateExamAsync(Guid examId, ExamTerminationDto terminationDto);
-    Task<IEnumerable<ExamPublishTransitionDto>> GetWorkflowHistoryAsync(Guid examId);
+    Task<ExamPublishWorkflowDto> GetExamPublishWorkflowAsync(int examId);
+    Task<ExamPublishWorkflowDto> CreateWorkflowAsync(int examId, ExamPublishConfigDto configDto);
+    Task<ExamPublishWorkflowDto> TransitionStateAsync(int examId, ExamPublishTransitionDto transitionDto);
+    Task<ExamPublishWorkflowDto> AssignStudentsAsync(int examId, List<int> studentIds);
+    Task<ExamPublishWorkflowDto> UpdateScheduleAsync(int examId, ExamScheduleDto scheduleDto);
+    Task<List<ActiveExamSessionDto>> GetActiveSessionsAsync(int examId);
+    Task<bool> TerminateExamAsync(int examId, ExamTerminationDto terminationDto);
+    Task<IEnumerable<ExamPublishTransitionDto>> GetWorkflowHistoryAsync(int examId);
 }
 
 // Controller
@@ -123,42 +123,42 @@ public class ExamPublishController : ControllerBase
     // GET: api/exams/{examId}/publish
     [HttpGet]
     [ProducesResponseType(typeof(ExamPublishWorkflowDto), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ExamPublishWorkflowDto>> GetPublishWorkflow(Guid examId)
+    public async Task<ActionResult<ExamPublishWorkflowDto>> GetPublishWorkflow(int examId)
     
     // POST: api/exams/{examId}/publish
     [HttpPost]
     [ProducesResponseType(typeof(ExamPublishWorkflowDto), StatusCodes.Status201Created)]
-    public async Task<ActionResult<ExamPublishWorkflowDto>> CreatePublishWorkflow(Guid examId, [FromBody] ExamPublishConfigDto configDto)
+    public async Task<ActionResult<ExamPublishWorkflowDto>> CreatePublishWorkflow(int examId, [FromBody] ExamPublishConfigDto configDto)
     
     // POST: api/exams/{examId}/publish/transitions
     [HttpPost("transitions")]
     [ProducesResponseType(typeof(ExamPublishWorkflowDto), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ExamPublishWorkflowDto>> TransitionState(Guid examId, [FromBody] ExamPublishTransitionDto transitionDto)
+    public async Task<ActionResult<ExamPublishWorkflowDto>> TransitionState(int examId, [FromBody] ExamPublishTransitionDto transitionDto)
     
     // POST: api/exams/{examId}/publish/students
     [HttpPost("students")]
     [ProducesResponseType(typeof(ExamPublishWorkflowDto), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ExamPublishWorkflowDto>> AssignStudents(Guid examId, [FromBody] List<Guid> studentIds)
+    public async Task<ActionResult<ExamPublishWorkflowDto>> AssignStudents(int examId, [FromBody] List<int> studentIds)
     
     // PUT: api/exams/{examId}/publish/schedule
     [HttpPut("schedule")]
     [ProducesResponseType(typeof(ExamPublishWorkflowDto), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ExamPublishWorkflowDto>> UpdateSchedule(Guid examId, [FromBody] ExamScheduleDto scheduleDto)
+    public async Task<ActionResult<ExamPublishWorkflowDto>> UpdateSchedule(int examId, [FromBody] ExamScheduleDto scheduleDto)
     
     // GET: api/exams/{examId}/publish/sessions
     [HttpGet("sessions")]
     [ProducesResponseType(typeof(List<ActiveExamSessionDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<ActiveExamSessionDto>>> GetActiveSessions(Guid examId)
+    public async Task<ActionResult<List<ActiveExamSessionDto>>> GetActiveSessions(int examId)
     
     // POST: api/exams/{examId}/publish/terminate
     [HttpPost("terminate")]
     [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-    public async Task<ActionResult<bool>> TerminateExam(Guid examId, [FromBody] ExamTerminationDto terminationDto)
+    public async Task<ActionResult<bool>> TerminateExam(int examId, [FromBody] ExamTerminationDto terminationDto)
     
     // GET: api/exams/{examId}/publish/history
     [HttpGet("history")]
     [ProducesResponseType(typeof(IEnumerable<ExamPublishTransitionDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ExamPublishTransitionDto>>> GetHistory(Guid examId)
+    public async Task<ActionResult<IEnumerable<ExamPublishTransitionDto>>> GetHistory(int examId)
 }
 ```
 
@@ -309,31 +309,31 @@ export const ExamMonitoringDashboard: React.FC<{
 ### Backend Validation
 ```powershell
 # Test the publish workflow creation
-curl -X POST http://localhost:5000/api/exams/{examId}/publish \
+curl -X POST https://localhost:7001/api/exams/{examId}/publish \
   -H "Content-Type: application/json" \
-  -d '{"examPaperId": "guid", "accessSettings": {"allowCalculator": true}}'
-# Expected: {"id": "guid", "examId": "guid", "currentState": "PrePublicationReview", ...}
+  -d '{"examPaperId": "int", "accessSettings": {"allowCalculator": true}}'
+# Expected: {"id": "int", "examId": "int", "currentState": "PrePublicationReview", ...}
 
 # Test state transition to scheduled
-curl -X POST http://localhost:5000/api/exams/{examId}/publish/transitions \
+curl -X POST https://localhost:7001/api/exams/{examId}/publish/transitions \
   -H "Content-Type: application/json" \
   -d '{"toState": "ScheduledForPublication", "comments": "Ready for scheduling"}'
-# Expected: {"id": "guid", "examId": "guid", "currentState": "ScheduledForPublication", ...}
+# Expected: {"id": "int", "examId": "int", "currentState": "ScheduledForPublication", ...}
 
 # Test schedule update
-curl -X PUT http://localhost:5000/api/exams/{examId}/publish/schedule \
+curl -X PUT https://localhost:7001/api/exams/{examId}/publish/schedule \
   -H "Content-Type: application/json" \
   -d '{"startDate": "2023-12-01T09:00:00Z", "endDate": "2023-12-01T11:00:00Z", "duration": 120, "accessWindowDuration": 150}'
 # Expected: Updated workflow object with schedule
 
 # Test invalid state transition
-curl -X POST http://localhost:5000/api/exams/{examId}/publish/transitions \
+curl -X POST https://localhost:7001/api/exams/{examId}/publish/transitions \
   -H "Content-Type: application/json" \
   -d '{"toState": "Unpublished", "comments": "Invalid transition from PrePublicationReview"}'
 # Expected: 400 Bad Request with validation error
 
 # Test exam termination
-curl -X POST http://localhost:5000/api/exams/{examId}/publish/terminate \
+curl -X POST https://localhost:7001/api/exams/{examId}/publish/terminate \
   -H "Content-Type: application/json" \
   -d '{"reason": "Technical issues", "isImmediate": true, "notifyStudents": true, "comments": "System outage"}'
 # Expected: true if successful

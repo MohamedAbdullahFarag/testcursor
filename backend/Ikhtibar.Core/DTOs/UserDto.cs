@@ -74,7 +74,7 @@ public class UserDto
     /// <summary>
     /// When the user was last updated
     /// </summary>
-    public DateTime UpdatedAt { get; set; }
+    public DateTime ModifiedAt { get; set; }
 
     /// <summary>
     /// User's last login time

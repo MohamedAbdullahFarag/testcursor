@@ -51,7 +51,7 @@ A robust manual grading system is essential because:
 \`\`\`csharp
 public class RubricEntity : BaseEntity
 {
-    public Guid QuestionId { get; set; }
+    public int QuestionId { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
     public List<RubricCriterion> Criteria { get; set; }
@@ -79,9 +79,9 @@ public class PerformanceLevel
 
 public class ManualGradingResultEntity : BaseEntity
 {
-    public Guid StudentResponseId { get; set; }
-    public Guid RubricId { get; set; }
-    public Guid GraderId { get; set; }
+    public int StudentResponseId { get; set; }
+    public int RubricId { get; set; }
+    public int GraderId { get; set; }
     public double Score { get; set; }
     public double MaxScore { get; set; }
     public Dictionary<string, double> CriteriaScores { get; set; }
@@ -100,13 +100,13 @@ public class ManualGradingResultEntity : BaseEntity
 public interface IManualGradingService
 {
     Task<RubricDto> CreateRubricAsync(CreateRubricDto dto);
-    Task<RubricDto> UpdateRubricAsync(Guid rubricId, UpdateRubricDto dto);
-    Task<ManualGradingResultDto> StartGradingAsync(Guid responseId, Guid graderId);
-    Task<ManualGradingResultDto> SaveGradingProgressAsync(Guid resultId, SaveGradingDto dto);
-    Task<ManualGradingResultDto> CompleteGradingAsync(Guid resultId, CompleteGradingDto dto);
-    Task<List<ManualGradingResultDto>> GetPendingGradingAsync(Guid graderId);
-    Task<bool> AssignResponseToGraderAsync(Guid responseId, Guid graderId);
-    Task<bool> RequestModerationAsync(Guid resultId, string reason);
+    Task<RubricDto> UpdateRubricAsync(int rubricId, UpdateRubricDto dto);
+    Task<ManualGradingResultDto> StartGradingAsync(int responseId, int graderId);
+    Task<ManualGradingResultDto> SaveGradingProgressAsync(int resultId, SaveGradingDto dto);
+    Task<ManualGradingResultDto> CompleteGradingAsync(int resultId, CompleteGradingDto dto);
+    Task<List<ManualGradingResultDto>> GetPendingGradingAsync(int graderId);
+    Task<bool> AssignResponseToGraderAsync(int responseId, int graderId);
+    Task<bool> RequestModerationAsync(int resultId, string reason);
 }
 
 public class ManualGradingService : IManualGradingService
@@ -125,10 +125,10 @@ public class ManualGradingService : IManualGradingService
 \`\`\`csharp
 public interface IManualGradingRepository : IBaseRepository<ManualGradingResultEntity>
 {
-    Task<List<ManualGradingResultEntity>> GetPendingByGraderIdAsync(Guid graderId);
-    Task<ManualGradingResultEntity> GetByResponseIdAsync(Guid responseId);
-    Task<List<ManualGradingResultEntity>> GetByExamSessionIdAsync(Guid sessionId);
-    Task<GradingSummaryDto> GetGradingSummaryAsync(Guid sessionId);
+    Task<List<ManualGradingResultEntity>> GetPendingByGraderIdAsync(int graderId);
+    Task<ManualGradingResultEntity> GetByResponseIdAsync(int responseId);
+    Task<List<ManualGradingResultEntity>> GetByExamSessionIdAsync(int sessionId);
+    Task<GradingSummaryDto> GetGradingSummaryAsync(int sessionId);
 }
 
 public class ManualGradingRepository : BaseRepository<ManualGradingResultEntity>, IManualGradingRepository
@@ -154,13 +154,13 @@ public class ManualGradingController : ControllerBase
     }
 
     [HttpPost("responses/{responseId}/start")]
-    public async Task<ActionResult<ManualGradingResultDto>> StartGrading(Guid responseId)
+    public async Task<ActionResult<ManualGradingResultDto>> StartGrading(int responseId)
     {
         // Implementation...
     }
 
     [HttpPost("results/{resultId}/save")]
-    public async Task<ActionResult<ManualGradingResultDto>> SaveProgress(Guid resultId, SaveGradingDto dto)
+    public async Task<ActionResult<ManualGradingResultDto>> SaveProgress(int resultId, SaveGradingDto dto)
     {
         // Implementation...
     }
@@ -377,13 +377,13 @@ npm run test src/modules/grading/components/RubricGradingComponent.test.ts
 
 \`\`\`bash
 # Test rubric creation
-curl -X POST http://localhost:5000/api/ManualGrading/rubrics -d '{rubricData}'
+curl -X POST https://localhost:7001/api/ManualGrading/rubrics -d '{rubricData}'
 
 # Test starting grading session
-curl -X POST http://localhost:5000/api/ManualGrading/responses/{responseId}/start
+curl -X POST https://localhost:7001/api/ManualGrading/responses/{responseId}/start
 
 # Test saving progress
-curl -X POST http://localhost:5000/api/ManualGrading/results/{resultId}/save -d '{gradingData}'
+curl -X POST https://localhost:7001/api/ManualGrading/results/{resultId}/save -d '{gradingData}'
 \`\`\`
 
 ## 📋 Acceptance Criteria

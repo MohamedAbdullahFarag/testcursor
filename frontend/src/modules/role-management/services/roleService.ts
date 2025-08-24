@@ -3,6 +3,7 @@
  * Handles all role-related API operations
  */
 
+import { apiClient } from '../../../shared/services/apiClient';
 import { 
   Role, 
   CreateRoleRequest, 
@@ -17,8 +18,6 @@ import {
   RolePermissionMatrix
 } from '../models/role.types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-
 /**
  * Role Service implementation
  */
@@ -27,277 +26,196 @@ export const roleService = {
    * Get roles with pagination and filtering
    */
   async getRoles(params: RolePaginationParams): Promise<RoleListResponse> {
-    const queryParams = new URLSearchParams({
-      page: params.page.toString(),
-      pageSize: params.pageSize.toString(),
-    });
+    try {
+      const queryParams = new URLSearchParams({
+        page: params.page.toString(),
+        pageSize: params.pageSize.toString(),
+      });
 
-    if (params.filters) {
-      if (params.filters.searchTerm) {
-        queryParams.append('searchTerm', params.filters.searchTerm);
+      if (params.filters) {
+        if (params.filters.searchTerm) {
+          queryParams.append('searchTerm', params.filters.searchTerm);
+        }
+        if (params.filters.isSystemRole !== undefined) {
+          queryParams.append('isSystemRole', params.filters.isSystemRole.toString());
+        }
+        if (params.filters.isActive !== undefined) {
+          queryParams.append('isActive', params.filters.isActive.toString());
+        }
+        if (params.filters.hasPermission) {
+          queryParams.append('hasPermission', params.filters.hasPermission);
+        }
       }
-      if (params.filters.isSystemRole !== undefined) {
-        queryParams.append('isSystemRole', params.filters.isSystemRole.toString());
-      }
-      if (params.filters.isActive !== undefined) {
-        queryParams.append('isActive', params.filters.isActive.toString());
-      }
-      if (params.filters.hasPermission) {
-        queryParams.append('hasPermission', params.filters.hasPermission);
-      }
+
+      const response = await apiClient.get<RoleListResponse>(`/api/roles?${queryParams}`);
+      return response.data!;
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      throw new Error('Failed to fetch roles');
     }
-
-    const response = await fetch(`${API_BASE_URL}/api/roles?${queryParams}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch roles: ${response.statusText}`);
-    }
-
-    return response.json();
   },
 
   /**
    * Get a single role by ID
    */
   async getRole(id: number): Promise<Role> {
-    const response = await fetch(`${API_BASE_URL}/api/roles/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
+    try {
+      const response = await apiClient.get<Role>(`/api/roles/${id}`);
+      return response.data!;
+    } catch (error) {
+      console.error(`Error fetching role ${id}:`, error);
+      if (error.statusCode === 404) {
         throw new Error(`Role with ID ${id} not found`);
       }
-      throw new Error(`Failed to fetch role: ${response.statusText}`);
+      throw new Error('Failed to fetch role');
     }
-
-    return response.json();
   },
 
   /**
    * Create a new role
    */
   async createRole(role: CreateRoleRequest): Promise<Role> {
-    const response = await fetch(`${API_BASE_URL}/api/roles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-      body: JSON.stringify(role),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create role: ${response.statusText}`);
+    try {
+      const response = await apiClient.post<Role>('/api/roles', role);
+      return response.data!;
+    } catch (error) {
+      console.error('Error creating role:', error);
+      throw new Error('Failed to create role');
     }
-
-    return response.json();
   },
 
   /**
    * Update an existing role
    */
   async updateRole(id: number, role: UpdateRoleRequest): Promise<Role> {
-    const response = await fetch(`${API_BASE_URL}/api/roles/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-      body: JSON.stringify(role),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to update role: ${response.statusText}`);
+    try {
+      const response = await apiClient.put<Role>(`/api/roles/${id}`, role);
+      return response.data!;
+    } catch (error) {
+      console.error(`Error updating role ${id}:`, error);
+      throw new Error('Failed to update role');
     }
-
-    return response.json();
   },
 
   /**
    * Delete a role
    */
   async deleteRole(id: number): Promise<boolean> {
-    const response = await fetch(`${API_BASE_URL}/api/roles/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to delete role: ${response.statusText}`);
+    try {
+      await apiClient.delete<void>(`/api/roles/${id}`);
+      return true;
+    } catch (error) {
+      console.error(`Error deleting role ${id}:`, error);
+      throw new Error('Failed to delete role');
     }
-
-    return true;
   },
 
   /**
    * Assign a role to a user
    */
   async assignRoleToUser(request: AssignRoleRequest): Promise<boolean> {
-    const response = await fetch(`${API_BASE_URL}/api/user-roles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to assign role: ${response.statusText}`);
+    try {
+      await apiClient.post<void>('/api/user-roles', request);
+      return true;
+    } catch (error) {
+      console.error('Error assigning role:', error);
+      throw new Error('Failed to assign role');
     }
-
-    return true;
   },
 
   /**
    * Remove a role from a user
    */
   async removeRoleFromUser(userId: number, roleId: number): Promise<boolean> {
-    const response = await fetch(`${API_BASE_URL}/api/user-roles/${userId}/${roleId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to remove role: ${response.statusText}`);
+    try {
+      await apiClient.delete<void>(`/api/user-roles/${userId}/${roleId}`);
+      return true;
+    } catch (error) {
+      console.error(`Error removing role ${roleId} from user ${userId}:`, error);
+      throw new Error('Failed to remove role');
     }
-
-    return true;
   },
 
   /**
    * Get roles assigned to a user
    */
   async getUserRoles(userId: number): Promise<Role[]> {
-    const response = await fetch(`${API_BASE_URL}/api/users/${userId}/roles`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch user roles: ${response.statusText}`);
+    try {
+      const response = await apiClient.get<Role[]>(`/api/users/${userId}/roles`);
+      return response.data!;
+    } catch (error) {
+      console.error(`Error fetching roles for user ${userId}:`, error);
+      throw new Error('Failed to fetch user roles');
     }
-
-    return response.json();
   },
 
   /**
    * Update user roles (batch assignment)
    */
   async updateUserRoles(request: UpdateUserRolesRequest): Promise<boolean> {
-    const response = await fetch(`${API_BASE_URL}/api/users/${request.userId}/roles`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-      body: JSON.stringify({ roleIds: request.roleIds }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to update user roles: ${response.statusText}`);
+    try {
+      await apiClient.put<void>(`/api/users/${request.userId}/roles`, { roleIds: request.roleIds });
+      return true;
+    } catch (error) {
+      console.error(`Error updating roles for user ${request.userId}:`, error);
+      throw new Error('Failed to update user roles');
     }
-
-    return true;
   },
 
   /**
    * Get all available permissions
    */
   async getPermissions(): Promise<Permission[]> {
-    const response = await fetch(`${API_BASE_URL}/api/permissions`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch permissions: ${response.statusText}`);
+    try {
+      const response = await apiClient.get<Permission[]>('/api/permissions');
+      return response.data!;
+    } catch (error) {
+      console.error('Error fetching permissions:', error);
+      throw new Error('Failed to fetch permissions');
     }
-
-    return response.json();
   },
 
   /**
    * Get role permission matrix
    */
   async getRolePermissionMatrix(roleId: number): Promise<RolePermissionMatrix> {
-    const response = await fetch(`${API_BASE_URL}/api/roles/${roleId}/permissions`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch role permission matrix: ${response.statusText}`);
+    try {
+      const response = await apiClient.get<RolePermissionMatrix>(`/api/roles/${roleId}/permissions`);
+      return response.data!;
+    } catch (error) {
+      console.error(`Error fetching permission matrix for role ${roleId}:`, error);
+      throw new Error('Failed to fetch role permission matrix');
     }
-
-    return response.json();
   },
 
   /**
    * Update role permissions
    */
   async updateRolePermissions(roleId: number, permissionCodes: string[]): Promise<boolean> {
-    const response = await fetch(`${API_BASE_URL}/api/roles/${roleId}/permissions`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-      body: JSON.stringify({ permissionCodes }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to update role permissions: ${response.statusText}`);
+    try {
+      await apiClient.put<void>(`/api/roles/${roleId}/permissions`, { permissionCodes });
+      return true;
+    } catch (error) {
+      console.error(`Error updating permissions for role ${roleId}:`, error);
+      throw new Error('Failed to update role permissions');
     }
-
-    return true;
   },
 
   /**
    * Get users with a specific role
    */
   async getRoleUsers(roleId: number, page: number = 1, pageSize: number = 10): Promise<RoleUsersResponse> {
-    const queryParams = new URLSearchParams({
-      page: page.toString(),
-      pageSize: pageSize.toString(),
-    });
+    try {
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        pageSize: pageSize.toString(),
+      });
 
-    const response = await fetch(`${API_BASE_URL}/api/roles/${roleId}/users?${queryParams}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch role users: ${response.statusText}`);
+      const response = await apiClient.get<RoleUsersResponse>(`/api/roles/${roleId}/users?${queryParams}`);
+      return response.data!;
+    } catch (error) {
+      console.error(`Error fetching users for role ${roleId}:`, error);
+      throw new Error('Failed to fetch role users');
     }
-
-    return response.json();
   },
 };
