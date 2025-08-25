@@ -16,3 +16,4 @@ export const TermsAndConditions = lazy(() => lazyRetry(() => import('@/modules/t
 export const PrivacyPolicy = lazy(() => lazyRetry(() => import('@/modules/privacyPolicy/views/index')))
 export const Home = lazy(() => lazyRetry(() => import('@/modules/home/views/index')))
 export const EParticipation = lazy(() => lazyRetry(() => import('@/modules/eparticipation/views/index')))
+export const EParticipationPortal = lazy(() => lazyRetry(() => import('@/modules/eparticipation/views/index')))

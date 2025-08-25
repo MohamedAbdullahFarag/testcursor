@@ -1,6 +1,7 @@
 import Logo from '@/assets/images/LogoME.svg'
 
 import { strings } from '@/shared/locales'
+import { pathNames } from '@/shared/constants'
 import { Person } from 'google-material-icons/outlined'
 import {
     Button,
@@ -33,10 +34,10 @@ const PortalTopHeader = () => {
     
     // Enhanced menu items with more navigation options
     const menuItems = [
-        { title: strings.common?.home || 'Home', id: 1, href: '/' },
-        { title: strings.support?.title || 'Support', id: 2, href: '/support' },
-        { title: 'FAQ', id: 3, href: '/faq' },
-        { title: 'E-Participation', id: 4, href: '/eparticipation' }
+        { title: strings.common?.home || 'Home', id: 1, href: pathNames.portal },
+        { title: strings.support?.title || 'Support', id: 2, href: pathNames.portalSupport },
+        { title: strings.faq?.title || 'FAQ', id: 3, href: pathNames.faqs },
+        { title: strings.eParticipation?.title || 'E-Participation', id: 4, href: pathNames.eparticipation }
     ]
     
     const [open, toggle] = useToggle(false)
@@ -71,10 +72,10 @@ const PortalTopHeader = () => {
                         <div className="hidden md:flex">
                             <NavigationSwitchLanguage />
                         </div>
-                        <NavigationAction className="gap-space-01" asChild>
-                            <NavLink to={'/login'}>
+                            <NavigationAction className="gap-space-01" asChild>
+                            <NavLink to={pathNames.login}>
                                 <Person />
-                                <span className="sr-only lg:not-sr-only">{strings.login?.title || 'Login'}</span>
+                                <span className="sr-only lg:not-sr-only">{strings.login || 'Login'}</span>
                             </NavLink>
                         </NavigationAction>
                         <NavigationMobileSideBar open={open} onOpenChange={toggle}>
@@ -98,7 +99,7 @@ const PortalTopHeader = () => {
                                 <Button rounded={'default'} asChild>
                                     <NavigationMobileLink asChild>
                                         <NavLink to={'/login'}>
-                                            <span>{strings.login?.title || 'Login'}</span>
+                                            <span>{strings.login || 'Login'}</span>
                                         </NavLink>
                                     </NavigationMobileLink>
                                 </Button>

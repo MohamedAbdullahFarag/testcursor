@@ -42,8 +42,11 @@ public class AuditService : IAuditService
         _mapper = mapper;
         _logger = logger;
         
-        // Configure EPPlus license context
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+    // NOTE: EPPlus 8+ changed license configuration API and the old
+    // ExcelPackage.LicenseContext setter may throw at runtime.
+    // The license should be configured once at application startup
+    // (for example in Program.cs) using the EPPlus 8+ recommended API.
+    // Removing license configuration here avoids throwing during DI/constructor.
     }
     
     /// <summary>

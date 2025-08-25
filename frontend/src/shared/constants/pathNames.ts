@@ -18,6 +18,8 @@ export const pathNames = {
     termsAndConditions: '/TermsAndConditions',
     privacyPolicy: '/privacyPolicy',
     login: '/login',
+    // Portal-level e-participation route (public portal)
+    eparticipation: '/eparticipation',
     eParticipation: `${dashboardPath}/e-participation`,
     // New paths for completed features
     mediaManagement: `${dashboardPath}/media`,

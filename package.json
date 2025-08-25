@@ -56,7 +56,9 @@
     "start:frontend:prod": "pnpm --filter admin-panel preview"
   },
   "devDependencies": {
+    "@playwright/test": "1.40.0",
     "concurrently": "^9.1.0",
+    "playwright-core": "^1.55.0",
     "rimraf": "^6.0.1"
   },
   "packageManager": "pnpm@9.0.0",

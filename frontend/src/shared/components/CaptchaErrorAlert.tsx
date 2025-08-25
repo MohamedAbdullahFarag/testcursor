@@ -2,6 +2,7 @@ import { ErrorOutline } from 'google-material-icons/outlined'
 import { Alert, AlertDescription } from 'mada-design-system'
 import { Else, If, Then } from 'react-if'
 import { Link } from 'react-router-dom'
+import { pathNames } from '@/shared/constants'
 import { strings } from '../locales'
 
 const CaptchaErrorAlert = ({ isSupport }: { isSupport?: boolean }) => {
@@ -16,7 +17,7 @@ const CaptchaErrorAlert = ({ isSupport }: { isSupport?: boolean }) => {
                             {strings.captchaError.captchaError}{' '}
                             {strings.formatString(
                                 strings.captchaError.captchaError2,
-                                <Link className="font-semibold underline" to={'/support'}>
+                                <Link className="font-semibold underline" to={pathNames.portalSupport}>
                                     {strings.captchaError.askSupportTeam}
                                 </Link>,
                             )}

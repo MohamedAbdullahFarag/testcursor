@@ -2,7 +2,7 @@ import PortalProvider from '@/modules/auth/components/PortalProvider'
 import { pathNames } from '@/shared/constants/pathNames'
 import { RouteObject } from 'react-router-dom'
 import {
-    EParticipation,
+    EParticipationPortal,
     ErrorPage,
     FAQS,
     Home,
@@ -66,7 +66,7 @@ const portalRoutes: RouteObject = {
                 },
                 {
                     path: pathNames.eParticipation,
-                    element: <EParticipation />,
+                    element: <EParticipationPortal />,
                 },
                 {
                     // index: true,
