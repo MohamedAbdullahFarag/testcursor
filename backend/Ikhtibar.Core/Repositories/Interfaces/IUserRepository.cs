@@ -43,6 +43,13 @@ public interface IUserRepository : IBaseRepository<User>
     Task<IEnumerable<User>> SearchUsersAsync(string searchTerm);
 
     /// <summary>
+    /// Get user by ID with roles included
+    /// </summary>
+    /// <param name="id">User ID</param>
+    /// <returns>User entity with roles if found, null otherwise</returns>
+    Task<User?> GetByIdWithRolesAsync(int id);
+
+    /// <summary>
     /// Check if email exists
     /// </summary>
     /// <param name="email">Email to check</param>

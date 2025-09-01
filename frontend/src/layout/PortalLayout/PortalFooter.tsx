@@ -6,80 +6,83 @@ import { useMemo } from 'react'
 import { Facebook, Instgram, Linkedin, X, Youtube } from './SocialIcons'
 
 const PortalFooter = () => {
-    // Use useMemo to ensure stable references and proper keys
-    const footerConfig = useMemo((): FooterProps => {
-        return {
-            extraLinks: [
+    // Create arrays with stable references and indexes
+    const extraLinks = useMemo(() => [
+        { 
+            label: strings.footer.TermsAndConditions, 
+            render: <Link key="terms-link" to={pathNames.termsAndConditions}>{strings.footer.TermsAndConditions}</Link> 
+        },
+        { 
+            label: strings.footer.PolicyAndPrivacy, 
+            render: <Link key="privacy-link" to={pathNames.privacyPolicy}>{strings.footer.PolicyAndPrivacy}</Link> 
+        },
+    ], []);
+
+    const groupLinks = useMemo(() => [
+        {
+            links: [],
+            title: 'استكشاف',
+        },
+        {
+            links: [
                 { 
-                    label: strings.footer.TermsAndConditions, 
-                    render: <Link key="terms-link" to={pathNames.termsAndConditions}>{strings.footer.TermsAndConditions}</Link> 
+                    label: strings.faq.title, 
+                    render: <Link key="faq-link" to={pathNames.faqs}>{strings.faq.title}</Link> 
                 },
                 { 
-                    label: strings.footer.PolicyAndPrivacy, 
-                    render: <Link key="privacy-link" to={pathNames.privacyPolicy}>{strings.footer.PolicyAndPrivacy}</Link> 
+                    label: 'طلب تذكرة دعم', 
+                    render: <Link key="support-link" to={pathNames.portalSupportCreate}>طلب تذكرة دعم</Link> 
+                },
+                { 
+                    label: 'استعلام عن تذكرة', 
+                    render: <Link key="inquiry-link" to={pathNames.portalSupportInquiry}>استعلام عن تذكرة</Link> 
                 },
             ],
-            groupLinks: [
-                {
-                    links: [],
-                    title: 'استكشاف',
-                },
-                {
-                    links: [
-                        { 
-                            label: strings.faq.title, 
-                            render: <Link key="faq-link" to={pathNames.faqs}>{strings.faq.title}</Link> 
-                        },
-                        { 
-                            label: 'طلب تذكرة دعم', 
-                            render: <Link key="support-link" to={pathNames.portalSupportCreate}>طلب تذكرة دعم</Link> 
-                        },
-                        { 
-                            label: 'استعلام عن تذكرة', 
-                            render: <Link key="inquiry-link" to={pathNames.portalSupportInquiry}>استعلام عن تذكرة</Link> 
-                        },
-                    ],
-                    title: 'المساعدة والدعم',
-                },
-                {
-                    links: [{ 
-                        label: 'وزارة التعليم -  المملكة العربية السعودية ', 
-                        href: 'https://moe.gov.sa' 
-                    }],
-                    title: 'روابط مساعدة',
-                },
-            ],
-            showGroupLinks: true,
-            socialMediaLinks: [
-                {
-                    target: 'https://www.linkedin.com/company/ministry-of-education-saudi-arabia',
-                    icon: <Linkedin key="linkedin-icon" />,
-                },
-                {
-                    target: 'https://x.com/moe_gov_sa',
-                    icon: <X key="twitter-icon" />,
-                },
-                {
-                    target: 'https://www.youtube.com/@moe_gov',
-                    icon: <Youtube key="youtube-icon" />,
-                },
-                {
-                    target: 'https://www.facebook.com/moegov.sa',
-                    icon: <Facebook key="facebook-icon" />,
-                },
-                {
-                    target: 'https://www.instagram.com/moe_gov_sa',
-                    icon: <Instgram key="instagram-icon" />,
-                },
-            ],
-            socialMediaTitle: strings.footer.contactUs,
-        }
-    }, []);
+            title: 'المساعدة والدعم',
+        },
+        {
+            links: [{ 
+                label: 'وزارة التعليم -  المملكة العربية السعودية ', 
+                href: 'https://moe.gov.sa' 
+            }],
+            title: 'روابط مساعدة',
+        },
+    ], []);
+
+    const socialMediaLinks = useMemo(() => [
+        {
+            target: 'https://www.linkedin.com/company/ministry-of-education-saudi-arabia',
+            icon: <Linkedin key="linkedin-icon" />,
+        },
+        {
+            target: 'https://x.com/moe_gov_sa',
+            icon: <X key="twitter-icon" />,
+        },
+        {
+            target: 'https://www.youtube.com/@moe_gov',
+            icon: <Youtube key="youtube-icon" />,
+        },
+        {
+            target: 'https://www.facebook.com/moegov.sa',
+            icon: <Facebook key="facebook-icon" />,
+        },
+        {
+            target: 'https://www.instagram.com/moe_gov_sa',
+            icon: <Instgram key="instagram-icon" />,
+        },
+    ], []);
+
+    // Use useMemo to ensure stable references
+    const footerConfig = useMemo((): FooterProps => ({
+        extraLinks,
+        groupLinks,
+        showGroupLinks: true,
+        socialMediaLinks,
+        socialMediaTitle: strings.footer.contactUs,
+    }), [extraLinks, groupLinks, socialMediaLinks]);
 
     return (
-        <div key="portal-footer">
-            <Footer {...footerConfig} />
-        </div>
+        <Footer {...footerConfig} key="portal-footer-component" />
     )
 }
 

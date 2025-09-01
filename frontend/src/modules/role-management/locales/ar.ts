@@ -5,6 +5,30 @@ export const strings = {
     permissionsManagement: 'إدارة الصلاحيات',
     rolesManagementComingSoon: 'ميزة إدارة الأدوار قادمة قريباً.',
     permissionsManagementComingSoon: 'ميزة إدارة الصلاحيات قادمة قريباً.',
+    
+    // Page level translations
+    accessDenied: 'الوصول مرفوض',
+    accessDeniedMessage: 'ليس لديك إذن للوصول إلى إدارة الأدوار. يرجى الاتصال بالمدير.',
+    roleManagement: 'إدارة الأدوار',
+    roleManagementDescription: 'إدارة أدوار المستخدمين والصلاحيات للنظام',
+    roleManagementTabs: 'تنقل إدارة الأدوار',
+    rolesTab: 'الأدوار',
+    assignmentsTab: 'تعيينات المستخدمين',
+    userRoleAssignments: 'تعيينات أدوار المستخدمين',
+    readOnlyMode: 'لديك وصول للقراءة فقط لهذا القسم',
+    
+    // Help and guidance
+    helpAndGuidance: 'المساعدة والتوجيه',
+    systemRoles: 'أدوار النظام',
+    systemRolesDescription: 'الأدوار المدمجة مع صلاحيات محددة مسبقاً لا يمكن تعديلها',
+    customRoles: 'الأدوار المخصصة',
+    customRolesDescription: 'الأدوار المعرفة من قبل المستخدم مع صلاحيات قابلة للتخصيص',
+    roleAssignments: 'تعيينات الأدوار',
+    roleAssignmentsDescription: 'تعيين الأدوار للمستخدمين للتحكم في وصولهم وصلاحياتهم',
+    permissions: 'الصلاحيات',
+    permissionsDescription: 'التحكم التفصيلي في ما يمكن للمستخدمين فعله في النظام',
+    
+    // Existing functionality
     assignRoles: 'تعيين الأدوار',
     roles: 'الأدوار',
     selectRoles: 'حدد الأدوار للتعيين',

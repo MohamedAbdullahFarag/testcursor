@@ -17,13 +17,16 @@ namespace Ikhtibar.API.Controllers.UserManagement;
 public class UsersController : ApiControllerBase
 {
     private readonly IUserService _userService;
+    private readonly IUserRoleService _userRoleService;
     private readonly ILogger<UsersController> _logger;
 
     public UsersController(
         IUserService userService,
+        IUserRoleService userRoleService,
         ILogger<UsersController> logger)
     {
         _userService = userService;
+        _userRoleService = userRoleService;
         _logger = logger;
     }
 
@@ -36,7 +39,7 @@ public class UsersController : ApiControllerBase
     /// <param name="sortDirection">Sort direction: asc or desc (default: desc)</param>
     /// <returns>List of users with pagination info</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<UserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -52,9 +55,22 @@ public class UsersController : ApiControllerBase
                 page, pageSize, sortBy, sortDirection);
             
             var users = await _userService.GetAllUsersAsync(page, pageSize);
+            var usersList = users.ToList();
             
-            // Return standardized API response format
-            return SuccessResponse(users, "Users retrieved successfully");
+            // Get total count for pagination (approximation since we're using existing service)
+            var allUsers = await _userService.GetAllUsersAsync(1, int.MaxValue);
+            var totalCount = allUsers.Count();
+            
+            // Return frontend-compatible format
+            var result = new 
+            {
+                items = usersList,
+                total = totalCount,
+                page = page,
+                pageSize = pageSize
+            };
+            
+            return SuccessResponse(result, "Users retrieved successfully");
         }
         catch (Exception ex)
         {
@@ -62,6 +78,51 @@ public class UsersController : ApiControllerBase
             return ErrorResponse("Failed to retrieve users", StatusCodes.Status500InternalServerError);
         }
     }
+    /// <summary>
+    /// Get roles assigned to a user (frontend compatibility)
+    /// </summary>
+    [HttpGet("{userId}/roles")]
+    public async Task<IActionResult> GetUserRolesAsync(int userId)
+    {
+        try
+        {
+            var roles = await _userRoleService.GetUserRolesAsync(userId);
+            return Ok(roles);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving roles for user {UserId}", userId);
+            return StatusCode(StatusCodes.Status500InternalServerError, "Failed to retrieve user roles");
+        }
+    }
+
+    /// <summary>
+    /// Replace roles assigned to a user (frontend compatibility)
+    /// </summary>
+    [HttpPut("{userId}/roles")]
+    public async Task<IActionResult> UpdateUserRolesAsync(int userId, [FromBody] UpdateUserRolesRequest request)
+    {
+        try
+        {
+            if (request == null)
+            {
+                return BadRequest("Request body is required");
+            }
+            await _userRoleService.ReplaceUserRolesAsync(userId, request.RoleIds);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating roles for user {UserId}", userId);
+            return StatusCode(StatusCodes.Status500InternalServerError, "Failed to update user roles");
+        }
+    }
+
+    public class UpdateUserRolesRequest
+    {
+        public IEnumerable<int> RoleIds { get; set; } = Array.Empty<int>();
+    }
+
 
     /// <summary>
     /// Retrieves a specific user by ID

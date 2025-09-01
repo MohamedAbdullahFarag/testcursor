@@ -183,8 +183,8 @@ public class AuditLogRepository : IAuditLogRepository
         // Prepare sort order
         var orderBy = $"ORDER BY {filter.SortBy} {filter.SortDirection}";
         
-        // Calculate pagination
-        int offset = (filter.Page - 1) * filter.PageSize;
+        // Calculate pagination (0-based page from frontend)
+        int offset = filter.Page * filter.PageSize;
         parameters.Add("@Offset", offset);
         parameters.Add("@PageSize", filter.PageSize);
         

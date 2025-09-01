@@ -4,7 +4,12 @@ import { customerExperienceAr } from '@/modules/customerExperience/locale/ar'
 import { dashboardAr } from '@/modules/dashboard/locales/ar'
 import { eParticipationAr } from '@/modules/eparticipation/locales/ar'
 import { supportAr } from '@/modules/support/locales/ar'
+import { strings as roleManagementAr } from '@/modules/role-management/locales/ar'
+import mediaManagementAr from '@/modules/media-management/locales/ar'
+import notificationsAr from '@/modules/notifications/locales/ar'
+import mediaAr from '@/modules/question-bank/media/locales/ar'
 import { userManagementLocales } from './userManagement'
+import categoryPagesAr from './categoryPagesAr'
 
 export const ar = {
     ...authAr,
@@ -13,12 +18,34 @@ export const ar = {
     ...supportAr,
     ...customerExperienceAr,
     ...eParticipationAr,
+    // Category pages translations
+    categoryPages: categoryPagesAr,
+    // Content Management namespace
+    'content-managment': contentManagmentAr,
+    // Role Management namespace
+    roleManagement: roleManagementAr,
+    // Media Management namespace
+    'media-management': mediaManagementAr,
+    // Notifications namespace
+    notifications: notificationsAr,
+    // Auth namespace for dedicated auth translation hook
+    auth: authAr,
+    // Media namespace for question-bank media manager
+    media: mediaAr,
     // Spread the individual namespaces from user management
     userManagement: userManagementLocales.ar.userManagement,
     users: userManagementLocales.ar.users,
     // Legacy keys for compatibility with localizedStrings
     loginNote: 'يرجى تسجيل الدخول للوصول إلى حسابك',
-    namespaceoAvailableResults: 'النتائج المتاحة',
+    availableResults: 'النتائج المتاحة',
+    // Missing keys that are being looked up
+    fileNotFound: 'لم يتم العثور على الملف',
+    uploadError: 'فشل الرفع',
+    deleteError: 'فشل الحذف',
+    updateError: 'فشل التحديث',
+    networkError: 'حدث خطأ في الشبكة',
+    permissionError: 'تم رفض الإذن',
+    storageFull: 'تم تجاوز حد التخزين',
     // User management specific missing keys
     noUsers: 'لم يتم العثور على مستخدمين',
     noUsersDescription: 'لا توجد مستخدمين للعرض. جرب إنشاء مستخدم جديد أو تعديل معايير البحث.',
@@ -115,6 +142,26 @@ export const ar = {
         trialVersion: 'نسخة تجريبية',
         edit: 'تعديل',
         serverError: 'عفوًا، حدث خطأ ما',
+        Main: 'الرئيسية',
+        copy: 'نسخ',
+        email: 'البريد الإلكتروني',
+        fullName: 'الاسم كاملاً',
+        mobileNumber: 'رقم الجوال',
+        description: 'الوصف',
+        nationalId: 'رقم الهوية',
+        residentID: 'رقم الإقامة',
+        copiedSuccessfully: 'تم النسخ بنجاح',
+        serviceUnavailable: 'الخدمة غير متاحة حالياً',
+        serviceNotWorkingContactSupport: 'يرجى التواصل مع فريق الدعم التقني للمساعدة، نقدر صبركم وتعاونكم',
+        refresh: 'إعادة تحميل',
+        home: 'الرئيسية',
+        lastUpdatedLabel: 'تاريخ آخر تحديث:',
+        timeZoneNote: 'توقيت المملكة العربية السعودية',
+        error: 'حدث خطأ',
+        errorDescription: 'عذراً، لم نتمكن من العثور على الصفحة التي تبحث عنها.',
+        backToHome: 'العودة للصفحة الرئيسية',
+        sorryTechnicalError: 'الخدمة تحت الصيانة للحصول على تجربة أفضل',
+        sorryTechnicalErrorDesc: 'يرجى إعادة التحميل أو طلب المساعدة من فريق الدعم',
     },
     accessibility: {
         accessibility: 'تمكين الوصول',
@@ -169,7 +216,7 @@ export const ar = {
         title: 'الأسئلة الشائعة',
         faqDescription: 'اطلع على أهم الأسئلة التي يطرحها مستخدمو اختبار.',
         browseFAQRelatedToService: 'تصفح الأسئلة المتعلقة بالخدمة',
-        namespaceoAvailableResults: 'لا توجد بيانات',
+        noAvailableResults: 'لا توجد بيانات',
         noAvailableResultsDetails: 'يمكنك طلب المساعدة من فريق الدعم.',
         search: 'اكتب سؤالك',
         all: 'الكل',

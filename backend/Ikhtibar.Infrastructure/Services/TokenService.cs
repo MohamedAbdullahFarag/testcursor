@@ -42,15 +42,28 @@ namespace Ikhtibar.Infrastructure.Services
                 };
 
                 // Add role claims if user has roles
+                _logger.LogInformation("JWT Debug - User ID: {UserId}, UserRoles count: {RoleCount}", 
+                    user.UserId, user.UserRoles?.Count ?? 0);
+                
                 if (user.UserRoles != null)
                 {
                     foreach (var userRole in user.UserRoles)
                     {
                         if (userRole.Role != null)
                         {
+                            _logger.LogInformation("JWT Debug - Adding role claim: {RoleCode}", userRole.Role.Code);
                             claims.Add(new Claim(ClaimTypes.Role, userRole.Role.Code));
                         }
+                        else
+                        {
+                            _logger.LogWarning("JWT Debug - UserRole with null Role: UserId={UserId}, RoleId={RoleId}", 
+                                userRole.UserId, userRole.RoleId);
+                        }
                     }
+                }
+                else
+                {
+                    _logger.LogWarning("JWT Debug - User has null UserRoles collection");
                 }
 
                 var tokenDescriptor = new SecurityTokenDescriptor

@@ -1,11 +1,26 @@
 import { apiClient } from '../../../shared/services/apiClient';
-import { PagedResult } from '../../../modules/notifications/types/notification.types';
+import { PagedResult } from '../../../shared/types/common';
+import { ApiResponse } from '../../../shared/models/api';
 import { AuditLog, AuditLogFilter, AuditLogExportFormat, AuditLogIntegrityResult } from '../types/auditLogs';
+
+// Backend response structure for audit logs
+interface BackendPagedResult<T> {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
 
 /**
  * Service for interacting with audit log API
  */
 export const auditLogService = {
+  // Use the API URL from environment variables
+  baseUrl: import.meta.env.VITE_API_URL || 'https://localhost:7001/api',
+
   /**
    * Get audit logs with filtering and pagination
    * @param filter Filter options
@@ -13,10 +28,54 @@ export const auditLogService = {
    */
   async getAuditLogs(filter: AuditLogFilter): Promise<PagedResult<AuditLog>> {
     try {
-      const response = await apiClient.get<{data: PagedResult<AuditLog>}>(`/api/audit-logs`, { 
-        params: filter
+      // Convert 0-based page to 1-based for backend
+      const backendFilter = {
+        ...filter,
+        page: filter.page + 1
+      };
+      
+      // The audit logs API returns the PagedResult directly, not wrapped in ApiResponse
+      const response = await apiClient.get(`${this.baseUrl}/audit-logs`, { 
+        params: backendFilter
       });
-      return response.data!.data;
+      
+      // Check if this is a direct PagedResult (not wrapped in ApiResponse)
+      let backendData: BackendPagedResult<AuditLog>;
+      
+      if ('success' in response && response.success !== undefined) {
+        // This is an ApiResponse wrapper
+        const apiResponse = response as ApiResponse<BackendPagedResult<AuditLog>>;
+        if (!apiResponse.success) {
+          const errorMsg = apiResponse.message || 'API request failed';
+          throw new Error(errorMsg);
+        }
+        backendData = apiResponse.data as BackendPagedResult<AuditLog>;
+      } else {
+        // This is a direct PagedResult
+        backendData = response as unknown as BackendPagedResult<AuditLog>;
+      }
+      
+      if (!backendData) {
+        return {
+          data: [],
+          total: 0,
+          page: 0,
+          pageSize: 25,
+          totalPages: 0,
+          hasNext: false,
+          hasPrevious: false
+        };
+      }
+      
+      return {
+        data: backendData.items || [],
+        total: backendData.totalCount || 0,
+        page: (backendData.pageNumber || 1) - 1, // Convert to 0-based
+        pageSize: backendData.pageSize || 25,
+        totalPages: backendData.totalPages || Math.ceil((backendData.totalCount || 0) / (backendData.pageSize || 25)),
+        hasNext: backendData.hasNextPage || false,
+        hasPrevious: backendData.hasPreviousPage || false
+      };
     } catch (error) {
       console.error('Error fetching audit logs:', error);
       throw error;
@@ -35,7 +94,7 @@ export const auditLogService = {
     if (toDate) params.toDate = toDate.toISOString();
     
     try {
-      const response = await apiClient.get<{data: AuditLog[]}>(`/api/audit-logs/security-events`, { 
+      const response = await apiClient.get<{data: AuditLog[]}>(`${this.baseUrl}/audit-logs/security-events`, { 
         params
       });
       return response.data!.data;
@@ -50,7 +109,7 @@ export const auditLogService = {
    * @param userId User ID
    * @param fromDate Start date
    * @param toDate End date
-   * @param page Page number
+   * @param page Page number (0-based)
    * @param pageSize Page size
    * @returns User-specific audit logs
    */
@@ -58,11 +117,11 @@ export const auditLogService = {
     userId: number,
     fromDate?: Date,
     toDate?: Date,
-    page: number = 1,
+    page: number = 0,
     pageSize: number = 25
   ): Promise<PagedResult<AuditLog>> {
     const params: Record<string, string | number> = {
-      page,
+      page: page + 1, // Convert to 1-based for backend
       pageSize
     };
     
@@ -70,11 +129,31 @@ export const auditLogService = {
     if (toDate) params.toDate = toDate.toISOString();
     
     try {
-      const response = await apiClient.get<{data: PagedResult<AuditLog>}>(
-        `/api/audit-logs/user/${userId}`, 
+      const response: ApiResponse<BackendPagedResult<AuditLog>> = await apiClient.get(
+        `${this.baseUrl}/audit-logs/user/${userId}`, 
         { params }
       );
-      return response.data!.data;
+      
+      // Check API response success
+      if (!response.success) {
+        throw new Error(response.message || 'API request failed');
+      }
+      
+      if (!response.data) {
+        throw new Error('No data received from API');
+      }
+      
+      // Transform backend response to match frontend pagination structure
+      const backendData = response.data;
+      return {
+        data: backendData.items || [],
+        total: backendData.totalCount || 0,
+        page: (backendData.pageNumber || 1) - 1, // Convert to 0-based
+        pageSize: backendData.pageSize || 25,
+        totalPages: backendData.totalPages || Math.ceil((backendData.totalCount || 0) / (backendData.pageSize || 25)),
+        hasNext: backendData.hasNextPage || false,
+        hasPrevious: backendData.hasPreviousPage || false
+      };
     } catch (error) {
       console.error(`Error fetching audit logs for user ${userId}:`, error);
       throw error;
@@ -92,16 +171,39 @@ export const auditLogService = {
   async getEntityAuditLogs(
     entityType: string,
     entityId: string,
-    page: number = 1,
+    page: number = 0,
     pageSize: number = 25
   ): Promise<PagedResult<AuditLog>> {
-    const params = { page, pageSize };
+    const params = { 
+      page: page + 1, // Convert to 1-based for backend
+      pageSize 
+    };
     try {
-      const response = await apiClient.get<{data: PagedResult<AuditLog>}>(
-        `/api/audit-logs/entity/${encodeURIComponent(entityType)}/${encodeURIComponent(entityId)}`,
+      const response: ApiResponse<BackendPagedResult<AuditLog>> = await apiClient.get(
+        `${this.baseUrl}/audit-logs/entity/${encodeURIComponent(entityType)}/${encodeURIComponent(entityId)}`,
         { params }
       );
-      return response.data!.data;
+      
+      // Check API response success
+      if (!response.success) {
+        throw new Error(response.message || 'API request failed');
+      }
+      
+      if (!response.data) {
+        throw new Error('No data received from API');
+      }
+      
+      // Transform backend response to match frontend pagination structure
+      const backendData = response.data;
+      return {
+        data: backendData.items || [],
+        total: backendData.totalCount || 0,
+        page: (backendData.pageNumber || 1) - 1, // Convert to 0-based
+        pageSize: backendData.pageSize || 25,
+        totalPages: backendData.totalPages || Math.ceil((backendData.totalCount || 0) / (backendData.pageSize || 25)),
+        hasNext: backendData.hasNextPage || false,
+        hasPrevious: backendData.hasPreviousPage || false
+      };
     } catch (error) {
       console.error(`Error fetching audit logs for entity ${entityType}/${entityId}:`, error);
       throw error;
@@ -117,7 +219,7 @@ export const auditLogService = {
   async exportAuditLogs(filter: AuditLogFilter, format: AuditLogExportFormat): Promise<Blob> {
     try {
       const response = await apiClient.post<Blob>(
-        `/api/audit-logs/export`, 
+        `${this.baseUrl}/audit-logs/export`, 
         filter, 
         {
           params: { format },
@@ -139,7 +241,7 @@ export const auditLogService = {
   async archiveOldLogs(retentionDays: number = 365): Promise<{ archivedCount: number; message: string }> {
     try {
       const response = await apiClient.post<{data: { archivedCount: number; message: string }}>(
-        `/api/audit-logs/archive`,
+        `${this.baseUrl}/audit-logs/archive`,
         {},
         { 
           params: { retentionDays }
@@ -168,7 +270,7 @@ export const auditLogService = {
     
     try {
       const response = await apiClient.get<{data: AuditLogIntegrityResult}>(
-        `/api/audit-logs/verify-integrity`, 
+        `${this.baseUrl}/audit-logs/verify-integrity`, 
         { params }
       );
       return response.data!.data;

@@ -8,7 +8,7 @@ import {
   MediaFileSearchDto,
   PagedResult,
   MediaType,
-  MediaStatus
+  MediaFileStatus
 } from '../types';
 
 // Query keys
@@ -31,7 +31,30 @@ export const mediaFilesKeys = {
 export const useMediaFiles = (searchParams: MediaFileSearchDto) => {
   return useQuery({
     queryKey: mediaFilesKeys.list(searchParams),
-    queryFn: () => mediaFilesApi.getMediaFiles(searchParams),
+    queryFn: async (): Promise<PagedResult<MediaFileDto>> => {
+      try {
+        const result = await mediaFilesApi.getMediaFiles(searchParams);
+        // Ensure we return a valid PagedResult structure
+        if (!result) {
+          return {
+            items: [],
+            totalCount: 0,
+            pageNumber: searchParams.page || 1,
+            pageSize: searchParams.pageSize || 10,
+          };
+        }
+        return result;
+      } catch (error) {
+        console.error('Error fetching media files:', error);
+        // Return empty result structure instead of undefined
+        return {
+          items: [],
+          totalCount: 0,
+          pageNumber: searchParams.page || 1,
+          pageSize: searchParams.pageSize || 10,
+        };
+      }
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -268,7 +291,7 @@ export const useBulkUpdateMedia = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { mediaFileIds: number[]; operation: string; targetCategoryId?: number; targetStatus?: MediaStatus; tags?: string }) =>
+    mutationFn: (data: { mediaFileIds: number[]; operation: string; targetCategoryId?: number; targetStatus?: MediaFileStatus; tags?: string }) =>
       mediaFilesApi.bulkUpdateMedia(data),
     onSuccess: (_, { mediaFileIds }) => {
       // Invalidate lists to reflect changes

@@ -76,7 +76,7 @@ export const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900" data-testid="role-management-title">
             {t('roleManagement')}
           </h1>
           <p className="text-gray-600 mt-2">

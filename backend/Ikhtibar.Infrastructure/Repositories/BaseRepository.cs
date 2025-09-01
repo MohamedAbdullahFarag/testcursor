@@ -204,6 +204,8 @@ public abstract class BaseRepository<T> : IBaseRepository<T> where T : class
         }
     }
 
+
+
     public virtual async Task<bool> ExistsAsync(int id)
     {
         try
@@ -317,7 +319,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T> where T : class
     protected virtual string GenerateInsertSql(T entity)
     {
         var properties = typeof(T).GetProperties()
-            .Where(p => p.CanRead && p.Name != _idColumnName && p.Name != "RowVersion")
+            .Where(p => p.CanRead && p.Name != _idColumnName && p.Name != "Id" && p.Name != "RowVersion")
             .ToList();
 
         var columns = string.Join(", ", properties.Select(p => p.Name));

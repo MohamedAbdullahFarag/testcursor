@@ -11,7 +11,7 @@ namespace Ikhtibar.Infrastructure.Repositories
     public class RefreshTokenRepository : BaseRepository<RefreshTokens>, IRefreshTokenRepository
     {
         public RefreshTokenRepository(IDbConnectionFactory connectionFactory, ILogger<RefreshTokenRepository> logger) 
-            : base(connectionFactory, logger, "RefreshTokens", "Id")
+            : base(connectionFactory, logger, "RefreshTokens", "RefreshTokenId")
         {
         }
 

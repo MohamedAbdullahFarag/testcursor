@@ -6,6 +6,7 @@ import React, { useState, memo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { LoginRequest } from '../models/auth.types';
 import { useTranslation } from 'react-i18next';
+import './LoginForm.css';
 import {
   Box,
   TextField,
@@ -107,37 +108,49 @@ export const LoginForm: React.FC = memo(() => {
           )}
           
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label={t('email')}
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={formData.email}
-              onChange={handleInputChange('email')}
-              error={!!validationErrors.email}
-              helperText={validationErrors.email}
-              disabled={isLoading}
-            />
+                      <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="email"
+            label={t('email')}
+            name="email"
+            autoComplete="email"
+            autoFocus
+            value={formData.email}
+            onChange={handleInputChange('email')}
+            error={!!validationErrors.email}
+            helperText={validationErrors.email}
+            disabled={isLoading}
+            inputProps={{
+              'aria-describedby': validationErrors.email ? 'email-error' : undefined,
+              'aria-invalid': !!validationErrors.email,
+              'aria-required': true,
+            }}
+            aria-describedby={validationErrors.email ? 'email-error' : undefined}
+          />
             
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label={t('password')}
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              value={formData.password}
-              onChange={handleInputChange('password')}
-              error={!!validationErrors.password}
-              helperText={validationErrors.password}
-              disabled={isLoading}
-            />
+                      <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label={t('password')}
+            type="password"
+            id="password"
+            autoComplete="current-password"
+            value={formData.password}
+            onChange={handleInputChange('password')}
+            error={!!validationErrors.password}
+            helperText={validationErrors.password}
+            disabled={isLoading}
+            inputProps={{
+              'aria-describedby': validationErrors.password ? 'password-error' : undefined,
+              'aria-invalid': !!validationErrors.password,
+              'aria-required': true,
+            }}
+            aria-describedby={validationErrors.password ? 'password-error' : undefined}
+          />
             
             <Button
               type="submit"
@@ -145,6 +158,8 @@ export const LoginForm: React.FC = memo(() => {
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
               disabled={isLoading}
+              aria-describedby={isLoading ? 'loading-status' : undefined}
+              aria-busy={isLoading}
             >
               {isLoading ? (
                 <CircularProgress size={24} color="inherit" />
@@ -152,6 +167,13 @@ export const LoginForm: React.FC = memo(() => {
                 t('login')
               )}
             </Button>
+            
+            {/* Screen reader status for loading state */}
+            {isLoading && (
+              <div id="loading-status" className="sr-only" aria-live="polite">
+                {t('signingIn')}
+              </div>
+            )}
           </Box>
         </Paper>
       </Box>

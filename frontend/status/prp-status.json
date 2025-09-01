@@ -1,0 +1,480 @@
+{
+  "project": "Ikhtibar Educational Exam Management System",
+  "currentPhase": "Test Implementation",
+  "phases": {
+    "Requirements Analysis": {
+      "phase": "Requirements Analysis",
+      "status": "completed",
+      "completionDate": "2024-01-15T10:00:00.000Z",
+      "notes": "All test requirements identified and documented",
+      "testResults": []
+    },
+    "Test Planning": {
+      "phase": "Test Planning",
+      "status": "completed",
+      "completionDate": "2024-01-20T14:30:00.000Z",
+      "notes": "Test strategy and structure designed",
+      "testResults": []
+    },
+    "Test Design": {
+      "phase": "Test Design",
+      "status": "in-progress",
+      "notes": "Implementing Page Object Model framework",
+      "testResults": []
+    },
+    "Test Implementation": {
+      "phase": "Test Implementation",
+      "status": "pending",
+      "dependencies": [
+        "Test Design"
+      ],
+      "testResults": [
+        {
+          "testId": "AUTH-013",
+          "testName": "Prevent XSS attempts",
+          "status": "failed",
+          "executionTime": 23,
+          "errorMessage": "page.goto: net::ERR_EMPTY_RESPONSE at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:06.057Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-015",
+          "testName": "Complete authentication flow with logout",
+          "status": "failed",
+          "executionTime": 23,
+          "errorMessage": "page.goto: net::ERR_EMPTY_RESPONSE at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:07.489Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-016",
+          "testName": "Handle authentication token expiration",
+          "status": "failed",
+          "executionTime": 37,
+          "errorMessage": "page.goto: net::ERR_EMPTY_RESPONSE at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:07.565Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-017",
+          "testName": "Proper form labels and accessibility attributes",
+          "status": "failed",
+          "executionTime": 22,
+          "errorMessage": "page.goto: net::ERR_EMPTY_RESPONSE at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:07.864Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-018",
+          "testName": "Support keyboard navigation",
+          "status": "failed",
+          "executionTime": 17,
+          "errorMessage": "page.goto: net::ERR_EMPTY_RESPONSE at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:08.375Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 32,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:09.816Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-004",
+          "testName": "Session persistence after page refresh",
+          "status": "failed",
+          "executionTime": 26,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:10.963Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-005",
+          "testName": "Error for invalid email format",
+          "status": "failed",
+          "executionTime": 25,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:11.004Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-006",
+          "testName": "Error for empty credentials",
+          "status": "failed",
+          "executionTime": 26,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:11.091Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-007",
+          "testName": "Error for non-existent user",
+          "status": "failed",
+          "executionTime": 25,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:11.619Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-008",
+          "testName": "Error for wrong password",
+          "status": "failed",
+          "executionTime": 24,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:13.069Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-010",
+          "testName": "Handle special characters in credentials",
+          "status": "failed",
+          "executionTime": 22,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:13.130Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-009",
+          "testName": "Handle very long email address",
+          "status": "failed",
+          "executionTime": 22,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:13.143Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-012",
+          "testName": "Prevent SQL injection attempts",
+          "status": "failed",
+          "executionTime": 30,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:14.239Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-013",
+          "testName": "Prevent XSS attempts",
+          "status": "failed",
+          "executionTime": 31,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:14.330Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-014",
+          "testName": "Implement rate limiting for failed attempts",
+          "status": "failed",
+          "executionTime": 26,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:14.776Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-015",
+          "testName": "Complete authentication flow with logout",
+          "status": "failed",
+          "executionTime": 24,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:16.173Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-017",
+          "testName": "Proper form labels and accessibility attributes",
+          "status": "failed",
+          "executionTime": 23,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:16.237Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-016",
+          "testName": "Handle authentication token expiration",
+          "status": "failed",
+          "executionTime": 34,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:16.292Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-018",
+          "testName": "Support keyboard navigation",
+          "status": "failed",
+          "executionTime": 25,
+          "errorMessage": "page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T12:10:16.910Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 4293,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+          "timestamp": "2025-08-29T12:21:18.745Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 4397,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+          "timestamp": "2025-08-29T12:21:18.875Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 7682,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+          "timestamp": "2025-08-29T12:21:22.228Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 7754,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+          "timestamp": "2025-08-29T12:21:22.320Z",
+          "browser": "webkit"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 11662,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m failed\n\nLocator:  locator('form')\nExpected: visible\nReceived: <element(s) not found>\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('form')\u001b[22m\n",
+          "timestamp": "2025-08-29T12:21:31.024Z",
+          "browser": "firefox"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 3076,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+          "timestamp": "2025-08-29T12:22:20.818Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 2717,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+          "timestamp": "2025-08-29T12:23:16.300Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 12593,
+          "errorMessage": "page.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#email')\u001b[22m\n",
+          "timestamp": "2025-08-29T12:27:38.988Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 3110,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+          "timestamp": "2025-08-29T12:31:06.912Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 4947,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+          "timestamp": "2025-08-29T14:30:58.563Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 3757,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+          "timestamp": "2025-08-29T15:48:01.278Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 2734,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+          "timestamp": "2025-08-29T15:52:26.035Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 2716,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+          "timestamp": "2025-08-29T15:53:09.356Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 2843,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+          "timestamp": "2025-08-29T15:54:48.385Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 13885,
+          "errorMessage": "page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================",
+          "timestamp": "2025-08-29T15:56:05.732Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 14546,
+          "errorMessage": "page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================",
+          "timestamp": "2025-08-29T19:46:25.642Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 2348,
+          "errorMessage": "page.goto: net::ERR_CONNECTION_REFUSED at https://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"https://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+          "timestamp": "2025-08-29T19:58:44.957Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 18333,
+          "errorMessage": "page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================",
+          "timestamp": "2025-08-29T20:00:41.128Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 15979,
+          "errorMessage": "page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================",
+          "timestamp": "2025-08-29T20:02:16.126Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 16095,
+          "errorMessage": "page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================",
+          "timestamp": "2025-08-29T20:03:58.842Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 15984,
+          "errorMessage": "page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================",
+          "timestamp": "2025-08-29T20:36:47.254Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 15895,
+          "errorMessage": "page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================",
+          "timestamp": "2025-08-29T20:40:34.168Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 12646,
+          "errorMessage": "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m failed\n\nLocator:  locator('form')\nExpected: visible\nReceived: <element(s) not found>\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('form')\u001b[22m\n",
+          "timestamp": "2025-08-29T20:44:37.194Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 17658,
+          "errorMessage": "page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================",
+          "timestamp": "2025-08-29T20:48:17.181Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 16686,
+          "errorMessage": "page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================",
+          "timestamp": "2025-08-29T20:55:54.651Z",
+          "browser": "chromium"
+        },
+        {
+          "testId": "AUTH-001",
+          "testName": "Login with valid admin credentials",
+          "status": "failed",
+          "executionTime": 16931,
+          "errorMessage": "page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================",
+          "timestamp": "2025-08-29T20:58:41.909Z",
+          "browser": "chromium"
+        }
+      ]
+    },
+    "Test Execution": {
+      "phase": "Test Execution",
+      "status": "pending",
+      "dependencies": [
+        "Test Implementation"
+      ],
+      "testResults": []
+    },
+    "Test Evaluation": {
+      "phase": "Test Evaluation",
+      "status": "pending",
+      "dependencies": [
+        "Test Execution"
+      ],
+      "testResults": []
+    }
+  },
+  "testResults": {
+    "totalTests": 46,
+    "passedTests": 0,
+    "failedTests": 46,
+    "skippedTests": 0,
+    "blockedTests": 0,
+    "lastUpdated": "2025-08-29T20:58:41.912Z",
+    "coverage": 0
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastModified": "2025-08-29T20:58:41.912Z",
+    "testEnvironment": "development",
+    "browser": "chromium"
+  }
+}

@@ -272,7 +272,12 @@ BEGIN
         ExpiresAt         DATETIME2      NOT NULL ,-- 'When token expires',
         RevokedAt         DATETIME2      NULL ,-- 'When token was revoked',
         ReplacedByToken   NVARCHAR(256)  NULL ,-- 'Hash of token that replaced this one',
-        ReasonRevoked     NVARCHAR(500)  NULL ,-- 'Why was token revoked',
+        ReasonRevoked     NVARCHAR(500)  NULL ,-- 'Legacy name for revocation reason (kept for compatibility)',
+        RevocationReason  NVARCHAR(200)  NULL ,-- 'Reason for revocation (matches entity property name)',
+    ClientIpAddress   NVARCHAR(45)   NULL ,-- 'Client IP at issuance',
+    UserAgent         NVARCHAR(500)  NULL ,-- 'User agent at issuance',
+        DeletedAt         DATETIME2      NULL ,-- 'Soft delete timestamp (used by repository)',
+        DeletedBy         INT            NULL ,-- 'UserId who deleted (soft) (used by repository)',
         CreatedAt         DATETIME2      NOT NULL CONSTRAINT DF_RT_CreatedAt DEFAULT(SYSUTCDATETIME()) ,
         CreatedBy         INT            NULL ,
         ModifiedAt        DATETIME2      NULL ,
@@ -283,6 +288,32 @@ BEGIN
         CONSTRAINT FK_RT_Users_CreatedBy FOREIGN KEY (CreatedBy)  REFERENCES dbo.Users(UserId),
         CONSTRAINT FK_RT_Users_ModifiedBy FOREIGN KEY (ModifiedBy) REFERENCES dbo.Users(UserId)
     );
+END
+
+-- Ensure RefreshTokens has columns required by repositories/entities when table already existed
+IF COL_LENGTH('dbo.RefreshTokens', 'RevocationReason') IS NULL
+BEGIN
+    ALTER TABLE dbo.RefreshTokens ADD RevocationReason NVARCHAR(200) NULL;
+END
+
+IF COL_LENGTH('dbo.RefreshTokens', 'DeletedAt') IS NULL
+BEGIN
+    ALTER TABLE dbo.RefreshTokens ADD DeletedAt DATETIME2 NULL;
+END
+
+IF COL_LENGTH('dbo.RefreshTokens', 'DeletedBy') IS NULL
+BEGIN
+    ALTER TABLE dbo.RefreshTokens ADD DeletedBy INT NULL;
+END
+
+IF COL_LENGTH('dbo.RefreshTokens', 'ClientIpAddress') IS NULL
+BEGIN
+    ALTER TABLE dbo.RefreshTokens ADD ClientIpAddress NVARCHAR(45) NULL;
+END
+
+IF COL_LENGTH('dbo.RefreshTokens', 'UserAgent') IS NULL
+BEGIN
+    ALTER TABLE dbo.RefreshTokens ADD UserAgent NVARCHAR(500) NULL;
 END
 
 -- Login attempts tracking table for security auditing
@@ -460,6 +491,13 @@ IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_LoginAttempts_Timestam
 
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_LoginAttempts_Success' AND object_id = OBJECT_ID('dbo.LoginAttempts'))
     CREATE INDEX IX_LoginAttempts_Success ON dbo.LoginAttempts(Success);
+
+-- Indexes for RefreshTokens
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_RT_TokenHash' AND object_id = OBJECT_ID('dbo.RefreshTokens'))
+    CREATE INDEX IX_RT_TokenHash ON dbo.RefreshTokens(TokenHash);
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_RT_UserId_ExpiresAt' AND object_id = OBJECT_ID('dbo.RefreshTokens'))
+    CREATE INDEX IX_RT_UserId_ExpiresAt ON dbo.RefreshTokens(UserId, ExpiresAt);
 
 -- Indexes for AuditLogs for performance
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_AuditLogs_UserId_Timestamp' AND object_id = OBJECT_ID('dbo.AuditLogs'))

@@ -10,8 +10,10 @@ interface PageHeaderProps extends React.HtmlHTMLAttributes<HTMLDivElement> {
     icon?: GoogleMaterialIcon
     divider?: boolean
     breadCrumb?: JSX.Element
+    /** Optional test id applied to the title heading for E2E tests */
+    dataTestId?: string
 }
-const PageHeader = ({ title, description, button, icon: Icon, divider = true, breadCrumb, className, ...props }: PageHeaderProps) => {
+const PageHeader = ({ title, description, button, icon: Icon, divider = true, breadCrumb, className, dataTestId, ...props }: PageHeaderProps) => {
     return (
         <Stack direction={'col'} gap={4}>
             {breadCrumb}
@@ -24,7 +26,7 @@ const PageHeader = ({ title, description, button, icon: Icon, divider = true, br
                             </div>
                         )}
                         <Stack direction={'col'} gap={2} justifyItems={'center'}>
-                            <h1 className="title-01 font-bold">{title}</h1>
+                            <h1 className="title-01 font-bold" data-testid={dataTestId}>{title}</h1>
                             <When condition={!!description}>
                                 <p className="hidden text-body-02 text-foreground-secondary md:block">{description}</p>
                             </When>

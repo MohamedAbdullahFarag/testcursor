@@ -44,9 +44,14 @@ public class ErrorHandlingMiddleware
     /// <param name="exception">The exception that occurred</param>
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
+    // Ensure correlation ID is present on the response for tracing
+    var correlationId = GetOrCreateCorrelationId(context);
+    context.Response.Headers["X-Correlation-ID"] = correlationId;
+
         context.Response.ContentType = "application/problem+json";
 
-        var problemDetails = CreateProblemDetails(context, exception);
+    var problemDetails = CreateProblemDetails(context, exception);
+    problemDetails.Extensions["correlationId"] = correlationId;
 
         var jsonOptions = new JsonSerializerOptions
         {
@@ -118,5 +123,27 @@ public class ErrorHandlingMiddleware
         }
 
         return problemDetails;
+    }
+
+    /// <summary>
+    /// Gets an existing correlation ID from request headers or trace identifier, or creates a new one.
+    /// </summary>
+    private static string GetOrCreateCorrelationId(HttpContext context)
+    {
+        const string headerName = "X-Correlation-ID";
+        if (context.Request.Headers.TryGetValue(headerName, out var values) && !string.IsNullOrWhiteSpace(values.ToString()))
+        {
+            return values.ToString();
+        }
+
+        // Prefer the built-in trace identifier if available
+        var traceId = context.TraceIdentifier;
+        if (!string.IsNullOrWhiteSpace(traceId))
+        {
+            return traceId;
+        }
+
+        // Fallback to a new GUID
+        return Guid.NewGuid().ToString("n");
     }
 }

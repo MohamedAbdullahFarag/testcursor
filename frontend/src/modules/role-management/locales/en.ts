@@ -5,6 +5,30 @@ export const strings = {
     permissionsManagement: 'Permissions Management',
     rolesManagementComingSoon: 'Roles management functionality is coming soon.',
     permissionsManagementComingSoon: 'Permissions management functionality is coming soon.',
+    
+    // Page level translations
+    accessDenied: 'Access Denied',
+    accessDeniedMessage: 'You do not have permission to access role management. Please contact your administrator.',
+    roleManagement: 'Role Management',
+    roleManagementDescription: 'Manage user roles and permissions for the system',
+    roleManagementTabs: 'Role Management Navigation',
+    rolesTab: 'Roles',
+    assignmentsTab: 'User Assignments',
+    userRoleAssignments: 'User Role Assignments',
+    readOnlyMode: 'You have read-only access to this section',
+    
+    // Help and guidance
+    helpAndGuidance: 'Help & Guidance',
+    systemRoles: 'System Roles',
+    systemRolesDescription: 'Built-in roles with predefined permissions that cannot be modified',
+    customRoles: 'Custom Roles',
+    customRolesDescription: 'User-defined roles with customizable permissions',
+    roleAssignments: 'Role Assignments',
+    roleAssignmentsDescription: 'Assign roles to users to control their access and permissions',
+    permissions: 'Permissions',
+    permissionsDescription: 'Fine-grained control over what users can do in the system',
+    
+    // Existing functionality
     assignRoles: 'Assign Roles',
     roles: 'Roles',
     selectRoles: 'Select roles to assign',

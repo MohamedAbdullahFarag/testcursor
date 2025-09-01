@@ -4,7 +4,12 @@ import { customerExperienceEn } from '@/modules/customerExperience/locale/en'
 import { dashboardEn } from '@/modules/dashboard/locales/en'
 import { eParticipationEn } from '@/modules/eparticipation/locales/en'
 import { supportEn } from '@/modules/support/locales/en'
+import { strings as roleManagementEn } from '@/modules/role-management/locales/en'
+import mediaManagementEn from '@/modules/media-management/locales/en'
+import notificationsEn from '@/modules/notifications/locales/en'
+import mediaEn from '@/modules/question-bank/media/locales/en'
 import { userManagementLocales } from './userManagement'
+import categoryPagesEn from './categoryPages'
 
 export const en = {
     ...authEn,
@@ -13,12 +18,34 @@ export const en = {
     ...supportEn,
     ...customerExperienceEn,
     ...eParticipationEn,
+    // Category pages translations
+    categoryPages: categoryPagesEn,
+    // Content Management namespace
+    'content-managment': contentManagmentEn,
+    // Role Management namespace
+    roleManagement: roleManagementEn,
+    // Media Management namespace
+    'media-management': mediaManagementEn,
+    // Notifications namespace
+    notifications: notificationsEn,
+    // Auth namespace for dedicated auth translation hook
+    auth: authEn,
+    // Media namespace for question-bank media manager
+    media: mediaEn,
     // Spread the individual namespaces from user management
     userManagement: userManagementLocales.en.userManagement,
     users: userManagementLocales.en.users,
     // Legacy keys for compatibility with localizedStrings
     loginNote: 'Please login to access your account',
-    namespaceoAvailableResults: 'Available Results',
+    availableResults: 'Available Results',
+    // Missing keys that are being looked up
+    fileNotFound: 'File not found',
+    uploadError: 'Upload failed',
+    deleteError: 'Delete failed',
+    updateError: 'Update failed',
+    networkError: 'Network error occurred',
+    permissionError: 'Permission denied',
+    storageFull: 'Storage limit exceeded',
     // User management specific missing keys
     noUsers: 'No users found',
     noUsersDescription: 'There are no users to display. Try creating a new user or adjusting your search criteria.',
@@ -115,6 +142,26 @@ export const en = {
         trialVersion: 'Beta version',
         edit: 'Edit',
         serverError: 'Sorry, something went wrong',
+        Main: 'Home',
+        copy: 'Copy',
+        email: 'Email',
+        fullName: 'Full name',
+        mobileNumber: 'Mobile Number',
+        description: 'Description',
+        nationalId: 'National ID',
+        residentID: 'Resident ID',
+        copiedSuccessfully: 'Copied successfully',
+        serviceUnavailable: 'Service Currently Unavailable',
+        serviceNotWorkingContactSupport: 'Please contact technical support team for assistance, we appreciate your patience and cooperation',
+        refresh: 'Refresh',
+        home: 'Home',
+        lastUpdatedLabel: 'Last updated date:',
+        timeZoneNote: 'Saudi Arabia time',
+        error: 'An error occurred.An error occurred.',
+        errorDescription: '  Sorry, we couldn t find the page you were looking for.',
+        backToHome: 'Back to Main Page',
+        sorryTechnicalError: 'Service is under maintenance for a better experience',
+        sorryTechnicalErrorDesc: 'Refresh please or ask support team help',
     },
     accessibility: {
         accessibility: 'Accessibility',

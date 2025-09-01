@@ -1,4 +1,5 @@
-import AuthProvider from '@/modules/auth/components/AuthProvider'
+import { AuthProvider } from '@/modules/auth/hooks/useAuth'
+import AuthGuard from '@/modules/auth/components/AuthProvider'
 import { pathNames } from '@/shared/constants/pathNames'
 import { RouteObject } from 'react-router-dom'
 import { 
@@ -26,12 +27,20 @@ import {
     EParticipationInitiatives,
     HelpFaq,
     HelpTerms,
-    HelpPrivacy
+    HelpPrivacy,
+    SystemCategoryPage,
+    AnalyticsCategoryPage,
+    CustomerExperienceCategoryPage,
+    HelpCategoryPage
 } from './dashboardRoutes'
 
 const dashboardRoutes: RouteObject = {
     path: pathNames.dashboard,
-    element: <AuthProvider />,
+    element: (
+        <AuthProvider>
+            <AuthGuard />
+        </AuthProvider>
+    ),
     errorElement: <ErrorPage />,
     children: [
         {
@@ -73,6 +82,23 @@ const dashboardRoutes: RouteObject = {
                 {
                     path: pathNames.notifications,
                     element: <Notifications />,
+                },
+                // Parent category routes
+                {
+                    path: pathNames.system,
+                    element: <SystemCategoryPage />,
+                },
+                {
+                    path: pathNames.analytics,
+                    element: <AnalyticsCategoryPage />,
+                },
+                {
+                    path: pathNames.customerExperience,
+                    element: <CustomerExperienceCategoryPage />,
+                },
+                {
+                    path: pathNames.help,
+                    element: <HelpCategoryPage />,
                 },
                 // System routes
                 {

@@ -15,7 +15,7 @@ public class PermissionRepository : BaseRepository<Permission>, IPermissionRepos
     private new readonly ILogger<PermissionRepository> _logger;
 
     public PermissionRepository(IDbConnectionFactory connectionFactory, ILogger<PermissionRepository> logger)
-        : base(connectionFactory, logger, "Permissions")
+        : base(connectionFactory, logger, "Permissions", "PermissionId")
     {
         _logger = logger;
     }
@@ -117,7 +117,10 @@ public class PermissionRepository : BaseRepository<Permission>, IPermissionRepos
                 : "SELECT COUNT(1) FROM Permissions WHERE Code = @Code AND IsDeleted = 0";
 
             using var connection = _connectionFactory.CreateConnection();
-            var count = await connection.ExecuteScalarAsync<int>(sql, new { Code = code, ExcludePermissionId = excludePermissionId.Value });
+            object parameters = excludePermissionId.HasValue 
+                ? new { Code = code, ExcludePermissionId = excludePermissionId.Value }
+                : (object)new { Code = code };
+            var count = await connection.ExecuteScalarAsync<int>(sql, parameters);
             return count > 0;
         }
         catch (Exception ex)

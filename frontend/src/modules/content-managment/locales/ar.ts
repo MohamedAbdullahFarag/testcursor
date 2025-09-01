@@ -1,8 +1,73 @@
 export const contentManagmentAr = {
+    // Page header and navigation
+    page: {
+        title: 'إدارة المحتوى',
+        description: 'إدارة جميع المحتويات بما في ذلك الملفات الوسائطية والأسئلة والإشعارات',
+        breadcrumbTitle: 'إدارة المحتوى'
+    },
+
+    // Feature cards
+    features: {
+        mediaManagement: {
+            title: 'إدارة الوسائط',
+            description: 'إدارة المحتوى الوسائطي بما في ذلك الصور والفيديوهات والملفات الصوتية والمستندات',
+            stats: '{{count}} ملف • {{size}} جيجابايت'
+        },
+        questionBank: {
+            title: 'بنك الأسئلة',
+            description: 'إنشاء وتنظيم الأسئلة وبنوك الأسئلة والمحتوى التعليمي',
+            stats: 'إدارة الشجرة • فئات'
+        },
+        notifications: {
+            title: 'الإشعارات',
+            description: 'إدارة إشعارات النظام والتواصل مع المستخدمين',
+            stats: 'مركز الإشعارات • التفضيلات'
+        }
+    },
+
+    // Content overview section
+    overview: {
+        title: 'نظرة عامة على المحتوى',
+        totalFiles: 'إجمالي الملفات',
+        totalSize: 'إجمالي التخزين',
+        activeNotifications: 'الإشعارات النشطة',
+        questionBanks: 'بنوك الأسئلة',
+        recentActivity: 'النشاط الأخير',
+        mediaTypes: {
+            images: 'الصور',
+            videos: 'الفيديوهات',
+            documents: 'المستندات',
+            audio: 'الملفات الصوتية'
+        }
+    },
+
+    // Status indicators
+    status: {
+        implemented: 'مُطبق',
+        inProgress: 'قيد التطوير',
+        planned: 'مخطط',
+        active: 'نشط',
+        inactive: 'غير نشط'
+    },
+
+    // Actions
+    actions: {
+        manage: 'إدارة',
+        view: 'عرض',
+        configure: 'تكوين',
+        upload: 'رفع',
+        create: 'إنشاء',
+        edit: 'تعديل',
+        delete: 'حذف'
+    },
+
+    // Legacy content management fields
     contentManagment: {
         title: 'إدارة المحتوى',
         nationalId: 'الهوية الوطنية',
     },
+    
+    // Shared validation messages (keeping existing)
     sharedValidation: {
         required: 'الرجاء إدخال {0}',
         requiredAn: 'الرجاء إدخال {0}',
@@ -29,5 +94,4 @@ export const contentManagmentAr = {
         endDateMustBeGreaterThan: '{0} يجب أن يكون أكبر من {1}',
         dateMustBeGreaterThanToday: '{0} يجب أن يكون أصغر من تاريخ اليوم',
     },
-   
 } as const

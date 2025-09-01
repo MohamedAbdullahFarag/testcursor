@@ -31,7 +31,7 @@ export const notificationsAr = {
     dropdownAriaLabel: 'قائمة الإشعارات',
     notificationsTitle: 'الإشعارات',
     markAllRead: 'تمييز الكل كمقروء',
-    markAllReadArياLabel: 'تمييز جميع الإشعارات كمقروءة',
+    markAllReadAriaLabel: 'تمييز جميع الإشعارات كمقروءة',
     markingAsRead: 'جاري التمييز كمقروء...',
     unreadCountText: '{{count}} غير مقروء',
     noNotifications: 'لا توجد إشعارات جديدة',
@@ -54,6 +54,8 @@ export const notificationsAr = {
     clearFilters: 'مسح المرشحات',
     noNotifications: 'ليس لديك إشعارات',
     noNotificationsSubtext: 'عندما تتلقى إشعارات، ستظهر هنا',
+    noNotificationsDescription: 'عندما تتلقى إشعارات، ستظهر هنا',
+    refreshAriaLabel: 'تحديث الإشعارات',
     loadingMore: 'جاري تحميل المزيد من الإشعارات...',
     loadMoreButton: 'تحميل المزيد',
     errorLoading: 'فشل في تحميل الإشعارات',
@@ -78,6 +80,10 @@ export const notificationsAr = {
     dateRangeMonth: 'هذا الشهر',
     searchPlaceholder: 'البحث في الإشعارات...',
     searchClear: 'مسح البحث',
+    searchAriaLabel: 'البحث في الإشعارات',
+    unreadOnly: 'غير المقروءة فقط',
+    allTypes: 'جميع الأنواع',
+    allPriorities: 'جميع الأولويات',
     resultsCount: 'تم العثور على {{count}} إشعار',
     noResults: 'لا توجد إشعارات تطابق مرشحاتك',
     resetFilters: 'إعادة تعيين المرشحات'
@@ -94,7 +100,16 @@ export const notificationsAr = {
     PasswordChanged: 'تغيير كلمة المرور',
     LoginAlert: 'تنبيه تسجيل الدخول',
     General: 'عام',
-    Security: 'أمان'
+    Security: 'أمان',
+    // Additional notification types
+    examReminder: 'تذكير بالامتحان',
+    examStart: 'بدء الامتحان',
+    examEnd: 'انتهاء الامتحان',
+    gradingComplete: 'اكتمال التصحيح',
+    deadlineReminder: 'تذكير بالموعد النهائي',
+    systemAlert: 'تنبيه النظام',
+    welcome: 'ترحيب',
+    passwordReset: 'إعادة تعيين كلمة المرور'
   },
 
   // Priority Levels
@@ -102,7 +117,12 @@ export const notificationsAr = {
     Low: 'منخفض',
     Normal: 'عادي',
     High: 'عالي',
-    Critical: 'حرج'
+    Critical: 'حرج',
+    // Additional priority levels (lowercase)
+    low: 'منخفض',
+    medium: 'متوسط',
+    high: 'عالي',
+    critical: 'حرج'
   },
 
   // Notification Status

@@ -80,11 +80,11 @@ public class UserRolesController : ApiControllerBase
     }
 
     /// <summary>
-    /// Assigns a role to a user
+    /// Assigns a role to a user (compatibility route: POST /api/user-roles)
     /// </summary>
     /// <param name="assignRoleDto">Role assignment data</param>
     /// <returns>Assignment confirmation</returns>
-    [HttpPost("assign")]
+    [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -128,12 +128,12 @@ public class UserRolesController : ApiControllerBase
     }
 
     /// <summary>
-    /// Removes a role from a user
+    /// Removes a role from a user (compatibility route: DELETE /api/user-roles/{userId}/{roleId})
     /// </summary>
     /// <param name="userId">User ID</param>
     /// <param name="roleId">Role ID</param>
     /// <returns>Removal confirmation</returns>
-    [HttpDelete("user/{userId}/role/{roleId}")]
+    [HttpDelete("{userId}/{roleId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

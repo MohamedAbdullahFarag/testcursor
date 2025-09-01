@@ -412,7 +412,7 @@ class ApiClient {
 
 // Create and export default API client instance
 const apiConfig: ApiClientConfig = {
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://localhost:7001',
+    baseURL: import.meta.env.DEV ? '' : (import.meta.env.VITE_API_BASE_URL || 'https://localhost:7001'),
     timeout: 30000, // 30 seconds
     retries: 3,
 }

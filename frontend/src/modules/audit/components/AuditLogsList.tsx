@@ -27,7 +27,11 @@ import {
   AuditLogFilter, 
   AuditSeverity, 
   AuditCategory,
-  AuditLogExportFormat 
+  AuditLogExportFormat,
+  getSeverityLabel,
+  getCategoryLabel,
+  AuditSeverityLabels,
+  AuditCategoryLabels
 } from '../types/auditLogs';
 
 // Use a simplified PagedResult interface
@@ -97,6 +101,7 @@ const AuditLogsList: React.FC<AuditLogsListProps> = ({
     const clearedFilter = {
       ...filter,
       userId: undefined,
+      userIdentifier: undefined,
       action: undefined,
       entityType: undefined,
       entityId: undefined,
@@ -152,14 +157,15 @@ const AuditLogsList: React.FC<AuditLogsListProps> = ({
   };
 
   // Render severity chip
-  const renderSeverityChip = (severity: AuditSeverity) => {
+  const renderSeverityChip = (severity: number) => {
+    const severityLabel = getSeverityLabel(severity);
     const color = 
       severity === AuditSeverity.Critical ? 'error' :
       severity === AuditSeverity.High ? 'warning' :
       severity === AuditSeverity.Medium ? 'info' :
       'success';
     
-    return <Chip label={severity} color={color as any} size="small" />;
+    return <Chip label={severityLabel} color={color as any} size="small" />;
   };
 
   return (
@@ -228,13 +234,13 @@ const AuditLogsList: React.FC<AuditLogsListProps> = ({
                 <Grid item xs={12} sm={6} md={4}>
                   <TextField
                     fullWidth
-                    label="User ID"
-                    name="userId"
-                    value={tempFilter.userId || ''}
+                    label="User Identifier"
+                    name="userIdentifier"
+                    value={tempFilter.userIdentifier || ''}
                     onChange={handleTextInputChange}
                     variant="outlined"
                     size="small"
-                    type="number"
+                    placeholder="Email or username"
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
@@ -253,8 +259,8 @@ const AuditLogsList: React.FC<AuditLogsListProps> = ({
                     <InputLabel>Severity</InputLabel>
                     <Select
                       label="Severity"
-                      value={tempFilter.severity || ''}
-                      onChange={(e) => handleSelectChange('severity', e.target.value)}
+                      value={tempFilter.severity ?? ''}
+                      onChange={(e) => handleSelectChange('severity', e.target.value === '' ? undefined : Number(e.target.value))}
                     >
                       <MenuItem value="">Any Severity</MenuItem>
                       <MenuItem value={AuditSeverity.Critical}>Critical</MenuItem>
@@ -269,16 +275,16 @@ const AuditLogsList: React.FC<AuditLogsListProps> = ({
                     <InputLabel>Category</InputLabel>
                     <Select
                       label="Category"
-                      value={tempFilter.category || ''}
-                      onChange={(e) => handleSelectChange('category', e.target.value)}
+                      value={tempFilter.category ?? ''}
+                      onChange={(e) => handleSelectChange('category', e.target.value === '' ? undefined : Number(e.target.value))}
                     >
                       <MenuItem value="">Any Category</MenuItem>
                       <MenuItem value={AuditCategory.Authentication}>Authentication</MenuItem>
                       <MenuItem value={AuditCategory.Authorization}>Authorization</MenuItem>
                       <MenuItem value={AuditCategory.UserManagement}>User Management</MenuItem>
                       <MenuItem value={AuditCategory.DataAccess}>Data Access</MenuItem>
-                      <MenuItem value={AuditCategory.API}>API</MenuItem>
                       <MenuItem value={AuditCategory.System}>System</MenuItem>
+                      <MenuItem value={AuditCategory.Security}>Security</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -337,9 +343,9 @@ const AuditLogsList: React.FC<AuditLogsListProps> = ({
               </TableRow>
             ) : (
               auditLogs.data.map((log: AuditLog) => (
-                <TableRow key={log.id}>
+                <TableRow key={log.auditLogId}>
                   <TableCell>{formatDate(log.timestamp)}</TableCell>
-                  <TableCell>{log.username || 'System'}</TableCell>
+                  <TableCell>{log.userIdentifier || 'System'}</TableCell>
                   <TableCell>{log.action}</TableCell>
                   <TableCell>
                     {log.entityType}
@@ -350,7 +356,7 @@ const AuditLogsList: React.FC<AuditLogsListProps> = ({
                     )}
                   </TableCell>
                   <TableCell>{renderSeverityChip(log.severity)}</TableCell>
-                  <TableCell>{log.category}</TableCell>
+                  <TableCell>{getCategoryLabel(log.category)}</TableCell>
                   <TableCell>{log.ipAddress || 'N/A'}</TableCell>
                 </TableRow>
               ))

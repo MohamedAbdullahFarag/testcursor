@@ -6,7 +6,7 @@
 
 // Re-export core types for this module
 export type {
-  UserDto as User,
+  UserDto,
   CreateUserDto,
   UpdateUserDto,
   UserFilterOptions as UserFilters,
@@ -14,28 +14,30 @@ export type {
   ApiResponse,
 } from '../../../shared/types/core-entities';
 
-export interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  roles: string[];
-  isActive: boolean;
-  createdAt: string;
-}
+// Use the proper UserDto from core entities as the main User type
+export type User = UserDto;
 
 export interface CreateUserRequest {
-  fullName: string;
+  username: string;
   email: string;
+  firstName: string;
+  lastName: string;
   password: string;
-  roles: string[];
+  phoneNumber?: string;
+  preferredLanguage?: string;
+  roleIds?: number[];
 }
 
 export interface UpdateUserRequest {
-  id: string;
-  fullName?: string;
+  id: number;
+  username?: string;
   email?: string;
-  roles?: string[];
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  preferredLanguage?: string;
   isActive?: boolean;
+  roleIds?: number[];
 }
 
 export interface UserListResponse {

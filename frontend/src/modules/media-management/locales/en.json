@@ -72,6 +72,9 @@
     "uploading": "Uploading...",
     "processing": "Processing..."
   },
+  "loadingStates": {
+    "mediaFiles": "Loading media files..."
+  },
   "error": {
     "loadingMediaFiles": "Error loading media files",
     "uploadFailed": "Upload failed",
@@ -107,12 +110,12 @@
   },
   "categories": {
     "title": "Media Categories",
-    "description": "Organize your media files into categories",
+    "pageDescription": "Organize your media files into categories",
     "newCategory": "New Category",
     "editCategory": "Edit Category",
     "deleteCategory": "Delete Category",
     "categoryName": "Category Name",
-    "description": "Description",
+    "fieldDescription": "Description",
     "parentCategory": "Parent Category",
     "icon": "Icon",
     "color": "Color",
@@ -122,12 +125,12 @@
   },
   "collections": {
     "title": "Media Collections",
-    "description": "Create and manage media collections",
+    "pageDescription": "Create and manage media collections",
     "newCollection": "New Collection",
     "editCollection": "Edit Collection",
     "deleteCollection": "Delete Collection",
     "collectionName": "Collection Name",
-    "description": "Description",
+    "fieldDescription": "Description",
     "slug": "Slug",
     "type": "Type",
     "isPublic": "Public",

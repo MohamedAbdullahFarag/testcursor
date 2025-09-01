@@ -11,7 +11,7 @@ namespace Ikhtibar.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "ADMIN")]
+[Authorize]
 public class UserRolesController : ControllerBase
 {
     private readonly IUserRoleService _userRoleService;

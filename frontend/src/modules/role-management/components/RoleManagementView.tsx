@@ -206,14 +206,14 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
       {/* Header */}
       {showHeader && (
         <div className="mb-6">
-          <h1 className="text-2xl font-bold">{title || t('roleManagement')}</h1>
+          <h1 className="text-2xl font-bold" data-testid="role-management-title">{title || t('roleManagement')}</h1>
           <p className="text-gray-500">{t('roleManagementDescription')}</p>
         </div>
       )}
 
       {/* Error display */}
       {(roleManagement.error || localError) && (
-        <Alert className="mb-4" variant="destructive">
+        <Alert className="mb-4" variant="outline">
           <AlertDescription>
             {roleManagement.error || localError}
           </AlertDescription>
@@ -227,6 +227,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
             onClick={openCreateModal}
             disabled={roleManagement.loading}
             aria-label={t('createRole')}
+            data-testid="create-role"
           >
             {t('createRole')}
           </Button>
@@ -307,7 +308,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
             mode="create"
             isLoading={isFormSubmitting}
             availablePermissions={availablePermissions}
-            onSubmit={handleCreateRole}
+            onSubmit={(data) => handleCreateRole(data as CreateRoleRequest)}
             onCancel={closeCreateModal}
           />
         </DialogContent>
@@ -357,7 +358,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
             </Button>
             
             <Button
-              variant="destructive"
+              variant="outline"
               onClick={handleDeleteRole}
               disabled={isFormSubmitting || (roleToDelete?.isSystemRole ?? false)}
               aria-label={t('delete')}
@@ -394,3 +395,5 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
     </div>
   );
 };
+
+export default RoleManagementView;

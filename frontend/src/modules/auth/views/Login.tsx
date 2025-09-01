@@ -4,16 +4,16 @@ import { authService } from '@/shared/constants/oidcConfig'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, Stack, useForm } from 'mada-design-system'
 import { z } from 'zod'
+
 import { useAuthStore } from '../store/authStore'
-import { authService as apiAuthService } from '../services/authService'
-import { useState } from 'react'
+import { authService as authApiService } from '../services/authService'
 import { useNavigate } from 'react-router-dom'
 import { pathNames } from '@/shared/constants/pathNames'
 
 const Login = () => {
     const login = useAuthStore(state => state.login)
-    const [isLoading, setIsLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const isLoading = useAuthStore(state => state.isLoading)
+    const error = useAuthStore(state => state.error)
     const navigate = useNavigate()
     
     const handleSsoLogin = async () => {
@@ -42,47 +42,28 @@ const Login = () => {
 
     const onSubmit = async (data: FormSchema) => {
         try {
-            setIsLoading(true)
-            setError(null)
-            
             console.log('Attempting login with:', data.email)
             
-            // Call the real authentication API
-            const result = await apiAuthService.login({
+            // Call auth service directly
+            const result = await authApiService.login({
                 email: data.email,
                 password: data.password
             })
             
-            console.log('Login API response:', result)
+            // Update the auth store with the result
+            login({
+                user: result.user,
+                accessToken: result.accessToken,
+                refreshToken: result.refreshToken
+            })
             
-            // apiAuthService.login returns AuthResult directly, not wrapped in response
-            if (result && result.accessToken && result.user) {
-                console.log('Login successful, updating auth store with:', {
-                    user: result.user,
-                    accessToken: result.accessToken,
-                    refreshToken: result.refreshToken,
-                })
-                
-                // Update auth store with real user data and tokens
-                login({
-                    user: result.user,
-                    accessToken: result.accessToken,
-                    refreshToken: result.refreshToken,
-                })
-                
-                console.log('Auth store updated successfully')
-                
-                // Redirect to dashboard after successful login
-                navigate(pathNames.dashboard)
-            } else {
-                console.error('Login failed - invalid response structure:', result)
-                setError('Login failed. Please check your credentials.')
-            }
+            console.log('Login successful, redirecting to dashboard')
+            
+            // Redirect to dashboard after successful login
+            navigate(pathNames.dashboard)
         } catch (err: unknown) {
             console.error('Login error:', err)
-            setError('Network error occurred. Please try again.')
-        } finally {
-            setIsLoading(false)
+            // Error is already handled by the auth service
         }
     }
 

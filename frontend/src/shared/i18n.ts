@@ -1,7 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-import Backend from 'i18next-http-backend';
 
 // Import translation files directly for better bundling
 import { en as enTranslations } from './locales/en';
@@ -13,8 +12,6 @@ import { ar as arTranslations } from './locales/ar';
  * Includes automatic language detection and fallback mechanisms
  */
 i18n
-  // Load translation using http backend
-  .use(Backend)
   // Detect user language
   .use(LanguageDetector)
   // Pass the i18n instance to react-i18next
@@ -27,8 +24,8 @@ i18n
     // Supported languages
     supportedLngs: ['en', 'ar'],
     
-    // Debug mode (only in development)
-    debug: import.meta.env.DEV,
+    // Debug mode (disabled to prevent excessive logging)
+    debug: false,
 
     // Language detection configuration
     detection: {
@@ -49,19 +46,33 @@ i18n
 
     // Namespace configuration
     defaultNS: 'common',
-    ns: ['common', 'userManagement', 'users'],
+    ns: ['common', 'userManagement', 'users', 'content-managment', 'categoryPages', 'roleManagement', 'media-management', 'notifications', 'auth', 'media'],
 
     // Resources (translations)
     resources: {
       en: {
-        common: enTranslations,
+        common: enTranslations.common,
         userManagement: enTranslations.userManagement,
         users: enTranslations.users,
+        'content-managment': enTranslations['content-managment'],
+        categoryPages: enTranslations.categoryPages,
+        roleManagement: enTranslations.roleManagement,
+        'media-management': enTranslations['media-management'],
+        notifications: enTranslations.notifications,
+        auth: enTranslations.auth,
+        media: enTranslations.media,
       },
       ar: {
-        common: arTranslations,
+        common: arTranslations.common,
         userManagement: arTranslations.userManagement,
         users: arTranslations.users,
+        'content-managment': arTranslations['content-managment'],
+        categoryPages: arTranslations.categoryPages,
+        roleManagement: arTranslations.roleManagement,
+        'media-management': arTranslations['media-management'],
+        notifications: arTranslations.notifications,
+        auth: arTranslations.auth,
+        media: arTranslations.media,
       },
     },
 
@@ -79,18 +90,6 @@ i18n
       // Use HTML tags in translations (be careful with user input)
       transSupportBasicHtmlNodes: true,
       transKeepBasicHtmlNodesFor: ['br', 'strong', 'i', 'em'],
-    },
-
-    // Backend configuration (if using HTTP backend)
-    backend: {
-      // Path where resources get loaded from
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
-      
-      // Allow cross domain requests
-      crossDomain: false,
-      
-      // Allow credentials on cross domain requests
-      withCredentials: false,
     },
   });
 

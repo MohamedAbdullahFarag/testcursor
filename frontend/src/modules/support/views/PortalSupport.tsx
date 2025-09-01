@@ -16,7 +16,7 @@ export default function PortalSupport() {
                             { title: strings.support.fullTitle },
                         ]}
                     />
-                    <h1 className="title-03 font-bold">{strings.support.fullTitle}</h1>
+                    <h1 className="title-03 font-bold" data-testid="portal-support-title">{strings.support.fullTitle}</h1>
                     <p className="text-body-02">{strings.support.supportBreifDesc}</p>
                 </Stack>
                 <Grid cols={6} gapX={5} gapY={6}>

@@ -21,7 +21,7 @@ public class UserRepository : BaseRepository<User>, IUserRepository
     }
 
     /// <summary>
-    /// Get user by email address
+    /// Get user by email address with roles
     /// </summary>
     public async Task<User?> GetByEmailAsync(string email)
     {
@@ -29,14 +29,42 @@ public class UserRepository : BaseRepository<User>, IUserRepository
         {
             using var connection = await _connectionFactory.CreateConnectionAsync();
             const string sql = @"
-                SELECT UserId, Username, Email, FirstName, LastName, PhoneNumber, 
-                       PreferredLanguage, IsActive, EmailVerified, PhoneVerified, 
-                       CreatedAt, ModifiedAt
-                FROM Users 
-                WHERE Email = @Email AND IsDeleted = 0";
+                SELECT u.UserId, u.Username, u.Email, u.FirstName, u.LastName, u.PhoneNumber, 
+                       u.PreferredLanguage, u.IsActive, u.EmailVerified, u.PhoneVerified, 
+                       u.PasswordHash, u.CreatedAt, u.ModifiedAt,
+                       ur.UserId, ur.RoleId, ur.AssignedAt, ur.AssignedBy,
+                       r.RoleId, r.Code, r.Name, r.Description, r.IsSystemRole, r.CreatedAt
+                FROM Users u
+                LEFT JOIN UserRoles ur ON u.UserId = ur.UserId
+                LEFT JOIN Roles r ON ur.RoleId = r.RoleId
+                WHERE u.Email = @Email AND u.IsDeleted = 0";
 
-            var user = await connection.QueryFirstOrDefaultAsync<User>(sql, new { Email = email });
-            return user;
+            var userDictionary = new Dictionary<int, User>();
+            
+            await connection.QueryAsync<User, UserRole, Role, User>(
+                sql,
+                (user, userRole, role) =>
+                {
+                    if (!userDictionary.TryGetValue(user.UserId, out var existingUser))
+                    {
+                        existingUser = user;
+                        existingUser.UserRoles = new List<UserRole>();
+                        userDictionary.Add(user.UserId, existingUser);
+                    }
+
+                    if (userRole != null && userRole.UserId > 0 && role != null)
+                    {
+                        userRole.Role = role;
+                        existingUser.UserRoles.Add(userRole);
+                    }
+
+                    return existingUser;
+                },
+                new { Email = email },
+                splitOn: "UserId,RoleId"
+            );
+
+            return userDictionary.Values.FirstOrDefault();
         }
         catch (Exception ex)
         {
@@ -165,6 +193,59 @@ public class UserRepository : BaseRepository<User>, IUserRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting user by ID: {Id}", id);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Get user by ID with roles included
+    /// </summary>
+    public async Task<User?> GetByIdWithRolesAsync(int id)
+    {
+        try
+        {
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            const string sql = @"
+                SELECT u.UserId, u.Username, u.Email, u.FirstName, u.LastName, u.PhoneNumber, 
+                       u.PreferredLanguage, u.IsActive, u.EmailVerified, u.PhoneVerified, 
+                       u.PasswordHash, u.CreatedAt, u.ModifiedAt,
+                       ur.UserId, ur.RoleId, ur.AssignedAt, ur.AssignedBy,
+                       r.RoleId, r.Code, r.Name, r.Description, r.IsSystemRole, r.CreatedAt
+                FROM Users u
+                LEFT JOIN UserRoles ur ON u.UserId = ur.UserId
+                LEFT JOIN Roles r ON ur.RoleId = r.RoleId
+                WHERE u.UserId = @Id AND u.IsDeleted = 0";
+
+            var userDictionary = new Dictionary<int, User>();
+            
+            await connection.QueryAsync<User, UserRole, Role, User>(
+                sql,
+                (user, userRole, role) =>
+                {
+                    if (!userDictionary.TryGetValue(user.UserId, out var existingUser))
+                    {
+                        existingUser = user;
+                        existingUser.UserRoles = new List<UserRole>();
+                        userDictionary.Add(user.UserId, existingUser);
+                    }
+
+                    if (userRole != null && userRole.UserId > 0 && role != null)
+                    {
+                        userRole.Role = role;
+                        existingUser.UserRoles.Add(userRole);
+                    }
+
+                    return existingUser;
+                },
+                new { Id = id },
+                splitOn: "UserId,RoleId"
+            );
+
+            return userDictionary.Values.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user by ID with roles: {Id}", id);
             throw;
         }
     }

@@ -13,7 +13,9 @@ public class RefreshTokens : BaseEntity
     /// <summary>
     /// Unique identifier for the refresh token
     /// </summary>
-    public new int Id { get; set; }
+    [Key]
+    [Column("RefreshTokenId")]
+    public override int Id { get; set; }
 
     /// <summary>
     /// Hashed refresh token value (never store plain text)

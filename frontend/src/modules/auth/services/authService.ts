@@ -3,7 +3,8 @@
 
 import { LoginRequest, AuthResult } from '../models/auth.types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7001';
+// Use relative URLs to leverage Vite's proxy configuration in development
+const API_BASE_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_BASE_URL || 'https://localhost:7001');
 
 export const authService = {
   /**
@@ -25,32 +26,70 @@ export const authService = {
       throw new Error('Login failed');
     }
 
-    return response.json() as Promise<AuthResult>;
+    const backendResult = await response.json();
+    
+    // Map backend response to frontend format
+    if (backendResult.success) {
+      return {
+        accessToken: backendResult.accessToken,
+        refreshToken: backendResult.refreshTokens,
+        user: {
+          id: backendResult.user?.userId?.toString() || '',
+          fullName: `${backendResult.user?.firstName || ''} ${backendResult.user?.lastName || ''}`.trim(),
+          email: backendResult.user?.email || '',
+          roles: backendResult.roles || []
+        }
+      };
+    } else {
+      throw new Error(backendResult.errorMessage || 'Login failed');
+    }
   },
 
   /**
    * Refresh access token using refresh token
    */
-  refresh: async (): Promise<AuthResult> => {
+  refresh: async (refreshToken: string): Promise<AuthResult> => {
     const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
       method: 'POST',
-      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(refreshToken),
     });
 
     if (!response.ok) {
       throw new Error('Token refresh failed');
     }
 
-    return response.json() as Promise<AuthResult>;
+    const backendResult = await response.json();
+    
+    // Map backend response to frontend format
+    if (backendResult.success) {
+      return {
+        accessToken: backendResult.accessToken,
+        refreshToken: backendResult.refreshTokens,
+        user: {
+          id: backendResult.user?.userId?.toString() || '',
+          fullName: `${backendResult.user?.firstName || ''} ${backendResult.user?.lastName || ''}`.trim(),
+          email: backendResult.user?.email || '',
+          roles: backendResult.roles || []
+        }
+      };
+    } else {
+      throw new Error(backendResult.errorMessage || 'Token refresh failed');
+    }
   },
 
   /**
    * Logout user and invalidate tokens
    */
-  logout: async (): Promise<void> => {
+  logout: async (refreshToken: string): Promise<void> => {
     const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
       method: 'POST',
-      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(refreshToken),
     });
 
     if (!response.ok) {
@@ -64,10 +103,11 @@ export const authService = {
   validateToken: async (token: string): Promise<boolean> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/validate`, {
-        method: 'GET',
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify(token),
       });
 
       return response.ok;

@@ -19,6 +19,7 @@ export const supportEn = {
         ticketNumber: 'Ticket Number',
         ticketDetails: 'Ticket Details',
         LoginNote: 'You have to login to modify the ticket or reply to it, or to view all your tickets.',
+        loginNote: 'You have to login to modify the ticket or reply to it, or to view all your tickets.',
         ticketStatus: 'Ticket status',
         ticketDate: 'Ticket date',
         customerSupportResponse: 'Technical Support reply',

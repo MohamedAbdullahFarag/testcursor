@@ -121,3 +121,5 @@ export const QuestionBankTree: React.FC<QuestionBankTreeProps> = ({
     </Box>
   );
 };
+
+export default QuestionBankTree;

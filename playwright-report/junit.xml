@@ -1,0 +1,105 @@
+<testsuites id="" name="" tests="4" failures="4" skipped="0" errors="0" time="28.717801999999995">
+<testsuite name="audit-logs-filters.spec.ts" timestamp="2025-09-01T08:21:32.692Z" hostname="chromium" tests="4" failures="4" skipped="0" time="97.471" errors="0">
+<testcase name="Audit Logs Filters › should show filter controls and filter options should be properly labeled" classname="audit-logs-filters.spec.ts" time="24.952">
+<failure message="audit-logs-filters.spec.ts:10:3 should show filter controls and filter options should be properly labeled" type="FAILURE">
+<![CDATA[  [chromium] › audit-logs-filters.spec.ts:10:3 › Audit Logs Filters › should show filter controls and filter options should be properly labeled 
+
+    TimeoutError: page.click: Timeout 10000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("Show Filters")')
+
+
+      10 |   test('should show filter controls and filter options should be properly labeled', async ({ page }) => {
+      11 |     // Click show filters button
+    > 12 |     await page.click('button:has-text("Show Filters")');
+         |                ^
+      13 |     
+      14 |     // Wait for filters to appear
+      15 |     await page.waitForSelector('[data-testid="severity-filter"], [role="combobox"]:has([aria-labelledby*="severity" i])', { timeout: 5000 });
+        at C:\Projects\testcursor\playwright-tests\audit-logs-filters.spec.ts:12:16
+
+    Error Context: ..\test-results\audit-logs-filters-Audit-L-2374f--should-be-properly-labeled-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\test-results\audit-logs-filters-Audit-L-2374f--should-be-properly-labeled-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Audit Logs Filters › should filter by severity correctly" classname="audit-logs-filters.spec.ts" time="22.929">
+<failure message="audit-logs-filters.spec.ts:58:3 should filter by severity correctly" type="FAILURE">
+<![CDATA[  [chromium] › audit-logs-filters.spec.ts:58:3 › Audit Logs Filters › should filter by severity correctly 
+
+    Error: page.click: Target page, context or browser has been closed
+    Call log:
+      - waiting for locator('button:has-text("Show Filters")')
+
+
+      58 |   test('should filter by severity correctly', async ({ page }) => {
+      59 |     // Show filters
+    > 60 |     await page.click('button:has-text("Show Filters")');
+         |                ^
+      61 |     
+      62 |     // Wait for table to load with data
+      63 |     await page.waitForSelector('table tbody tr', { timeout: 10000 });
+        at C:\Projects\testcursor\playwright-tests\audit-logs-filters.spec.ts:60:16
+]]>
+</failure>
+</testcase>
+<testcase name="Audit Logs Filters › should filter by category correctly" classname="audit-logs-filters.spec.ts" time="24.695">
+<failure message="audit-logs-filters.spec.ts:94:3 should filter by category correctly" type="FAILURE">
+<![CDATA[  [chromium] › audit-logs-filters.spec.ts:94:3 › Audit Logs Filters › should filter by category correctly 
+
+    TimeoutError: page.click: Timeout 10000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("Show Filters")')
+
+
+      94 |   test('should filter by category correctly', async ({ page }) => {
+      95 |     // Show filters
+    > 96 |     await page.click('button:has-text("Show Filters")');
+         |                ^
+      97 |     
+      98 |     // Wait for table to load with data
+      99 |     await page.waitForSelector('table tbody tr', { timeout: 10000 });
+        at C:\Projects\testcursor\playwright-tests\audit-logs-filters.spec.ts:96:16
+
+    Error Context: ..\test-results\audit-logs-filters-Audit-L-9219d-ilter-by-category-correctly-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\test-results\audit-logs-filters-Audit-L-9219d-ilter-by-category-correctly-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Audit Logs Filters › should clear filters correctly" classname="audit-logs-filters.spec.ts" time="24.895">
+<failure message="audit-logs-filters.spec.ts:130:3 should clear filters correctly" type="FAILURE">
+<![CDATA[  [chromium] › audit-logs-filters.spec.ts:130:3 › Audit Logs Filters › should clear filters correctly 
+
+    TimeoutError: page.click: Timeout 10000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("Show Filters")')
+
+
+      130 |   test('should clear filters correctly', async ({ page }) => {
+      131 |     // Show filters
+    > 132 |     await page.click('button:has-text("Show Filters")');
+          |                ^
+      133 |     
+      134 |     // Wait for table to load
+      135 |     await page.waitForSelector('table tbody tr', { timeout: 10000 });
+        at C:\Projects\testcursor\playwright-tests\audit-logs-filters.spec.ts:132:16
+
+    Error Context: ..\test-results\audit-logs-filters-Audit-L-d1681-uld-clear-filters-correctly-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|..\test-results\audit-logs-filters-Audit-L-d1681-uld-clear-filters-correctly-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

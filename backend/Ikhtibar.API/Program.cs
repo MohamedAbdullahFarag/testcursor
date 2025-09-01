@@ -33,9 +33,12 @@ builder.Services.AddCors(options =>
             policy.WithOrigins(
                 "https://localhost:5173",
                 "http://localhost:5173",
+                "https://localhost:5174",
+                "http://localhost:5174",
                 "https://localhost:3000",
+                "http://localhost:3000",
                 "https://localhost:7001",
-                "https://localhost:7001"
+                "http://localhost:7001"
             )
             .AllowAnyMethod()
             .AllowAnyHeader()
@@ -367,6 +370,9 @@ using (var scope = app.Services.CreateScope())
 
 // Global error handling middleware (must be first)
 app.UseMiddleware<ErrorHandlingMiddleware>();
+
+// Add rate limiting middleware (disabled for development testing)
+// app.UseRateLimiting();
 
 // Enable Swagger in all environments for API documentation
 app.UseSwagger();

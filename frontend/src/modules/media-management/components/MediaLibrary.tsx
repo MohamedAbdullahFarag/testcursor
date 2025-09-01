@@ -115,7 +115,7 @@ export const MediaLibrary: React.FC = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-2 text-gray-600">{t('loading.mediaFiles')}</p>
+          <p className="mt-2 text-gray-600">{t('loadingStates.mediaFiles')}</p>
         </div>
       </div>
     );
@@ -146,12 +146,12 @@ export const MediaLibrary: React.FC = () => {
           />
         </div>
         
-        <Select value={filters.mediaType?.toString()} onValueChange={(value) => setFilters(prev => ({ ...prev, mediaType: value ? parseInt(value) : undefined }))}>
+        <Select value={filters.mediaType?.toString() || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, mediaType: value === "all" ? undefined : parseInt(value) }))}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder={t('filters.allTypes')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{t('filters.allTypes')}</SelectItem>
+            <SelectItem value="all">{t('filters.allTypes')}</SelectItem>
             <SelectItem value={MediaType.Image.toString()}>{t('filters.images')}</SelectItem>
             <SelectItem value={MediaType.Video.toString()}>{t('filters.videos')}</SelectItem>
             <SelectItem value={MediaType.Audio.toString()}>{t('filters.audio')}</SelectItem>
@@ -159,12 +159,12 @@ export const MediaLibrary: React.FC = () => {
           </SelectContent>
         </Select>
 
-        <Select value={filters.status?.toString()} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value ? parseInt(value) : undefined }))}>
+        <Select value={filters.status?.toString() || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value === "all" ? undefined : parseInt(value) }))}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder={t('filters.allStatuses')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{t('filters.allStatuses')}</SelectItem>
+            <SelectItem value="all">{t('filters.allStatuses')}</SelectItem>
             <SelectItem value={MediaStatus.Ready.toString()}>{t('filters.ready')}</SelectItem>
             <SelectItem value={MediaStatus.Processing.toString()}>{t('filters.processing')}</SelectItem>
             <SelectItem value={MediaStatus.Failed.toString()}>{t('filters.failed')}</SelectItem>

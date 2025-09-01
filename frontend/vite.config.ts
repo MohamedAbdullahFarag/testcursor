@@ -69,7 +69,15 @@ export default defineConfig({
     server: {
         port: 5173,
         host: true,
-       // strictPort: true,
+        // strictPort: true,
+        proxy: {
+            '/api': {
+                target: 'https://localhost:7001',
+                changeOrigin: true,
+                secure: false, // Ignore SSL certificate errors in development
+                rewrite: (path) => path.replace(/^\/api/, '/api')
+            }
+        }
     },
     preview: {
         port: 5173,

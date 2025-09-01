@@ -1,7 +1,8 @@
 import { create, StateCreator } from 'zustand'
 import { persist, PersistOptions } from 'zustand/middleware'
-import type { User, LoginParams } from '../models/auth.types'
+import type { User, AuthResult } from '../models/auth.types'
 import { authService } from '../services/authService'
+import { tokenRefreshService } from '../services/tokenRefreshService'
 
 // Auth state interface with store-specific methods
 interface AuthState {
@@ -14,7 +15,7 @@ interface AuthState {
     error: string | null
     
     // Actions
-    login: (params: LoginParams) => void
+    login: (params: { user: User; accessToken: string; refreshToken: string }) => void
     logout: () => Promise<void>
     clearAuth: () => void
     updateUser: (userData: Partial<User>) => void
@@ -53,6 +54,9 @@ export const useAuthStore = create<AuthState>()(
                     error: null,
                 })
                 console.log('Auth store state updated successfully')
+                
+                // Start automatic token refresh
+                tokenRefreshService.startAutoRefresh();
             },
 
             logout: async () => {
@@ -64,6 +68,9 @@ export const useAuthStore = create<AuthState>()(
                 } catch (error) {
                     console.error('Logout error:', error);
                 } finally {
+                    // Stop automatic token refresh
+                    tokenRefreshService.stopAutoRefresh();
+                    
                     set({
                         user: null,
                         accessToken: null,
@@ -74,14 +81,18 @@ export const useAuthStore = create<AuthState>()(
                 }
             },
 
-            clearAuth: () =>
+            clearAuth: () => {
+                // Stop automatic token refresh
+                tokenRefreshService.stopAutoRefresh();
+                
                 set({
                     user: null,
                     accessToken: null,
                     refreshToken: null,
                     isAuthenticated: false,
                     error: null,
-                }),
+                });
+            },
 
             updateUser: userData =>
                 set(state => ({

@@ -1,0 +1,137 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner "a secondary navigation navbar" [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - 'generic "Current date: 01/09/2025" [ref=e7]':
+            - img [ref=e8]
+            - generic [ref=e10]: 01/09/2025
+          - 'generic "Current time: 11:22 ص" [ref=e11]':
+            - img [ref=e12]
+            - generic [ref=e14]: 11:22 ص
+        - generic [ref=e15]:
+          - button "Dark mode" [ref=e16] [cursor=pointer]:
+            - img [ref=e17] [cursor=pointer]
+          - button "Color contrast" [ref=e19] [cursor=pointer]:
+            - img [ref=e20] [cursor=pointer]
+          - button "Decrease font size" [ref=e22] [cursor=pointer]:
+            - img [ref=e23] [cursor=pointer]
+          - button "Increase font size" [ref=e25] [cursor=pointer]:
+            - img [ref=e26] [cursor=pointer]
+          - button "Voice commands" [ref=e28] [cursor=pointer]:
+            - img [ref=e29] [cursor=pointer]
+          - generic [ref=e31]:
+            - img [ref=e32]
+            - text: Beta version
+    - banner [ref=e34]:
+      - generic [ref=e36]:
+        - link "logo" [ref=e37] [cursor=pointer]:
+          - /url: /
+          - img "logo" [ref=e38] [cursor=pointer]
+        - navigation "Main" [ref=e39]:
+          - list [ref=e41]:
+            - listitem [ref=e42]:
+              - link "Home" [ref=e43] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e44]:
+              - link "Support" [ref=e45] [cursor=pointer]:
+                - /url: /support
+            - listitem [ref=e46]:
+              - link "FAQs" [ref=e47] [cursor=pointer]:
+                - /url: /faq
+            - listitem [ref=e48]:
+              - link "E-participation" [ref=e49] [cursor=pointer]:
+                - /url: /eparticipation
+        - generic [ref=e50]:
+          - button "العربية" [ref=e52] [cursor=pointer]:
+            - img [ref=e53] [cursor=pointer]
+            - generic [ref=e55] [cursor=pointer]: العربية
+          - link "Sign In" [ref=e56] [cursor=pointer]:
+            - /url: /login
+            - img [ref=e57] [cursor=pointer]
+            - generic [ref=e59] [cursor=pointer]: Sign In
+    - main [ref=e60]:
+      - generic [ref=e62]:
+        - img [ref=e63]
+        - generic [ref=e64]:
+          - heading "An error occurred.An error occurred." [level=1] [ref=e65]
+          - paragraph [ref=e66]: Sorry, we couldn t find the page you were looking for.
+        - button "mada-button" [ref=e67] [cursor=pointer]: Back to Main Page
+    - region "Notifications (F8)":
+      - list
+    - contentinfo [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e72]:
+            - generic [ref=e73]: استكشاف
+            - list
+          - generic [ref=e75]:
+            - generic [ref=e76]: المساعدة والدعم
+            - list [ref=e77]:
+              - listitem [ref=e78]:
+                - link "FAQs" [ref=e79] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e80]:
+                - link "طلب تذكرة دعم" [ref=e81] [cursor=pointer]:
+                  - /url: /support/create
+              - listitem [ref=e82]:
+                - link "استعلام عن تذكرة" [ref=e83] [cursor=pointer]:
+                  - /url: /support/inquiry
+          - generic [ref=e85]:
+            - generic [ref=e86]: روابط مساعدة
+            - list [ref=e87]:
+              - listitem [ref=e88]:
+                - link "وزارة التعليم - المملكة العربية السعودية" [ref=e89] [cursor=pointer]:
+                  - /url: https://moe.gov.sa
+          - generic [ref=e91]:
+            - generic [ref=e92]:
+              - generic [ref=e93]: تواصل معنا
+              - generic [ref=e94]:
+                - button "icon-button" [ref=e95] [cursor=pointer]:
+                  - img [ref=e96] [cursor=pointer]
+                - button "icon-button" [ref=e99] [cursor=pointer]:
+                  - img [ref=e100] [cursor=pointer]
+                - button "icon-button" [ref=e102] [cursor=pointer]:
+                  - img [ref=e103] [cursor=pointer]
+                - button "icon-button" [ref=e105] [cursor=pointer]:
+                  - img [ref=e106] [cursor=pointer]
+                - button "icon-button" [ref=e109] [cursor=pointer]:
+                  - img [ref=e110] [cursor=pointer]
+            - generic [ref=e115]:
+              - generic [ref=e116]: Accessibility Tools
+              - generic [ref=e117]:
+                - button "Color contrast" [ref=e118] [cursor=pointer]:
+                  - img [ref=e119] [cursor=pointer]
+                - button "Decrease font size" [ref=e121] [cursor=pointer]:
+                  - img [ref=e122] [cursor=pointer]
+                - button "Increase font size" [ref=e124] [cursor=pointer]:
+                  - img [ref=e125] [cursor=pointer]
+                - button "Voice commands" [ref=e127] [cursor=pointer]:
+                  - img [ref=e128] [cursor=pointer]
+        - generic [ref=e130]:
+          - generic [ref=e131]:
+            - paragraph [ref=e132]: All rights reserved to the Ministry of Education © 2025
+            - paragraph [ref=e133]: Developed and operated by Tatweer Educational Technologies Company
+            - generic [ref=e134]:
+              - link "Terms & conditions" [ref=e135] [cursor=pointer]:
+                - /url: /TermsAndConditions
+              - link "Privacy policy" [ref=e136] [cursor=pointer]:
+                - /url: /privacyPolicy
+          - generic [ref=e137]:
+            - link "moe" [ref=e138] [cursor=pointer]:
+              - /url: https://moe.gov.sa/ar/Pages/default.aspx
+              - img "moe" [ref=e139] [cursor=pointer]
+            - link "tetco" [ref=e140] [cursor=pointer]:
+              - /url: https://tetco.sa/
+              - img "tetco" [ref=e141] [cursor=pointer]
+            - link "vision 2030" [ref=e142] [cursor=pointer]:
+              - /url: https://www.vision2030.gov.sa/
+              - img "vision 2030" [ref=e143] [cursor=pointer]
+  - generic [ref=e144]:
+    - img [ref=e146]
+    - button "Open Tanstack query devtools" [ref=e194] [cursor=pointer]:
+      - img [ref=e195] [cursor=pointer]
+```

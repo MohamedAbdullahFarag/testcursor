@@ -21,7 +21,7 @@ import {
     Stack,
     useToast,
 } from 'mada-design-system'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Case, Default, Switch } from 'react-if'
 import { CertificatesGray } from 'streamline-icons'
 import { Create, MainSkeleton, TicketCard, TicketDetails } from '../components'
@@ -51,7 +51,12 @@ const DashboardSupport = () => {
                         { title: strings.support.title },
                     ]}
                 />
-                <PageHeader title={strings.support.title} description={strings.support.customerSupportDescription} icon={SupportIcon} />
+                <PageHeader
+                    title={strings.support.title}
+                    description={strings.support.customerSupportDescription}
+                    icon={SupportIcon}
+                    dataTestId="support-page-title"
+                />
                 <Grid gap={4} cols={6}>
                     <GridItem columns={{ base: 6, lg: 3, xl: 2 }} className="rounded-2 border border-border p-space-03">
                         <Stack gap={3} className="w-full" alignItems={'center'}>
@@ -122,8 +127,20 @@ const Comp = () => {
     const cardsTotal = useGridColumns()
     const { user } = useAuthStore(state => state)
     const [currentPage, setCurrentPage] = useState(1)
+    
+    // Debug logging to track re-renders and values
+    console.log('Comp re-render:', { 
+        cardsTotal, 
+        userId: user?.id, 
+        currentPage,
+        userFullObject: user 
+    })
+    
+    // Memoize the userId to prevent unnecessary re-renders if user object changes but id doesn't
+    const userId = useMemo(() => user?.id || '', [user?.id])
+    
     const { data, isLoading, error, isError, refetch } = useGetCasesByUserId({
-        userId: user?.id || '',
+        userId,
         Limit: cardsTotal,
         Offset: (currentPage - 1) * cardsTotal,
     })
@@ -150,7 +167,7 @@ const Comp = () => {
             <Case condition={isError}>
                 <div className="rounded-3 border">
                     <ServiceError
-                        CustomMessage={strings.shared.sorryTechnicalError}
+                        CustomMessage={strings.shared.serverError}
                         CustomMessageDesc=""
                         isSupprtBtnVisible={false}
                         onUpdate={refetch}

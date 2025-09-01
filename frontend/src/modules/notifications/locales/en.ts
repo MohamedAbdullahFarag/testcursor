@@ -54,6 +54,8 @@ export const notificationsEn = {
     clearFilters: 'Clear Filters',
     noNotifications: 'You have no notifications',
     noNotificationsSubtext: 'When you receive notifications, they will appear here',
+    noNotificationsDescription: 'When you receive notifications, they will appear here',
+    refreshAriaLabel: 'Refresh notifications',
     loadingMore: 'Loading more notifications...',
     loadMoreButton: 'Load More',
     errorLoading: 'Failed to load notifications',
@@ -78,6 +80,10 @@ export const notificationsEn = {
     dateRangeMonth: 'This Month',
     searchPlaceholder: 'Search notifications...',
     searchClear: 'Clear search',
+    searchAriaLabel: 'Search notifications',
+    unreadOnly: 'Unread only',
+    allTypes: 'All Types',
+    allPriorities: 'All Priorities',
     resultsCount: '{{count}} notifications found',
     noResults: 'No notifications match your filters',
     resetFilters: 'Reset Filters'
@@ -94,7 +100,16 @@ export const notificationsEn = {
     PasswordChanged: 'Password Changed',
     LoginAlert: 'Login Alert',
     General: 'General',
-    Security: 'Security'
+    Security: 'Security',
+    // Additional notification types
+    examReminder: 'Exam Reminder',
+    examStart: 'Exam Started',
+    examEnd: 'Exam Ended',
+    gradingComplete: 'Grading Complete',
+    deadlineReminder: 'Deadline Reminder',
+    systemAlert: 'System Alert',
+    welcome: 'Welcome',
+    passwordReset: 'Password Reset'
   },
 
   // Priority Levels
@@ -102,7 +117,12 @@ export const notificationsEn = {
     Low: 'Low',
     Normal: 'Normal',
     High: 'High',
-    Critical: 'Critical'
+    Critical: 'Critical',
+    // Additional priority levels (lowercase)
+    low: 'Low',
+    medium: 'Medium',
+    high: 'High',
+    critical: 'Critical'
   },
 
   // Notification Status

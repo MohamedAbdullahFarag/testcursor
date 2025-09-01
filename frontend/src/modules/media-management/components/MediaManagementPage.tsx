@@ -196,3 +196,5 @@ export const MediaManagementPage: React.FC = () => {
     </div>
   );
 };
+
+export default MediaManagementPage;

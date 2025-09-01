@@ -62,7 +62,7 @@ export const UserList: React.FC<UserListProps> = ({
         </TableHead>
         <TableBody>
           {users.map((user) => (
-            <TableRow key={user.id}>
+            <TableRow key={user.id} data-testid={`user-row-${user.id}`}>
               <TableCell>
                 <Typography variant="body1" fontWeight="medium">
                   {user.fullName}
@@ -96,6 +96,8 @@ export const UserList: React.FC<UserListProps> = ({
                   size="small"
                   onClick={() => onEdit(user)}
                   color="primary"
+                  aria-label={`Edit user ${user.fullName}`}
+                  data-testid={`edit-user-${user.id}`}
                 >
                   <EditIcon />
                 </IconButton>
@@ -103,6 +105,8 @@ export const UserList: React.FC<UserListProps> = ({
                   size="small"
                   onClick={() => onDelete(user.id)}
                   color="error"
+                  aria-label={`Delete user ${user.fullName}`}
+                  data-testid={`delete-user-${user.id}`}
                 >
                   <DeleteIcon />
                 </IconButton>

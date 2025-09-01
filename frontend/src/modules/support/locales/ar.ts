@@ -20,6 +20,7 @@ export const supportAr = {
         ticketNumber: 'تذكرة رقم',
         ticketDetails: 'تفاصيل التذكرة',
         loginNote: 'يتوجب عليك تسجيل الدخول للتعديل أو الرد على التذكرة أو لمشاهدة كل التذاكر الخاصة بك.',
+        LoginNote: 'يتوجب عليك تسجيل الدخول للتعديل أو الرد على التذكرة أو لمشاهدة كل التذاكر الخاصة بك.',
         ticketStatus: 'حالة التذكرة',
         ticketDate: 'تاريخ التذكرة',
         customerSupportResponse: 'رد فريق الدعم',

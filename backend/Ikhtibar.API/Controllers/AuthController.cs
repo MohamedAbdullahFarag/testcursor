@@ -48,6 +48,13 @@ namespace Ikhtibar.API.Controllers
                 }
 
                 var result = await _authenticationService.AuthenticateAsync(request);
+                
+                // Check if authentication was successful
+                if (!result.Success)
+                {
+                    return Unauthorized(result);
+                }
+                
                 return Ok(result);
             }
             catch (UnauthorizedAccessException)
@@ -81,6 +88,13 @@ namespace Ikhtibar.API.Controllers
                 }
 
                 var result = await _authenticationService.RefreshTokenAsync(refreshToken);
+                
+                // Check if token refresh was successful
+                if (!result.Success)
+                {
+                    return Unauthorized(result);
+                }
+                
                 return Ok(result);
             }
             catch (UnauthorizedAccessException)

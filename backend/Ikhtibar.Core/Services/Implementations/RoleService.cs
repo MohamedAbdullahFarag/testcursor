@@ -243,6 +243,16 @@ public class RoleService : IRoleService
             {
                 new Role
                 {
+                    Code = "system-admin",
+                    Name = "System Administrator",
+                    Description = "System administrator with full access",
+                    IsActive = true,
+                    IsSystemRole = true,
+                    CreatedAt = DateTime.UtcNow,
+                    ModifiedAt = DateTime.UtcNow
+                },
+                new Role
+                {
                     Code = "ADMIN",
                     Name = "Administrator",
                     Description = "System administrator with full access",

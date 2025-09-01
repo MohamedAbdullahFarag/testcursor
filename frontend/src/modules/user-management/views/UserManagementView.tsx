@@ -20,7 +20,8 @@ import { User, CreateUserRequest, UpdateUserRequest } from '../models/user.types
 export const UserManagementView: React.FC = () => {
   const {
     users,
-    total,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    total: _total,
     loading,
     error,
     create,
@@ -80,13 +81,15 @@ export const UserManagementView: React.FC = () => {
       <Box sx={{ py: 3 }}>
         {/* Header */}
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h4" component="h1">
+          <Typography variant="h4" component="h1" data-testid="user-management-title">
             User Management
           </Typography>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleOpenCreateForm}
+            aria-label="Create User"
+            data-testid="create-user"
           >
             Create User
           </Button>
@@ -122,7 +125,13 @@ export const UserManagementView: React.FC = () => {
           <DialogContent>
             <UserForm
               user={editingUser}
-              onSubmit={editingUser ? handleUpdateUser : handleCreateUser}
+              onSubmit={(data) => {
+                if (editingUser) {
+                  void handleUpdateUser(data as UpdateUserRequest)
+                } else {
+                  void handleCreateUser(data as CreateUserRequest)
+                }
+              }}
               onCancel={handleCloseForm}
               loading={loading}
             />
@@ -157,3 +166,5 @@ export const UserManagementView: React.FC = () => {
     </Container>
   );
 };
+
+export default UserManagementView;
